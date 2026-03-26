@@ -1,0 +1,72 @@
+---
+import type { CollectionEntry } from 'astro:content';
+import BaseLayout from './BaseLayout.astro';
+import Navigation from '../components/Navigation.astro';
+import Footer from '../components/Footer.astro';
+
+interface Props {
+  post: CollectionEntry<'blog'>;
+}
+
+const { post } = Astro.props;
+---
+
+<BaseLayout title={post.data.title} description={post.data.description}>
+  <Navigation />
+  <main class="pt-24 pb-16">
+    <article class="container-content">
+      <!-- Header -->
+      <header class="mb-12">
+        <h1 class="text-4xl font-bold mb-4">{post.data.title}</h1>
+        <div class="flex items-center gap-4 text-text-secondary text-sm">
+          <time>
+            {post.data.pubDate.toLocaleDateString('id-ID', { year: 'numeric', month: 'long', day: 'numeric' })}
+          </time>
+          <div class="flex gap-2">
+            {post.data.tags.map((tag) => (
+              <span class="px-2 py-1 bg-bg-tertiary rounded text-xs">{tag}</span>
+            ))}
+          </div>
+        </div>
+      </header>
+      
+      <!-- Content -->
+      <div class="prose prose-invert max-w-none">
+        <slot />
+      </div>
+      
+      <!-- Tags -->
+      <div class="mt-12 pt-8 border-t border-border">
+        <h3 class="text-sm font-semibold mb-4">Tags:</h3>
+        <div class="flex flex-wrap gap-2">
+          {post.data.tags.map((tag) => (
+            <a href={`/blog?tag=${tag}`} class="px-3 py-1 bg-bg-tertiary text-text-secondary text-sm rounded-full hover:bg-accent-primary hover:text-white transition-colors">
+              {tag}
+            </a>
+          ))}
+        </div>
+      </div>
+      
+      <!-- Giscus Comments -->
+      <div class="mt-12 pt-8 border-t border-border">
+        <script 
+          src="https://giscus.app/client.js"
+          data-repo="agumelar/agunggumelarsaputra.com"
+          data-repo-id="R_kgDO..."
+          data-category="Comments"
+          data-category-id="DIC_kwDO..."
+          data-mapping="pathname"
+          data-strict="0"
+          data-reactions-enabled="1"
+          data-emit-metadata="0"
+          data-input-position="bottom"
+          data-theme="dark"
+          data-lang="id"
+          crossorigin="anonymous"
+          async>
+        </script>
+      </div>
+    </article>
+  </main>
+  <Footer />
+</BaseLayout>

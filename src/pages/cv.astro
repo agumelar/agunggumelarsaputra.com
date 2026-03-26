@@ -1,0 +1,112 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import Navigation from '../components/Navigation.astro';
+import Footer from '../components/Footer.astro';
+
+const experience = [
+  {
+    title: "Software Developer",
+    company: "PT Teknologi Maju",
+    period: "2023 - Present",
+    description: "Mengembangkan aplikasi web dan mobile untuk klien enterprise."
+  },
+  {
+    title: "Web Developer",
+    company: "Startup EduTech",
+    period: "2021 - 2023",
+    description: "Membangun platform pembelajaran online dengan Vue.js dan Node.js."
+  },
+];
+
+const education = [
+  {
+    title: "S2 Teknologi Pendidikan & Vokasi",
+    institution: "Universitas Negeri Jakarta",
+    period: "2024 - Present",
+  },
+  {
+    title: "S1 Rekayasa Perangkat Lunak",
+    institution: "Institut Teknologi Bandung",
+    period: "2019 - 2023",
+  },
+];
+
+const skills = [
+  "JavaScript/TypeScript", "React", "Vue.js", "Node.js",
+  "Python", "Machine Learning", "PostgreSQL", "Git",
+  "Docker", "AWS", "Figma"
+];
+---
+
+<BaseLayout title="CV" description="Curriculum Vitae - Agung Gumelar Saputra">
+  <Navigation />
+  <main class="pt-24 pb-16">
+    <div class="container-main">
+      <h1 class="text-4xl font-bold mb-8">Curriculum Vitae</h1>
+      
+      <!-- Header -->
+      <section class="mb-12">
+        <div class="flex items-center gap-8">
+          <div class="w-32 h-32 bg-bg-tertiary rounded-full flex items-center justify-center">
+            <span class="text-4xl">👨‍💻</span>
+          </div>
+          <div>
+            <h2 class="text-2xl font-semibold">Agung Gumelar Saputra</h2>
+            <p class="text-text-secondary">Software Developer | EdTech Enthusiast</p>
+            <div class="flex gap-4 mt-4">
+              <a href="mailto:agumelarsaputra@gmail.com" class="text-accent-primary hover:underline">agumelarsaputra@gmail.com</a>
+              <a href="https://github.com/agumelar" class="text-accent-primary hover:underline">GitHub</a>
+              <a href="https://linkedin.com/in/agunggumelarsaputra" class="text-accent-primary hover:underline">LinkedIn</a>
+            </div>
+          </div>
+        </div>
+      </section>
+      
+      <!-- Experience -->
+      <section class="mb-12">
+        <h3 class="text-2xl font-semibold mb-6">Pengalaman Kerja</h3>
+        <div class="space-y-6">
+          {experience.map((exp) => (
+            <div class="bg-bg-secondary p-6 rounded-xl border border-border">
+              <div class="flex justify-between items-start mb-2">
+                <h4 class="text-lg font-semibold">{exp.title}</h4>
+                <span class="text-text-secondary text-sm">{exp.period}</span>
+              </div>
+              <p class="text-accent-primary text-sm mb-2">{exp.company}</p>
+              <p class="text-text-secondary">{exp.description}</p>
+            </div>
+          ))}
+        </div>
+      </section>
+      
+      <!-- Education -->
+      <section class="mb-12">
+        <h3 class="text-2xl font-semibold mb-6">Pendidikan</h3>
+        <div class="space-y-6">
+          {education.map((edu) => (
+            <div class="bg-bg-secondary p-6 rounded-xl border border-border">
+              <div class="flex justify-between items-start mb-2">
+                <h4 class="text-lg font-semibold">{edu.title}</h4>
+                <span class="text-text-secondary text-sm">{edu.period}</span>
+              </div>
+              <p class="text-accent-primary">{edu.institution}</p>
+            </div>
+          ))}
+        </div>
+      </section>
+      
+      <!-- Skills -->
+      <section>
+        <h3 class="text-2xl font-semibold mb-6">Keahlian</h3>
+        <div class="flex flex-wrap gap-3">
+          {skills.map((skill) => (
+            <span class="px-4 py-2 bg-bg-secondary border border-border rounded-lg text-text-secondary">
+              {skill}
+            </span>
+          ))}
+        </div>
+      </section>
+    </div>
+  </main>
+  <Footer />
+</BaseLayout>

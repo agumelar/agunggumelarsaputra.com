@@ -1,0 +1,101 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import Navigation from '../components/Navigation.astro';
+import Footer from '../components/Footer.astro';
+---
+
+<BaseLayout title="Contact" description="Hubungi Agung Gumelar Saputra">
+  <Navigation />
+  <main class="pt-24 pb-16">
+    <div class="container-main">
+      <h1 class="text-4xl font-bold mb-8 text-center">Hubungi Saya</h1>
+      
+      <div class="max-w-2xl mx-auto">
+        <!-- Contact Form -->
+        <form 
+          class="bg-bg-secondary p-8 rounded-xl border border-border mb-12"
+          name="contact"
+          method="POST"
+          data-netlify="true"
+        >
+          <div class="mb-6">
+            <label for="name" class="block text-sm font-medium mb-2">Nama</label>
+            <input 
+              type="text" 
+              id="name" 
+              name="name" 
+              required
+              class="w-full px-4 py-3 bg-bg-tertiary border border-border rounded-lg focus:outline-none focus:border-accent-primary"
+            />
+          </div>
+          
+          <div class="mb-6">
+            <label for="email" class="block text-sm font-medium mb-2">Email</label>
+            <input 
+              type="email" 
+              id="email" 
+              name="email" 
+              required
+              class="w-full px-4 py-3 bg-bg-tertiary border border-border rounded-lg focus:outline-none focus:border-accent-primary"
+            />
+          </div>
+          
+          <div class="mb-6">
+            <label for="message" class="block text-sm font-medium mb-2">Pesan</label>
+            <textarea 
+              id="message" 
+              name="message" 
+              rows="5" 
+              required
+              minlength="10"
+              class="w-full px-4 py-3 bg-bg-tertiary border border-border rounded-lg focus:outline-none focus:border-accent-primary resize-none"
+            ></textarea>
+          </div>
+          
+          <button 
+            type="submit"
+            class="w-full bg-accent-primary hover:bg-accent-hover text-white py-3 rounded-lg font-medium transition-colors"
+          >
+            Kirim Pesan
+          </button>
+        </form>
+        
+        <!-- Social Links -->
+        <div class="text-center">
+          <h3 class="text-lg font-semibold mb-4">Atau hubungi melalui:</h3>
+          <div class="flex justify-center gap-6">
+            <a 
+              href="https://github.com/agumelar" 
+              target="_blank"
+              rel="noopener noreferrer"
+              class="text-text-secondary hover:text-accent-primary transition-colors"
+            >
+              GitHub
+            </a>
+            <a 
+              href="https://linkedin.com/in/agunggumelarsaputra" 
+              target="_blank"
+              rel="noopener noreferrer"
+              class="text-text-secondary hover:text-accent-primary transition-colors"
+            >
+              LinkedIn
+            </a>
+            <a 
+              href="mailto:agumelarsaputra@gmail.com"
+              class="text-text-secondary hover:text-accent-primary transition-colors"
+            >
+              Email
+            </a>
+          </div>
+          
+          <div class="mt-8 p-4 bg-bg-secondary rounded-lg border border-border">
+            <p class="text-text-secondary text-sm">
+              ⏰ Response time: typically within 24-48 hours
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+  <Footer />
+</BaseLayout>
