@@ -9,28 +9,67 @@ const navItems = [
 const currentPath = Astro.url.pathname;
 ---
 
-<header class="fixed top-0 left-0 right-0 z-50 bg-bg-primary/80 backdrop-blur-md border-b border-border">
-  <nav class="container-main flex items-center justify-between h-16">
-    <a href="/" class="text-xl font-bold text-accent-primary">
-      AGS
+<header class="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+  <div class="container-main flex h-16 items-center justify-between">
+    <a href="/" class="flex items-center space-x-2 font-bold text-xl">
+      <span class="text-primary">AGS</span>
     </a>
     
-    <ul class="flex items-center gap-6">
+    <nav class="hidden md:flex items-center gap-6">
       {navItems.map((item) => (
-        <li>
-          <a 
-            href={item.href}
-            class:list={[
-              "text-sm font-medium transition-colors",
-              currentPath === item.href || (item.href !== '/' && currentPath.startsWith(item.href))
-                ? "text-accent-primary"
-                : "text-text-secondary hover:text-text-primary"
-            ]}
-          >
-            {item.label}
-          </a>
-        </li>
+        <a 
+          href={item.href}
+          class:list={[
+            "text-sm font-medium transition-colors hover:text-primary",
+            currentPath === item.href || (item.href !== '/' && currentPath.startsWith(item.href))
+              ? "text-primary"
+              : "text-muted-foreground"
+          ]}
+        >
+          {item.label}
+        </a>
       ))}
-    </ul>
-  </nav>
+    </nav>
+    
+    <!-- Mobile Menu Button -->
+    <button 
+      class="md:hidden inline-flex items-center justify-center p-2 rounded-md text-muted-foreground hover:bg-accent hover:text-accent-foreground"
+      aria-label="Toggle menu"
+      id="mobile-menu-btn"
+    >
+      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <line x1="4" x2="20" y1="12" y2="12"/>
+        <line x1="4" x2="20" y1="6" y2="6"/>
+        <line x1="4" x2="20" y1="18" y2="18"/>
+      </svg>
+    </button>
+  </div>
+  
+  <!-- Mobile Menu -->
+  <div id="mobile-menu" class="hidden md:hidden border-t bg-background">
+    <nav class="container-main py-4 flex flex-col gap-2">
+      {navItems.map((item) => (
+        <a 
+          href={item.href}
+          class:list={[
+            "px-4 py-2 rounded-md text-sm font-medium transition-colors",
+            currentPath === item.href || (item.href !== '/' && currentPath.startsWith(item.href))
+              ? "bg-primary text-primary-foreground"
+              : "text-muted-foreground hover:bg-accent hover:text-accent-foreground"
+          ]}
+        >
+          {item.label}
+        </a>
+      ))}
+    </nav>
+  </div>
 </header>
+
+<script>
+  const btn = document.getElementById('mobile-menu-btn');
+  const menu = document.getElementById('mobile-menu');
+  
+  btn?.addEventListener('click', () => {
+    menu?.classList.toggle('hidden');
+  });
+</script>
