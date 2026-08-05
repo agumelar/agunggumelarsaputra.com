@@ -5,7 +5,7 @@
   "scripts": {
     "dev": "astro dev",
     "start": "astro dev",
-    "build": "mkdir -p /tmp/ags_build && rsync -a --exclude 'node_modules' --exclude '.git' ./ /tmp/ags_build/ && cd /tmp/ags_build && npm install --prefer-offline && node ./node_modules/astro/astro.js build && mkdir -p /mnt/d/DATA/PROJEK/agunggumelarsaputra.com/dist && rsync -a /tmp/ags_build/dist/ /mnt/d/DATA/PROJEK/agunggumelarsaputra.com/dist/",
+    "build": "astro build",
     "preview": "astro preview",
     "astro": "astro"
   },
