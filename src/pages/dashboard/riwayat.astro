@@ -1,0 +1,170 @@
+---
+import DashboardLayout from '../../layouts/DashboardLayout.astro';
+import { db } from '../../db';
+import { tkaAttempts, userProgress, userGamification } from '../../db/schema';
+import { eq, desc } from 'drizzle-orm';
+import { getCollection } from 'astro:content';
+
+const user = Astro.locals.user;
+if (!user) {
+  return Astro.redirect('/login');
+}
+
+// Fetch user history
+const examAttempts = await db.select().from(tkaAttempts).where(eq(tkaAttempts.userId, user.userId)).orderBy(desc(tkaAttempts.createdAt));
+const finishedLessons = await db.select().from(userProgress).where(eq(userProgress.userId, user.userId)).orderBy(desc(userProgress.completedAt));
+const [stats] = await db.select().from(userGamification).where(eq(userGamification.userId, user.userId)).limit(1);
+
+let allModules: any[] = [];
+try {
+  allModules = await getCollection('pembelajaran');
+} catch (e) {
+  allModules = [];
+}
+
+const avgScore = examAttempts.length > 0 
+  ? Math.round(examAttempts.reduce((acc, curr) => acc + curr.score, 0) / examAttempts.length)
+  : 0;
+---
+
+<DashboardLayout title="Riwayat & Statistik Belajar" activeNav="/dashboard/riwayat">
+  <div class="space-y-8 max-w-5xl mx-auto">
+    
+    <!-- Header -->
+    <div class="space-y-2">
+      <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-500/10 border border-blue-500/30 text-blue-400 text-xs font-mono">
+        <span>📊 Rekam Jejak Prestasi & Modul</span>
+      </div>
+      <h1 class="text-3xl font-extrabold text-foreground tracking-tight">
+        Riwayat & Aktivitas Belajar
+      </h1>
+      <p class="text-xs text-muted-foreground">
+        Pantau performa simulasi ujian TKA dan status kelulusan modul materi PPLG yang telah Anda selesaikan.
+      </p>
+    </div>
+
+    <!-- Overview Stats Metric Grid -->
+    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+      <div class="card p-5 rounded-2xl border-border/60 bg-card/80 space-y-1">
+        <span class="text-xs text-muted-foreground">Rata-Rata Skor TKA</span>
+        <div class="text-3xl font-extrabold text-cyan-400 font-mono">{avgScore} <span class="text-sm text-muted-foreground font-sans">/ 100</span></div>
+      </div>
+      <div class="card p-5 rounded-2xl border-border/60 bg-card/80 space-y-1">
+        <span class="text-xs text-muted-foreground">Total Ujian Selesai</span>
+        <div class="text-3xl font-extrabold text-amber-400 font-mono">{examAttempts.length} <span class="text-sm text-muted-foreground font-sans">Kali</span></div>
+      </div>
+      <div class="card p-5 rounded-2xl border-border/60 bg-card/80 space-y-1">
+        <span class="text-xs text-muted-foreground">Modul Diselesaikan</span>
+        <div class="text-3xl font-extrabold text-emerald-400 font-mono">{finishedLessons.length} <span class="text-sm text-muted-foreground font-sans">Modul</span></div>
+      </div>
+    </div>
+
+    <!-- Section 1: Detailed Exam History Table -->
+    <div class="card p-6 rounded-2xl border-border/60 bg-card/90 space-y-4 shadow-sm overflow-x-auto">
+      <div class="flex items-center justify-between">
+        <h2 class="text-base font-bold text-foreground flex items-center gap-2">
+          <span>🎯 Riwayat Pengerjaan Tryout Drilling TKA PPLG</span>
+        </h2>
+        <a href="/pembelajaran/tka-pplg" class="btn btn-outline btn-sm text-cyan-400 border-cyan-500/30 hover:bg-cyan-500/10 text-xs">
+          + Ikuti Ujian Baru
+        </a>
+      </div>
+
+      {examAttempts.length === 0 ? (
+        <div class="p-8 text-center text-xs text-muted-foreground space-y-2">
+          <p>Belum ada rekaman ujian. Selesaikan ujian TKA untuk menguji kesiapan kompetensimu!</p>
+        </div>
+      ) : (
+        <table class="w-full text-left text-xs">
+          <thead class="text-[11px] text-muted-foreground uppercase font-mono border-b border-border/60">
+            <tr>
+              <th class="py-3 px-4">Waktu Ujian</th>
+              <th class="py-3 px-4">Nilai / Skor</th>
+              <th class="py-3 px-4">Ketepatan Jawaban</th>
+              <th class="py-3 px-4">Status Hasil</th>
+              <th class="py-3 px-4 text-right">XP Diperoleh</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-border/40 font-medium">
+            {examAttempts.map((attempt) => {
+              const isPass = attempt.score >= 75;
+              const dateFormatted = new Date(attempt.createdAt).toLocaleDateString('id-ID', {
+                day: 'numeric',
+                month: 'short',
+                year: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+              });
+              return (
+                <tr class="hover:bg-accent/40 transition-colors">
+                  <td class="py-3.5 px-4 font-mono text-muted-foreground">
+                    {dateFormatted}
+                  </td>
+                  <td class="py-3.5 px-4 font-mono font-extrabold text-foreground text-sm">
+                    {attempt.score}/100
+                  </td>
+                  <td class="py-3.5 px-4 text-muted-foreground font-mono">
+                    {attempt.correctAnswers} Benar / {attempt.totalQuestions} Soal
+                  </td>
+                  <td class="py-3.5 px-4">
+                    <span class:list={[
+                      "text-[10px] font-bold px-2 py-0.5 rounded-full font-mono",
+                      isPass ? "bg-emerald-500/20 text-emerald-400 border border-emerald-500/30" : "bg-amber-500/20 text-amber-400 border border-amber-500/30"
+                    ]}>
+                      {isPass ? 'KOMPETEN' : 'PERLU DRILLING'}
+                    </span>
+                  </td>
+                  <td class="py-3.5 px-4 text-right font-mono font-bold text-amber-400">
+                    +{attempt.xpEarned} XP
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      )}
+    </div>
+
+    <!-- Section 2: Completed Modules -->
+    <div class="card p-6 rounded-2xl border-border/60 bg-card/90 space-y-4 shadow-sm">
+      <h2 class="text-base font-bold text-foreground flex items-center gap-2">
+        <span>📚 Modul Materi Yang Sudah Selesai Dibaca</span>
+      </h2>
+
+      {finishedLessons.length === 0 ? (
+        <div class="p-8 text-center text-xs text-muted-foreground space-y-2">
+          <p>Belum ada modul yang ditandai selesai.</p>
+          <a href="/pembelajaran" class="text-blue-400 font-semibold hover:underline block">
+            Jelajahi Modul Pembelajaran →
+          </a>
+        </div>
+      ) : (
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          {finishedLessons.map((lesson) => {
+            const modInfo = allModules.find(m => m.slug === lesson.lessonSlug);
+            const title = modInfo ? modInfo.data.title : lesson.lessonSlug;
+            const completedDate = new Date(lesson.completedAt).toLocaleDateString('id-ID', {
+              day: 'numeric',
+              month: 'short',
+              year: 'numeric'
+            });
+            return (
+              <div class="p-4 rounded-xl bg-background border border-border/50 flex items-center justify-between gap-3">
+                <div class="space-y-1 min-w-0">
+                  <span class="text-[10px] text-emerald-400 font-bold flex items-center gap-1">
+                    <span>✓ Selesai Pada:</span> {completedDate}
+                  </span>
+                  <h3 class="text-xs font-bold text-foreground truncate">{title}</h3>
+                </div>
+                <a href={`/pembelajaran/${lesson.lessonSlug}`} class="text-xs font-semibold text-blue-400 hover:underline flex-shrink-0">
+                  Buka →
+                </a>
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </div>
+
+  </div>
+</DashboardLayout>

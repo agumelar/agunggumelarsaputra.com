@@ -1,0 +1,191 @@
+---
+import DashboardLayout from '../../layouts/DashboardLayout.astro';
+import { db } from '../../db';
+import { userGamification, users } from '../../db/schema';
+import { eq, desc } from 'drizzle-orm';
+
+const user = Astro.locals.user;
+if (!user) {
+  return Astro.redirect('/login');
+}
+
+// Fetch all ranked users
+const allRankedUsers = await db.select({
+  id: users.id,
+  name: users.name,
+  role: users.role,
+  avatarUrl: users.avatarUrl,
+  xp: userGamification.xp,
+  level: userGamification.level,
+  streakDays: userGamification.streakDays,
+}).from(userGamification)
+  .innerJoin(users, eq(userGamification.userId, users.id))
+  .orderBy(desc(userGamification.xp));
+
+// User's own rank
+const userRankIndex = allRankedUsers.findIndex(u => u.id === user.userId);
+const userRank = userRankIndex !== -1 ? userRankIndex + 1 : '-';
+
+const top3 = allRankedUsers.slice(0, 3);
+const otherRanked = allRankedUsers.slice(3);
+---
+
+<DashboardLayout title="Papan Peringkat Siswa" activeNav="/dashboard/leaderboard">
+  <div class="space-y-8 max-w-5xl mx-auto">
+    
+    <!-- Header Banner -->
+    <div class="text-center space-y-3 py-6">
+      <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-500/10 border border-amber-500/30 text-amber-400 text-xs font-mono">
+        <span>🏆 Peringkat Keaktifan & Prestasi Belajar</span>
+      </div>
+      <h1 class="text-3xl sm:text-4xl font-extrabold text-foreground tracking-tight">
+        Leaderboard Siswa PPLG
+      </h1>
+      <p class="text-xs sm:text-sm text-muted-foreground max-w-lg mx-auto">
+        Kumpulkan Experience Points (XP) dengan menyelesaikan modul materi dan mencapai skor tinggi pada Tryout Drilling TKA PPLG.
+      </p>
+
+      <!-- Current User Rank Pill -->
+      <div class="inline-flex items-center gap-4 p-3 rounded-2xl bg-card border border-border/80 shadow-md mt-4 text-xs">
+        <div class="flex items-center gap-2">
+          <span class="text-muted-foreground">Posisi Anda Saat Ini:</span>
+          <span class="px-2.5 py-0.5 rounded-lg bg-blue-500/20 text-blue-400 font-extrabold font-mono text-sm">
+            #{userRank}
+          </span>
+        </div>
+        <span class="text-muted-foreground">|</span>
+        <div class="flex items-center gap-1.5">
+          <span class="text-muted-foreground">Poin:</span>
+          <span class="text-amber-400 font-bold font-mono">
+            {userRankIndex !== -1 ? allRankedUsers[userRankIndex].xp : 0} XP
+          </span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Top 3 Podium Cards -->
+    {top3.length > 0 && (
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-6 pt-4 items-end">
+        
+        <!-- Rank 2 (Silver) -->
+        {top3[1] && (
+          <div class="p-6 rounded-2xl bg-gradient-to-b from-slate-800/40 via-card to-card border border-slate-700/60 text-center space-y-3 shadow-lg relative order-2 md:order-1">
+            <div class="w-10 h-10 rounded-full bg-slate-400/20 border border-slate-400 text-slate-200 font-extrabold text-lg flex items-center justify-center mx-auto shadow">
+              2
+            </div>
+            <div class="space-y-1">
+              <h3 class="text-sm font-bold text-foreground truncate">{top3[1].name}</h3>
+              <p class="text-[11px] text-muted-foreground font-mono">Level {top3[1].level}</p>
+            </div>
+            <div class="text-xl font-extrabold text-slate-300 font-mono">
+              {top3[1].xp} XP
+            </div>
+          </div>
+        )}
+
+        <!-- Rank 1 (Gold - Highest Center) -->
+        {top3[0] && (
+          <div class="p-8 rounded-3xl bg-gradient-to-b from-amber-500/20 via-card to-card border border-amber-500/40 text-center space-y-4 shadow-xl relative order-1 md:order-2 transform md:-translate-y-4">
+            <div class="text-3xl">👑</div>
+            <div class="w-12 h-12 rounded-full bg-gradient-to-r from-amber-400 to-yellow-500 text-black font-extrabold text-xl flex items-center justify-center mx-auto shadow-lg shadow-amber-500/30">
+              1
+            </div>
+            <div class="space-y-1">
+              <h3 class="text-base font-extrabold text-foreground truncate">{top3[0].name}</h3>
+              <span class="text-xs px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300 font-mono font-semibold">
+                Level {top3[0].level}
+              </span>
+            </div>
+            <div class="text-2xl font-extrabold text-amber-400 font-mono tracking-tight">
+              {top3[0].xp} XP
+            </div>
+          </div>
+        )}
+
+        <!-- Rank 3 (Bronze) -->
+        {top3[2] && (
+          <div class="p-6 rounded-2xl bg-gradient-to-b from-amber-900/30 via-card to-card border border-amber-800/40 text-center space-y-3 shadow-lg relative order-3">
+            <div class="w-10 h-10 rounded-full bg-amber-800/30 border border-amber-700 text-amber-500 font-extrabold text-lg flex items-center justify-center mx-auto shadow">
+              3
+            </div>
+            <div class="space-y-1">
+              <h3 class="text-sm font-bold text-foreground truncate">{top3[2].name}</h3>
+              <p class="text-[11px] text-muted-foreground font-mono">Level {top3[2].level}</p>
+            </div>
+            <div class="text-xl font-extrabold text-amber-500 font-mono">
+              {top3[2].xp} XP
+            </div>
+          </div>
+        )}
+
+      </div>
+    )}
+
+    <!-- Complete Ranked Table -->
+    <div class="card p-6 rounded-2xl border-border/60 bg-card/90 space-y-4 shadow-md overflow-x-auto">
+      <h2 class="text-base font-bold text-foreground flex items-center gap-2">
+        <span>📜 Daftar Peringkat Seluruh Siswa</span>
+      </h2>
+
+      <table class="w-full text-left text-xs">
+        <thead class="text-[11px] text-muted-foreground uppercase font-mono border-b border-border/60">
+          <tr>
+            <th class="py-3 px-4">Peringkat</th>
+            <th class="py-3 px-4">Nama Siswa</th>
+            <th class="py-3 px-4">Tingkat Level</th>
+            <th class="py-3 px-4">Streak Aktif</th>
+            <th class="py-3 px-4 text-right">Total XP</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-border/40 font-medium">
+          {allRankedUsers.map((ranked, idx) => {
+            const isMe = ranked.id === user.userId;
+            return (
+              <tr class:list={[
+                "hover:bg-accent/40 transition-colors",
+                isMe ? "bg-blue-500/10 font-bold" : ""
+              ]}>
+                <td class="py-3.5 px-4 font-mono font-bold">
+                  <span class:list={[
+                    "w-6 h-6 rounded-full inline-flex items-center justify-center text-xs",
+                    idx === 0 ? "bg-amber-500 text-black font-bold" :
+                    idx === 1 ? "bg-slate-300 text-black font-bold" :
+                    idx === 2 ? "bg-amber-700 text-white font-bold" :
+                    "text-muted-foreground"
+                  ]}>
+                    #{idx + 1}
+                  </span>
+                </td>
+                <td class="py-3.5 px-4">
+                  <div class="flex items-center gap-2.5">
+                    <span class="text-foreground">{ranked.name}</span>
+                    {isMe && (
+                      <span class="text-[9px] px-2 py-0.5 rounded-full bg-blue-500/20 text-blue-400 font-mono">
+                        Anda
+                      </span>
+                    )}
+                    {ranked.role === 'admin' && (
+                      <span class="text-[9px] px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300 font-mono">
+                        Guru
+                      </span>
+                    )}
+                  </div>
+                </td>
+                <td class="py-3.5 px-4 font-mono text-emerald-400">
+                  Level {ranked.level}
+                </td>
+                <td class="py-3.5 px-4 font-mono text-muted-foreground">
+                  🔥 {ranked.streakDays || 1} Hari
+                </td>
+                <td class="py-3.5 px-4 text-right font-mono font-extrabold text-amber-400 text-sm">
+                  {ranked.xp} XP
+                </td>
+              </tr>
+            );
+          })}
+        </tbody>
+      </table>
+    </div>
+
+  </div>
+</DashboardLayout>

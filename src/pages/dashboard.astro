@@ -1,132 +1,361 @@
 ---
-import BaseLayout from '../layouts/BaseLayout.astro';
+import DashboardLayout from '../layouts/DashboardLayout.astro';
 import { db } from '../db';
 import { userGamification, userProgress, tkaAttempts, users } from '../db/schema';
 import { eq, desc } from 'drizzle-orm';
+import { getCollection } from 'astro:content';
 
 const user = Astro.locals.user;
 if (!user) {
   return Astro.redirect('/login');
 }
 
+// Fetch live user stats
 let [stats] = await db.select().from(userGamification).where(eq(userGamification.userId, user.userId)).limit(1);
 if (!stats) {
   [stats] = await db.insert(userGamification).values({ userId: user.userId, xp: 0, level: 1 }).returning();
 }
 
+// Fetch user completed lessons & exam history
 const completedLessons = await db.select().from(userProgress).where(eq(userProgress.userId, user.userId));
 const examHistory = await db.select().from(tkaAttempts).where(eq(tkaAttempts.userId, user.userId)).orderBy(desc(tkaAttempts.createdAt)).limit(5);
 
+// Fetch all learning modules from content collections
+let allModules: any[] = [];
+try {
+  allModules = await getCollection('pembelajaran');
+} catch (e) {
+  allModules = [];
+}
+
+// Highest TKA score calculation
+const highestScore = examHistory.length > 0 ? Math.max(...examHistory.map(e => e.score)) : 0;
+
+// Leaderboard Top 5
 const topUsers = await db.select({
   name: users.name,
+  role: users.role,
   xp: userGamification.xp,
   level: userGamification.level,
 }).from(userGamification)
   .innerJoin(users, eq(userGamification.userId, users.id))
   .orderBy(desc(userGamification.xp))
   .limit(5);
+
+// Level titles
+function getLevelTitle(level: number) {
+  switch (level) {
+    case 1: return 'Apprentice Coder';
+    case 2: return 'Junior Developer';
+    case 3: return 'Logic Architect';
+    case 4: return 'PPLG Specialist';
+    default: return 'Code Master';
+  }
+}
+
+// Next level XP target
+const nextLevelXp = stats.level * 200;
+const xpProgressPercent = Math.min(100, Math.round((stats.xp / nextLevelXp) * 100));
+const isAdmin = user.role === 'admin';
 ---
 
-<BaseLayout title="Student Dashboard" description="Dashboard Gamifikasi Belajar Siswa PPLG">
-  <section class="py-12 bg-gradient-to-b from-blue-950/20 via-background to-background">
-    <div class="container-main space-y-8">
+<DashboardLayout title="Ringkasan Belajar" activeNav="/dashboard">
+  <div class="space-y-8">
+    
+    <!-- Admin Notice Banner (If user is Admin/Teacher) -->
+    {isAdmin && (
+      <div class="p-4 sm:p-5 rounded-2xl bg-gradient-to-r from-amber-500/15 via-amber-500/10 to-orange-500/15 border border-amber-500/30 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-lg shadow-amber-500/5">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-xl bg-amber-500/20 text-amber-400 flex items-center justify-center text-xl flex-shrink-0">
+            👑
+          </div>
+          <div>
+            <h2 class="text-sm font-bold text-foreground flex items-center gap-2">
+              <span>Selamat Datang, Bapak/Ibu Guru!</span>
+              <span class="text-[10px] px-2 py-0.5 rounded-full font-mono bg-amber-500/20 text-amber-300 border border-amber-500/40">GURU & ADMIN</span>
+            </h2>
+            <p class="text-xs text-muted-foreground">Anda memiliki akses penuh untuk memonitor hasil pengerjaan soal siswa, nilai ujian, serta mengelola data siswa di Panel Guru.</p>
+          </div>
+        </div>
+        <a href="/admin" class="btn btn-sm bg-amber-500 hover:bg-amber-400 text-black font-bold whitespace-nowrap shadow-md">
+          Buka Panel Guru & Admin →
+        </a>
+      </div>
+    )}
+
+    <!-- Welcome Hero Banner -->
+    <div class="relative overflow-hidden rounded-3xl bg-gradient-to-r from-blue-900/40 via-indigo-950/40 to-card border border-blue-500/20 p-6 sm:p-8 shadow-xl">
+      <div class="absolute -right-10 -bottom-10 w-64 h-64 bg-blue-500/10 rounded-full blur-3xl pointer-events-none"></div>
       
-      <!-- Welcome Header -->
-      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-border/40 pb-6">
-        <div>
-          <span class="text-xs text-cyan-400 font-mono">⚡ Student Portal Dashboard</span>
-          <h1 class="text-3xl font-extrabold text-foreground">Halo, {user.name}! 👋</h1>
-          <p class="text-xs text-muted-foreground">Siap melanjutkan petualangan kodingmu hari ini?</p>
+      <div class="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
+        <div class="space-y-2">
+          <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-500/10 border border-blue-500/30 text-blue-400 text-xs font-mono">
+            <span>✨ Student Learning Portal</span>
+            <span>•</span>
+            <span>SMKN 1 Rongga</span>
+          </div>
+          <h1 class="text-2xl sm:text-4xl font-extrabold text-foreground tracking-tight">
+            Halo, <span class="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 via-cyan-300 to-emerald-400">{user.name}</span>! 👋
+          </h1>
+          <p class="text-xs sm:text-sm text-muted-foreground max-w-xl leading-relaxed">
+            Selamat datang di pusat pembelajaran interaktif Rekayasa Perangkat Lunak. Terus tingkatkan kemampuan koding dan persiapkan dirimu menghadapi Ujian Kejuruan TKA PPLG!
+          </p>
         </div>
-        <form action="/api/auth/logout" method="POST">
-          <button type="submit" class="btn btn-outline btn-sm text-red-400 border-red-500/30 hover:bg-red-500/10">
-            Keluar Portal
-          </button>
-        </form>
-      </div>
 
-      <!-- Gamification Stats Grid -->
-      <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
-        <div class="p-5 rounded-xl bg-card border border-border/60 space-y-1">
-          <span class="text-xs text-muted-foreground">Total Experience</span>
-          <div class="text-3xl font-extrabold text-amber-400 font-mono">{stats.xp} XP</div>
-        </div>
-        <div class="p-5 rounded-xl bg-card border border-border/60 space-y-1">
-          <span class="text-xs text-muted-foreground">Level Belajar</span>
-          <div class="text-3xl font-extrabold text-emerald-400 font-mono">Lvl {stats.level}</div>
-        </div>
-        <div class="p-5 rounded-xl bg-card border border-border/60 space-y-1">
-          <span class="text-xs text-muted-foreground">Modul Selesai</span>
-          <div class="text-3xl font-extrabold text-blue-400 font-mono">{completedLessons.length}</div>
-        </div>
-        <div class="p-5 rounded-xl bg-card border border-border/60 space-y-1">
-          <span class="text-xs text-muted-foreground">Ujian TKA Diikuti</span>
-          <div class="text-3xl font-extrabold text-cyan-400 font-mono">{examHistory.length}</div>
+        <!-- Quick Streak & Level Card -->
+        <div class="flex items-center gap-4 bg-background/80 backdrop-blur-md p-4 rounded-2xl border border-border/60 shadow-md flex-shrink-0">
+          <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-amber-500 to-orange-500 flex items-center justify-center text-2xl shadow-lg shadow-orange-500/20">
+            🔥
+          </div>
+          <div class="space-y-0.5">
+            <span class="text-[11px] text-muted-foreground font-mono">Daily Streak</span>
+            <div class="text-base font-extrabold text-foreground font-mono">{stats.streakDays || 1} Hari Beruntun</div>
+            <span class="text-[10px] text-emerald-400 font-medium">Status Aktif Hari Ini</span>
+          </div>
         </div>
       </div>
+    </div>
 
-      <!-- Dashboard Main Grid -->
-      <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        
-        <!-- Left 2 Cols: Progress & Exam History -->
-        <div class="lg:col-span-2 space-y-6">
-          <div class="p-6 rounded-xl bg-card border border-border/60 space-y-4">
-            <h2 class="text-lg font-bold text-foreground">🎯 Mulai Belajar & Simulasi</h2>
-            <div class="flex flex-wrap gap-3">
-              <a href="/pembelajaran" class="btn btn-primary font-semibold bg-blue-600 hover:bg-blue-500 text-white">
-                📚 Buka Modul Learning Hub
-              </a>
-              <a href="/pembelajaran/tka-pplg" class="btn btn-outline border-cyan-500/40 text-cyan-400 hover:bg-cyan-500/10">
-                🎯 Simulasi Drilling TKA PPLG
-              </a>
+    <!-- Gamification KPI Cards (4 Columns) -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
+      
+      <!-- Card 1: Experience Points -->
+      <div class="card p-6 rounded-2xl border-border/60 bg-card/80 backdrop-blur space-y-3 hover:border-amber-500/40 transition-all group">
+        <div class="flex items-center justify-between">
+          <span class="text-xs font-medium text-muted-foreground">Total Experience</span>
+          <div class="w-8 h-8 rounded-xl bg-amber-500/10 text-amber-400 flex items-center justify-center font-bold text-sm">⚡</div>
+        </div>
+        <div class="space-y-1">
+          <div class="text-3xl font-extrabold text-foreground font-mono tracking-tight group-hover:text-amber-400 transition-colors">
+            {stats.xp} <span class="text-sm font-sans font-semibold text-muted-foreground">XP</span>
+          </div>
+          <!-- Progress Bar to Next Level -->
+          <div class="space-y-1 pt-1">
+            <div class="w-full bg-accent rounded-full h-1.5 overflow-hidden">
+              <div class="bg-gradient-to-r from-amber-500 to-orange-500 h-full rounded-full transition-all duration-500" style={`width: ${xpProgressPercent}%`}></div>
+            </div>
+            <div class="flex justify-between text-[10px] text-muted-foreground font-mono">
+              <span>Next Lvl: {nextLevelXp} XP</span>
+              <span>{xpProgressPercent}%</span>
             </div>
           </div>
+        </div>
+      </div>
 
-          <!-- Exam History -->
-          <div class="p-6 rounded-xl bg-card border border-border/60 space-y-4">
-            <h2 class="text-lg font-bold text-foreground">📊 Riwayat Ujian TKA</h2>
-            {examHistory.length === 0 ? (
-              <p class="text-xs text-muted-foreground">Belum ada riwayat ujian. Ikuti simulasi TKA untuk mendapatkan XP bonus!</p>
-            ) : (
-              <div class="space-y-2">
-                {examHistory.map((attempt) => (
-                  <div class="p-3 rounded-lg bg-background border border-border/40 flex items-center justify-between text-xs">
-                    <div>
-                      <span class="font-bold text-foreground">Skor TKA: {attempt.score}/100</span>
-                      <span class="text-[10px] text-muted-foreground block">Benar {attempt.correctAnswers} dari {attempt.totalQuestions} soal</span>
+      <!-- Card 2: Level Belajar -->
+      <div class="card p-6 rounded-2xl border-border/60 bg-card/80 backdrop-blur space-y-3 hover:border-emerald-500/40 transition-all group">
+        <div class="flex items-center justify-between">
+          <span class="text-xs font-medium text-muted-foreground">Tingkat Level</span>
+          <div class="w-8 h-8 rounded-xl bg-emerald-500/10 text-emerald-400 flex items-center justify-center font-bold text-sm">🏅</div>
+        </div>
+        <div class="space-y-1">
+          <div class="text-3xl font-extrabold text-emerald-400 font-mono tracking-tight">
+            Level {stats.level}
+          </div>
+          <p class="text-xs text-muted-foreground font-medium">{getLevelTitle(stats.level)}</p>
+        </div>
+      </div>
+
+      <!-- Card 3: Modul Selesai -->
+      <div class="card p-6 rounded-2xl border-border/60 bg-card/80 backdrop-blur space-y-3 hover:border-blue-500/40 transition-all group">
+        <div class="flex items-center justify-between">
+          <span class="text-xs font-medium text-muted-foreground">Modul Diselesaikan</span>
+          <div class="w-8 h-8 rounded-xl bg-blue-500/10 text-blue-400 flex items-center justify-center font-bold text-sm">📚</div>
+        </div>
+        <div class="space-y-1">
+          <div class="text-3xl font-extrabold text-blue-400 font-mono tracking-tight">
+            {completedLessons.length} <span class="text-sm font-sans font-normal text-muted-foreground">/ {allModules.length || 3}</span>
+          </div>
+          <a href="/pembelajaran" class="text-xs text-blue-400 font-semibold hover:underline block pt-1">
+            Buka Katalog Modul →
+          </a>
+        </div>
+      </div>
+
+      <!-- Card 4: Ujian & Skor Tertinggi -->
+      <div class="card p-6 rounded-2xl border-border/60 bg-card/80 backdrop-blur space-y-3 hover:border-cyan-500/40 transition-all group">
+        <div class="flex items-center justify-between">
+          <span class="text-xs font-medium text-muted-foreground">Simulasi TKA Diikuti</span>
+          <div class="w-8 h-8 rounded-xl bg-cyan-500/10 text-cyan-400 flex items-center justify-center font-bold text-sm">🎯</div>
+        </div>
+        <div class="space-y-1">
+          <div class="text-3xl font-extrabold text-cyan-400 font-mono tracking-tight">
+            {examHistory.length} <span class="text-sm font-sans font-normal text-muted-foreground">Kali</span>
+          </div>
+          <p class="text-xs text-muted-foreground">Skor Terbaik: <span class="font-bold text-foreground font-mono">{highestScore}/100</span></p>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Main Grid Sections: Left (Courses & Drilling CTA) + Right (Leaderboard & Exam Log) -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+      
+      <!-- LEFT 2 COLS: Curriculum & Quick Actions -->
+      <div class="lg:col-span-2 space-y-8">
+        
+        <!-- Quick Action Banner for Drilling TKA -->
+        <div class="p-6 rounded-2xl bg-gradient-to-r from-cyan-950/40 via-blue-950/30 to-card border border-cyan-500/30 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6 shadow-md">
+          <div class="space-y-2">
+            <div class="inline-flex items-center gap-1.5 text-xs font-mono font-bold text-cyan-400">
+              <span>🎯 SIMULASI DRILLING UJIAN</span>
+            </div>
+            <h2 class="text-lg font-bold text-foreground">Tes Kemampuan Akademik (TKA) PPLG</h2>
+            <p class="text-xs text-muted-foreground max-w-md">
+              Uji pemahaman komprehensif terkait Pemrograman Web, OOP, SQL Basis Data, dan Rekayasa Perangkat Lunak berbasis standar industri SMK.
+            </p>
+          </div>
+          <a href="/pembelajaran/tka-pplg" class="btn btn-primary bg-cyan-600 hover:bg-cyan-500 text-white font-bold whitespace-nowrap px-5 py-3 rounded-xl shadow-lg shadow-cyan-600/20">
+            Mulai Ujian Sekarang 🚀
+          </a>
+        </div>
+
+        <!-- Learning Modules List -->
+        <div class="p-6 rounded-2xl bg-card border border-border/60 space-y-6 shadow-sm">
+          <div class="flex items-center justify-between">
+            <div class="space-y-1">
+              <h2 class="text-lg font-bold text-foreground flex items-center gap-2">
+                <span>📚 Modul Pembelajaran PPLG</span>
+              </h2>
+              <p class="text-xs text-muted-foreground">Pilih materi yang ingin Anda pelajari atau lanjutkan.</p>
+            </div>
+            <a href="/pembelajaran" class="text-xs font-semibold text-blue-400 hover:underline">
+              Lihat Semua Modul →
+            </a>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {allModules.length > 0 ? (
+              allModules.map((mod: any) => {
+                const isCompleted = completedLessons.some(c => c.lessonSlug === mod.slug);
+                return (
+                  <a 
+                    href={`/pembelajaran/${mod.slug}`} 
+                    class="p-4 rounded-xl bg-background border border-border/50 hover:border-blue-500/40 hover:bg-accent/40 transition-all flex flex-col justify-between gap-3 group"
+                  >
+                    <div class="space-y-1.5">
+                      <div class="flex items-center justify-between">
+                        <span class="text-[10px] font-mono px-2 py-0.5 rounded bg-blue-500/10 text-blue-400 border border-blue-500/20">
+                          {mod.data.category || 'Materi PPLG'}
+                        </span>
+                        {isCompleted ? (
+                          <span class="text-[10px] font-bold text-emerald-400 flex items-center gap-1">
+                            <span>✓</span> Selesai
+                          </span>
+                        ) : (
+                          <span class="text-[10px] text-muted-foreground font-mono">+10 XP</span>
+                        )}
+                      </div>
+                      <h3 class="text-sm font-bold text-foreground group-hover:text-blue-400 transition-colors line-clamp-1">
+                        {mod.data.title}
+                      </h3>
+                      <p class="text-xs text-muted-foreground line-clamp-2">
+                        {mod.data.description}
+                      </p>
                     </div>
-                    <span class="px-2 py-1 rounded bg-amber-500/10 text-amber-400 font-mono font-bold">+{attempt.xpEarned} XP</span>
-                  </div>
-                ))}
+
+                    <div class="text-[11px] font-semibold text-blue-400 flex items-center gap-1 pt-1">
+                      <span>{isCompleted ? 'Pelajari Ulang' : 'Buka Materi'}</span>
+                      <span class="group-hover:translate-x-1 transition-transform">→</span>
+                    </div>
+                  </a>
+                );
+              })
+            ) : (
+              <div class="col-span-2 p-6 rounded-xl bg-background text-center text-xs text-muted-foreground">
+                Katalog materi siap diakses di menu Pembelajaran.
               </div>
             )}
           </div>
         </div>
 
-        <!-- Right 1 Col: Leaderboard -->
-        <div class="space-y-6">
-          <div class="p-6 rounded-xl bg-card border border-border/60 space-y-4">
-            <h2 class="text-lg font-bold text-foreground flex items-center gap-2">
-              <span>🏆 Leaderboard Siswa</span>
-            </h2>
-            <div class="space-y-3">
-              {topUsers.map((top, idx) => (
-                <div class="flex items-center justify-between p-2.5 rounded-lg bg-background border border-border/40 text-xs">
-                  <div class="flex items-center gap-2">
-                    <span class="w-5 h-5 rounded-full bg-blue-500/20 text-blue-400 flex items-center justify-center font-bold font-mono text-[10px]">
-                      {idx + 1}
-                    </span>
-                    <span class="font-semibold text-foreground">{top.name}</span>
+      </div>
+
+      <!-- RIGHT 1 COL: Leaderboard & Recent Exams -->
+      <div class="space-y-8">
+        
+        <!-- Top Leaderboard Preview -->
+        <div class="p-6 rounded-2xl bg-card border border-border/60 space-y-5 shadow-sm">
+          <div class="flex items-center justify-between">
+            <div class="flex items-center gap-2">
+              <span class="text-lg">🏆</span>
+              <h2 class="text-base font-bold text-foreground">Papan Peringkat</h2>
+            </div>
+            <a href="/dashboard/leaderboard" class="text-xs font-semibold text-blue-400 hover:underline">
+              Semua →
+            </a>
+          </div>
+
+          <div class="space-y-2.5">
+            {topUsers.map((top, idx) => (
+              <div class:list={[
+                "flex items-center justify-between p-3 rounded-xl border text-xs transition-all",
+                idx === 0 
+                  ? "bg-amber-500/10 border-amber-500/30 text-amber-300 font-bold" 
+                  : "bg-background border-border/40 hover:bg-accent/40"
+              ]}>
+                <div class="flex items-center gap-3 min-w-0">
+                  <span class:list={[
+                    "w-6 h-6 rounded-full flex items-center justify-center font-bold font-mono text-xs flex-shrink-0",
+                    idx === 0 ? "bg-amber-500 text-black shadow-md shadow-amber-500/30" :
+                    idx === 1 ? "bg-slate-300 text-black" :
+                    idx === 2 ? "bg-amber-700 text-white" :
+                    "bg-accent text-muted-foreground"
+                  ]}>
+                    {idx + 1}
+                  </span>
+                  <div class="min-w-0">
+                    <span class="text-xs font-semibold text-foreground truncate block">{top.name}</span>
+                    <span class="text-[10px] text-muted-foreground font-mono">Lvl {top.level}</span>
                   </div>
-                  <span class="font-mono text-amber-400 font-bold">{top.xp} XP</span>
+                </div>
+                <span class="font-mono text-amber-400 font-bold flex-shrink-0">{top.xp} XP</span>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <!-- Recent Exam History -->
+        <div class="p-6 rounded-2xl bg-card border border-border/60 space-y-5 shadow-sm">
+          <div class="flex items-center justify-between">
+            <div class="flex items-center gap-2">
+              <span class="text-lg">📊</span>
+              <h2 class="text-base font-bold text-foreground">Riwayat Ujian</h2>
+            </div>
+            <a href="/dashboard/riwayat" class="text-xs font-semibold text-blue-400 hover:underline">
+              Detail →
+            </a>
+          </div>
+
+          {examHistory.length === 0 ? (
+            <div class="p-6 rounded-xl bg-background text-center text-xs text-muted-foreground space-y-2">
+              <p>Belum ada riwayat pengerjaan ujian.</p>
+              <a href="/pembelajaran/tka-pplg" class="text-blue-400 font-semibold hover:underline block text-xs">
+                Mulai Drilling TKA Pertama →
+              </a>
+            </div>
+          ) : (
+            <div class="space-y-2.5">
+              {examHistory.map((attempt) => (
+                <div class="p-3 rounded-xl bg-background border border-border/40 flex items-center justify-between text-xs">
+                  <div>
+                    <span class="font-bold text-foreground">Skor: {attempt.score}/100</span>
+                    <span class="text-[10px] text-muted-foreground block font-mono">
+                      Benar {attempt.correctAnswers}/{attempt.totalQuestions} soal
+                    </span>
+                  </div>
+                  <span class="px-2.5 py-1 rounded-lg bg-amber-500/10 border border-amber-500/20 text-amber-400 font-mono font-bold">
+                    +{attempt.xpEarned} XP
+                  </span>
                 </div>
               ))}
             </div>
-          </div>
+          )}
         </div>
 
       </div>
 
     </div>
-  </section>
-</BaseLayout>
+
+  </div>
+</DashboardLayout>

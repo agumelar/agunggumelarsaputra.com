@@ -1,0 +1,448 @@
+---
+import DashboardLayout from '../../layouts/DashboardLayout.astro';
+import { db } from '../../db';
+import { users, userGamification, tkaAttempts, userProgress } from '../../db/schema';
+import { eq, desc } from 'drizzle-orm';
+
+const user = Astro.locals.user;
+if (!user || user.role !== 'admin') {
+  return Astro.redirect('/dashboard?error=unauthorized_admin');
+}
+
+// 1. Fetch All Users + Gamification Info
+const allUsers = await db.select({
+  id: users.id,
+  name: users.name,
+  email: users.email,
+  role: users.role,
+  avatarUrl: users.avatarUrl,
+  createdAt: users.createdAt,
+  xp: userGamification.xp,
+  level: userGamification.level,
+  streakDays: userGamification.streakDays,
+}).from(users)
+  .leftJoin(userGamification, eq(users.id, userGamification.userId))
+  .orderBy(desc(users.createdAt));
+
+// 2. Fetch All Exam Attempts + User Info
+const allExamLogs = await db.select({
+  id: tkaAttempts.id,
+  userId: tkaAttempts.userId,
+  userName: users.name,
+  userEmail: users.email,
+  score: tkaAttempts.score,
+  totalQuestions: tkaAttempts.totalQuestions,
+  correctAnswers: tkaAttempts.correctAnswers,
+  xpEarned: tkaAttempts.xpEarned,
+  createdAt: tkaAttempts.createdAt,
+}).from(tkaAttempts)
+  .innerJoin(users, eq(tkaAttempts.userId, users.id))
+  .orderBy(desc(tkaAttempts.createdAt));
+
+// 3. Fetch All Lesson Progress + User Info
+const allLessonLogs = await db.select({
+  id: userProgress.id,
+  userName: users.name,
+  userEmail: users.email,
+  lessonSlug: userProgress.lessonSlug,
+  completedAt: userProgress.completedAt,
+}).from(userProgress)
+  .innerJoin(users, eq(userProgress.userId, users.id))
+  .orderBy(desc(userProgress.completedAt));
+
+// 4. Metrics Calculations
+const totalStudents = allUsers.filter(u => u.role === 'student').length;
+const totalAdmins = allUsers.filter(u => u.role === 'admin').length;
+const totalExamsTaken = allExamLogs.length;
+const avgScoreAll = totalExamsTaken > 0
+  ? Math.round(allExamLogs.reduce((acc, curr) => acc + curr.score, 0) / totalExamsTaken)
+  : 0;
+const passingExams = allExamLogs.filter(e => e.score >= 75).length;
+const passRate = totalExamsTaken > 0 ? Math.round((passingExams / totalExamsTaken) * 100) : 0;
+---
+
+<DashboardLayout title="Panel Guru & Administrator" activeNav="/admin">
+  <div class="space-y-8">
+    
+    <!-- Admin Hero Banner -->
+    <div class="p-6 sm:p-8 rounded-3xl bg-gradient-to-r from-amber-950/40 via-amber-900/20 to-card border border-amber-500/30 flex flex-col md:flex-row md:items-center justify-between gap-6 shadow-xl">
+      <div class="space-y-2">
+        <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-500/20 border border-amber-500/40 text-amber-300 text-xs font-mono font-bold">
+          <span>👑 Administrator Management Console</span>
+          <span>•</span>
+          <span>Guru Pengampu PPLG</span>
+        </div>
+        <h1 class="text-2xl sm:text-3xl font-extrabold text-foreground tracking-tight">
+          Panel Manajemen Guru & Monitoring Siswa
+        </h1>
+        <p class="text-xs sm:text-sm text-muted-foreground max-w-xl">
+          Pantau progres belajar seluruh siswa SMKN 1 Rongga, kelola perizinan hak akses role admin/siswa, dan evaluasi hasil nilai ujian Drilling TKA secara real-time.
+        </p>
+      </div>
+
+      <div class="flex items-center gap-3">
+        <a href="#students" class="btn btn-sm bg-amber-500 hover:bg-amber-400 text-black font-bold">
+          👥 Data Siswa ({allUsers.length})
+        </a>
+        <a href="#exams" class="btn btn-sm btn-outline border-amber-500/40 text-amber-300 hover:bg-amber-500/10 font-semibold">
+          📈 Log Ujian ({totalExamsTaken})
+        </a>
+      </div>
+    </div>
+
+    <!-- 4 KPI Metrics -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
+      
+      <!-- Metric 1: Siswa Terdaftar -->
+      <div class="card p-6 rounded-2xl border-border/60 bg-card/80 space-y-2">
+        <div class="flex items-center justify-between">
+          <span class="text-xs font-medium text-muted-foreground">Total Siswa Terdaftar</span>
+          <span class="text-lg">👨‍🎓</span>
+        </div>
+        <div class="text-3xl font-extrabold text-foreground font-mono">
+          {totalStudents} <span class="text-xs text-muted-foreground font-sans font-normal">Siswa ({totalAdmins} Guru)</span>
+        </div>
+        <p class="text-[11px] text-muted-foreground">Basis Data Pengguna Aktif</p>
+      </div>
+
+      <!-- Metric 2: Ujian Dikerjakan -->
+      <div class="card p-6 rounded-2xl border-border/60 bg-card/80 space-y-2">
+        <div class="flex items-center justify-between">
+          <span class="text-xs font-medium text-muted-foreground">Total Ujian TKA Diikuti</span>
+          <span class="text-lg">📝</span>
+        </div>
+        <div class="text-3xl font-extrabold text-cyan-400 font-mono">
+          {totalExamsTaken} <span class="text-xs text-muted-foreground font-sans font-normal">Sesi</span>
+        </div>
+        <p class="text-[11px] text-muted-foreground">Simulasi Drilling PPLG</p>
+      </div>
+
+      <!-- Metric 3: Rata-Rata Nilai -->
+      <div class="card p-6 rounded-2xl border-border/60 bg-card/80 space-y-2">
+        <div class="flex items-center justify-between">
+          <span class="text-xs font-medium text-muted-foreground">Rata-Rata Nilai Kelas</span>
+          <span class="text-lg">📊</span>
+        </div>
+        <div class="text-3xl font-extrabold text-amber-400 font-mono">
+          {avgScoreAll} <span class="text-xs text-muted-foreground font-sans font-normal">/ 100</span>
+        </div>
+        <p class="text-[11px] text-muted-foreground">Tingkat Kelulusan: <span class="text-emerald-400 font-bold">{passRate}%</span></p>
+      </div>
+
+      <!-- Metric 4: Modul Diselesaikan -->
+      <div class="card p-6 rounded-2xl border-border/60 bg-card/80 space-y-2">
+        <div class="flex items-center justify-between">
+          <span class="text-xs font-medium text-muted-foreground">Modul Diselesaikan Siswa</span>
+          <span class="text-lg">📚</span>
+        </div>
+        <div class="text-3xl font-extrabold text-emerald-400 font-mono">
+          {allLessonLogs.length} <span class="text-xs text-muted-foreground font-sans font-normal">Kali</span>
+        </div>
+        <p class="text-[11px] text-muted-foreground">Aktivitas Belajar Mandiri</p>
+      </div>
+
+    </div>
+
+    <!-- Alert Notification for Role Updates -->
+    <div id="admin-alert" class="hidden p-4 rounded-xl text-xs font-medium text-center transition-all"></div>
+
+    <!-- SECTION 1: MANAJEMEN DATA PENGGUNA & ROLE SISWA -->
+    <div id="students" class="card p-6 sm:p-8 rounded-3xl border-border/60 bg-card/90 space-y-6 shadow-md">
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-border/40 pb-4">
+        <div>
+          <h2 class="text-lg font-bold text-foreground flex items-center gap-2">
+            <span>👥 Data Siswa & Manajemen Role Pengguna</span>
+          </h2>
+          <p class="text-xs text-muted-foreground">Kelola akun, pantau level/XP, serta tetapkan peran (Role: Siswa / Guru Admin).</p>
+        </div>
+        
+        <!-- Search filter input -->
+        <div class="relative max-w-xs w-full">
+          <input 
+            type="text" 
+            id="user-search-input" 
+            placeholder="Cari nama / email siswa..." 
+            class="w-full px-3.5 py-2 rounded-xl bg-background border border-border text-xs text-foreground focus:outline-none focus:border-amber-500"
+          />
+        </div>
+      </div>
+
+      <div class="overflow-x-auto">
+        <table class="w-full text-left text-xs" id="users-table">
+          <thead class="text-[11px] text-muted-foreground uppercase font-mono border-b border-border/60">
+            <tr>
+              <th class="py-3 px-4">Pengguna</th>
+              <th class="py-3 px-4">Email</th>
+              <th class="py-3 px-4">Role Saat Ini</th>
+              <th class="py-3 px-4">Level & XP</th>
+              <th class="py-3 px-4">Tgl Registrasi</th>
+              <th class="py-3 px-4 text-right">Aksi Manajemen Role</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-border/40 font-medium">
+            {allUsers.map((u) => {
+              const regDate = new Date(u.createdAt).toLocaleDateString('id-ID', {
+                day: 'numeric',
+                month: 'short',
+                year: 'numeric'
+              });
+              const isSelf = u.id === user.userId;
+
+              return (
+                <tr class="hover:bg-accent/40 transition-colors user-row">
+                  <td class="py-3.5 px-4">
+                    <div class="flex items-center gap-2.5">
+                      <div class="w-8 h-8 rounded-full bg-gradient-to-br from-blue-600 to-indigo-600 flex items-center justify-center text-white font-bold text-xs flex-shrink-0">
+                        {u.name.substring(0, 2).toUpperCase()}
+                      </div>
+                      <div>
+                        <span class="font-bold text-foreground block user-name">{u.name}</span>
+                        {isSelf && (
+                          <span class="text-[9px] px-1.5 py-0.2 rounded bg-emerald-500/20 text-emerald-400 font-mono">
+                            Akun Anda
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  </td>
+                  <td class="py-3.5 px-4 text-muted-foreground font-mono user-email">
+                    {u.email}
+                  </td>
+                  <td class="py-3.5 px-4">
+                    <span class:list={[
+                      "px-2.5 py-0.5 rounded-full text-[10px] font-mono font-bold uppercase",
+                      u.role === 'admin' 
+                        ? "bg-amber-500/20 text-amber-300 border border-amber-500/40" 
+                        : "bg-blue-500/20 text-blue-300 border border-blue-500/40"
+                    ]}>
+                      {u.role === 'admin' ? '👑 Guru / Admin' : '👨‍🎓 Siswa'}
+                    </span>
+                  </td>
+                  <td class="py-3.5 px-4 font-mono">
+                    <span class="text-emerald-400 font-semibold">Lvl {u.level || 1}</span>
+                    <span class="text-muted-foreground text-[10px]"> • </span>
+                    <span class="text-amber-400 font-bold">{u.xp || 0} XP</span>
+                  </td>
+                  <td class="py-3.5 px-4 font-mono text-muted-foreground">
+                    {regDate}
+                  </td>
+                  <td class="py-3.5 px-4 text-right">
+                    {isSelf ? (
+                      <span class="text-[10px] text-muted-foreground italic font-mono">-</span>
+                    ) : (
+                      <button 
+                        type="button"
+                        data-user-id={u.id}
+                        data-current-role={u.role}
+                        class="role-toggle-btn px-3 py-1 rounded-lg text-xs font-semibold border transition-all hover:scale-105"
+                        class:list={[
+                          u.role === 'admin'
+                            ? "border-red-500/40 text-red-400 hover:bg-red-500/10"
+                            : "border-amber-500/40 text-amber-300 hover:bg-amber-500/10"
+                        ]}
+                      >
+                        {u.role === 'admin' ? 'Ubah ke Siswa' : 'Jadikan Guru/Admin'}
+                      </button>
+                    )}
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- SECTION 2: LOG HASIL UJIAN SISWA -->
+    <div id="exams" class="card p-6 sm:p-8 rounded-3xl border-border/60 bg-card/90 space-y-6 shadow-md">
+      <div class="border-b border-border/40 pb-4">
+        <h2 class="text-lg font-bold text-foreground flex items-center gap-2">
+          <span>🎯 Log Nilai Ujian Drilling TKA PPLG Seluruh Siswa</span>
+        </h2>
+        <p class="text-xs text-muted-foreground">Riwayat lengkap nilai simulasi ujian yang telah dikerjakan oleh siswa.</p>
+      </div>
+
+      {allExamLogs.length === 0 ? (
+        <div class="p-8 text-center text-xs text-muted-foreground">
+          Belum ada rekaman ujian yang masuk dari siswa.
+        </div>
+      ) : (
+        <div class="overflow-x-auto">
+          <table class="w-full text-left text-xs">
+            <thead class="text-[11px] text-muted-foreground uppercase font-mono border-b border-border/60">
+              <tr>
+                <th class="py-3 px-4">Nama Siswa</th>
+                <th class="py-3 px-4">Waktu Pengerjaan</th>
+                <th class="py-3 px-4">Skor Nilai</th>
+                <th class="py-3 px-4">Ketepatan</th>
+                <th class="py-3 px-4">Status Kelulusan</th>
+                <th class="py-3 px-4 text-right">XP Diberikan</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-border/40 font-medium">
+              {allExamLogs.map((exam) => {
+                const examDate = new Date(exam.createdAt).toLocaleDateString('id-ID', {
+                  day: 'numeric',
+                  month: 'short',
+                  year: 'numeric',
+                  hour: '2-digit',
+                  minute: '2-digit'
+                });
+                const isPass = exam.score >= 75;
+
+                return (
+                  <tr class="hover:bg-accent/40 transition-colors">
+                    <td class="py-3.5 px-4 font-bold text-foreground">
+                      {exam.userName}
+                      <span class="block text-[10px] text-muted-foreground font-mono font-normal">{exam.userEmail}</span>
+                    </td>
+                    <td class="py-3.5 px-4 font-mono text-muted-foreground">
+                      {examDate}
+                    </td>
+                    <td class="py-3.5 px-4 font-mono font-extrabold text-sm text-foreground">
+                      {exam.score} / 100
+                    </td>
+                    <td class="py-3.5 px-4 font-mono text-muted-foreground">
+                      {exam.correctAnswers} / {exam.totalQuestions} Soal
+                    </td>
+                    <td class="py-3.5 px-4">
+                      <span class:list={[
+                        "text-[10px] font-bold px-2 py-0.5 rounded-full font-mono",
+                        isPass 
+                          ? "bg-emerald-500/20 text-emerald-400 border border-emerald-500/30" 
+                          : "bg-amber-500/20 text-amber-400 border border-amber-500/30"
+                      ]}>
+                        {isPass ? 'KOMPETEN' : 'BELUM KOMPETEN'}
+                      </span>
+                    </td>
+                    <td class="py-3.5 px-4 text-right font-mono font-bold text-amber-400">
+                      +{exam.xpEarned} XP
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+      )}
+    </div>
+
+    <!-- SECTION 3: LOG PENYELESAIAN MODUL MATERI -->
+    <div class="card p-6 sm:p-8 rounded-3xl border-border/60 bg-card/90 space-y-6 shadow-md">
+      <div class="border-b border-border/40 pb-4">
+        <h2 class="text-lg font-bold text-foreground flex items-center gap-2">
+          <span>📚 Log Penyelesaian Modul Materi Siswa</span>
+        </h2>
+        <p class="text-xs text-muted-foreground">Daftar siswa yang telah menyelesaikan materi di Learning Hub.</p>
+      </div>
+
+      {allLessonLogs.length === 0 ? (
+        <div class="p-8 text-center text-xs text-muted-foreground">
+          Belum ada rekaman modul yang diselesaikan.
+        </div>
+      ) : (
+        <div class="overflow-x-auto">
+          <table class="w-full text-left text-xs">
+            <thead class="text-[11px] text-muted-foreground uppercase font-mono border-b border-border/60">
+              <tr>
+                <th class="py-3 px-4">Nama Siswa</th>
+                <th class="py-3 px-4">Slug Modul Materi</th>
+                <th class="py-3 px-4 text-right">Waktu Selesai</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-border/40 font-medium">
+              {allLessonLogs.map((log) => {
+                const finishDate = new Date(log.completedAt).toLocaleDateString('id-ID', {
+                  day: 'numeric',
+                  month: 'short',
+                  year: 'numeric',
+                  hour: '2-digit',
+                  minute: '2-digit'
+                });
+
+                return (
+                  <tr class="hover:bg-accent/40 transition-colors">
+                    <td class="py-3.5 px-4 font-bold text-foreground">
+                      {log.userName}
+                    </td>
+                    <td class="py-3.5 px-4 font-mono text-blue-400">
+                      /pembelajaran/{log.lessonSlug}
+                    </td>
+                    <td class="py-3.5 px-4 text-right font-mono text-muted-foreground">
+                      {finishDate}
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+      )}
+    </div>
+
+  </div>
+</DashboardLayout>
+
+<script>
+  // Search filter for users
+  const searchInput = document.getElementById('user-search-input') as HTMLInputElement | null;
+  const userRows = document.querySelectorAll('.user-row');
+
+  searchInput?.addEventListener('input', (e) => {
+    const query = (e.target as HTMLInputElement).value.toLowerCase();
+    userRows.forEach(row => {
+      const name = row.querySelector('.user-name')?.textContent?.toLowerCase() || '';
+      const email = row.querySelector('.user-email')?.textContent?.toLowerCase() || '';
+      if (name.includes(query) || email.includes(query)) {
+        (row as HTMLElement).style.display = '';
+      } else {
+        (row as HTMLElement).style.display = 'none';
+      }
+    });
+  });
+
+  // Role Toggle Action
+  const roleButtons = document.querySelectorAll('.role-toggle-btn');
+  const alertBox = document.getElementById('admin-alert');
+
+  roleButtons.forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const targetUserId = btn.getAttribute('data-user-id');
+      const currentRole = btn.getAttribute('data-current-role');
+      const newRole = currentRole === 'admin' ? 'student' : 'admin';
+      const confirmMsg = currentRole === 'admin' 
+        ? 'Apakah Anda yakin ingin mencabut role Guru/Admin menjadi Siswa?' 
+        : 'Apakah Anda yakin ingin menaikkan role pengguna ini menjadi Guru/Admin?';
+
+      if (!confirm(confirmMsg)) return;
+
+      try {
+        const res = await fetch('/api/admin/users/role', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ targetUserId, newRole })
+        });
+
+        const data = await res.json();
+
+        if (res.ok && data.success) {
+          if (alertBox) {
+            alertBox.className = 'p-4 rounded-xl text-xs font-bold text-center bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 block';
+            alertBox.textContent = data.message;
+          }
+          setTimeout(() => window.location.reload(), 1000);
+        } else {
+          if (alertBox) {
+            alertBox.className = 'p-4 rounded-xl text-xs font-bold text-center bg-red-500/10 border border-red-500/30 text-red-400 block';
+            alertBox.textContent = data.error || 'Gagal mengubah role.';
+          }
+        }
+      } catch (e) {
+        if (alertBox) {
+          alertBox.className = 'p-4 rounded-xl text-xs font-bold text-center bg-red-500/10 border border-red-500/30 text-red-400 block';
+          alertBox.textContent = 'Terjadi kesalahan koneksi server.';
+        }
+      }
+    });
+  });
+</script>

@@ -1,37 +1,42 @@
 ---
-import BaseLayout from '../../layouts/BaseLayout.astro';
+import DashboardLayout from '../../layouts/DashboardLayout.astro';
 import TkaQuiz from '../../components/TkaQuiz.astro';
+
+const user = Astro.locals.user;
+if (!user) {
+  return Astro.redirect('/login');
+}
 ---
 
-<BaseLayout 
+<DashboardLayout 
   title="Drilling TKA PPLG Simulator"
   description="Simulasi CBT Ujian Tes Keahlian Akademik PPLG Kurikulum Merdeka Kemendikdasmen oleh Agung Gumelar Saputra."
+  activeNav="/pembelajaran/tka-pplg"
 >
-  <section class="py-12 bg-gradient-to-b from-cyan-950/20 via-background to-background border-b border-border/40">
-    <div class="container-main space-y-4">
+  <div class="space-y-8 max-w-5xl mx-auto">
+    <!-- Header Banner -->
+    <div class="p-6 sm:p-8 rounded-3xl bg-gradient-to-r from-cyan-950/40 via-blue-950/30 to-card border border-cyan-500/30 space-y-3 shadow-xl">
       <div class="flex items-center gap-2">
-        <span class="px-3 py-1 rounded-full bg-cyan-500/10 border border-cyan-500/30 text-cyan-400 text-xs font-semibold">
+        <span class="px-3 py-1 rounded-full bg-cyan-500/15 border border-cyan-500/30 text-cyan-400 text-xs font-mono font-bold">
           🎯 Ujian Vokasi SMK
         </span>
-        <span class="px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-xs font-semibold">
-          ✨ Bonus +100 XP
+        <span class="px-3 py-1 rounded-full bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 text-xs font-mono font-bold">
+          ✨ Hingga +100 XP
         </span>
       </div>
 
-      <h1 class="text-3xl md:text-5xl font-extrabold text-foreground tracking-tight">
+      <h1 class="text-2xl sm:text-4xl font-extrabold text-foreground tracking-tight">
         Drilling & Tryout TKA PPLG
       </h1>
 
-      <p class="text-base md:text-lg text-muted-foreground max-w-3xl">
-        Asesmen Tes Keahlian Akademik untuk siswa **Pengembangan Perangkat Lunak dan Gim (PPLG)**. Uji pemahaman kamu mengenai Algoritma, Database, OOP, K3LH, dan Proses Bisnis PPLG secara real-time.
+      <p class="text-xs sm:text-sm text-muted-foreground max-w-3xl leading-relaxed">
+        Asesmen Tes Keahlian Akademik untuk siswa **Pengembangan Perangkat Lunak dan Gim (PPLG)**. Uji pemahaman kamu mengenai Algoritma, Database, OOP, K3LH, dan Proses Bisnis PPLG secara real-time. Nilai dan rekaman pengerjaan akan otomatis tercatat di akun belajarmu!
       </p>
     </div>
-  </section>
 
-  <!-- Quiz Engine Container -->
-  <section class="py-12">
-    <div class="container-main">
+    <!-- Quiz Engine Component -->
+    <div>
       <TkaQuiz />
     </div>
-  </section>
-</BaseLayout>
+  </div>
+</DashboardLayout>

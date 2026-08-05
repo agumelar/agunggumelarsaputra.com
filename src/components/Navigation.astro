@@ -4,15 +4,12 @@ const user = Astro.locals.user;
 
 const navItems = [
   { href: '/', label: 'Beranda' },
-  { href: '/pembelajaran', label: 'Pembelajaran' },
-  { href: '/pembelajaran/tka-pplg', label: 'Drilling TKA PPLG', highlight: true },
+  { href: '/pembelajaran', label: 'Modul Belajar' },
+  { href: '/pembelajaran/tka-pplg', label: 'Drilling TKA', highlight: true },
   { href: '/projects', label: 'Projects' },
   { href: '/blog', label: 'Blog' },
   { href: '/cv', label: 'CV Guru' },
   { href: '/contact', label: 'Kontak' },
-  ...(user 
-    ? [{ href: '/dashboard', label: 'Dashboard', highlight: true }]
-    : [{ href: '/login', label: 'Login', highlight: true }])
 ];
 ---
 
@@ -61,15 +58,20 @@ const navItems = [
     <!-- Action Controls: Gamification Badge + Dark/Light Theme Switcher -->
     <div class="flex items-center gap-2">
       {user ? (
-        <a href="/dashboard" id="user-xp-badge" class="hidden sm:flex items-center gap-1.5 px-3 py-1 rounded-full bg-gradient-to-r from-amber-500/10 to-emerald-500/10 border border-amber-500/30 text-xs font-medium text-amber-400 hover:scale-105 transition-transform" title="Level & XP Belajar Anda">
-          <span>⚡</span>
-          <span id="header-xp-val" class="font-bold font-mono">0 XP</span>
-          <span class="text-muted-foreground">|</span>
-          <span id="header-level-val" class="text-[11px] text-emerald-400">Lvl 1</span>
-        </a>
+        <div class="flex items-center gap-2">
+          {user.role === 'admin' && (
+            <a href="/admin" class="hidden sm:inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-amber-500/10 border border-amber-500/30 text-xs font-bold text-amber-300 hover:bg-amber-500/20 transition-colors">
+              <span>👑 Panel Guru</span>
+            </a>
+          )}
+          <a href="/dashboard" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold shadow-md shadow-blue-600/20 transition-all">
+            <span>🎓 Portal Siswa</span>
+          </a>
+        </div>
       ) : (
-        <a href="/login" class="hidden sm:flex px-3 py-1 rounded-md text-xs font-medium border border-border/40 hover:bg-accent text-foreground transition-colors">
-          Login Portal
+        <a href="/login" class="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white text-xs font-bold shadow-md shadow-blue-600/20 transition-all">
+          <span>Masuk LMS</span>
+          <span>→</span>
         </a>
       )}
 

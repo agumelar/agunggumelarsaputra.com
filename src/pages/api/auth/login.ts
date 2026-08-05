@@ -20,7 +20,18 @@ export const POST: APIRoute = async ({ request, cookies }) => {
       return new Response(JSON.stringify({ error: 'Email atau password salah.' }), { status: 400 });
     }
 
-    const token = signToken({ userId: user.id, email: user.email, name: user.name, role: user.role });
+    const ADMIN_EMAILS = [
+      'rplchatgptpro@gmail.com',
+      'agunggumelarsaputra@gmail.com',
+      'agunggumelar@smkn1rongga.sch.id'
+    ];
+    let userRole = user.role;
+    if (ADMIN_EMAILS.includes(user.email.toLowerCase()) && user.role !== 'admin') {
+      await db.update(users).set({ role: 'admin' }).where(eq(users.id, user.id));
+      userRole = 'admin';
+    }
+
+    const token = signToken({ userId: user.id, email: user.email, name: user.name, role: userRole });
 
     cookies.set('ags_session', token, {
       path: '/',
