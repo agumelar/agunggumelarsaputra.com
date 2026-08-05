@@ -1,33 +1,61 @@
 ---
 const skills = [
   {
+    icon: "💻",
     title: "Software Development",
-    description: "Rekayasa Perangkat Lunak, Web Development, Mobile Apps"
+    description: "Rekayasa Perangkat Lunak, Web Development, Mobile Apps",
+    tags: ["JavaScript", "TypeScript", "Python", "React", "Node.js"]
   },
   {
+    icon: "🤖",
     title: "Artificial Intelligence",
-    description: "Machine Learning, NLP, AI Applications"
+    description: "Machine Learning, NLP, AI Applications",
+    tags: ["ML", "Deep Learning", "Python", "TensorFlow"]
   },
   {
+    icon: "📚",
     title: "EdTech",
-    description: "Educational Technology, Learning Management Systems"
+    description: "Educational Technology, Learning Management Systems",
+    tags: ["LMS", "E-Learning", "Instructional Design"]
   },
   {
+    icon: "🎓",
     title: "Teknologi Pendidikan",
-    description: "Instructional Design, Digital Learning"
+    description: "Instructional Design, Digital Learning",
+    tags: ["S2 Teknologi Pendidikan", "Vokasi"]
   },
 ];
 ---
 
-<section id="skills" class="py-24">
+<section id="skills" class="py-16 md:py-24 bg-card">
   <div class="container-main">
-    <h2 class="text-3xl font-semibold text-center mb-12">Keahlian</h2>
+    <div class="flex flex-col items-center mb-12">
+      <h2 class="text-3xl font-bold tracking-tight mb-4">Keahlian</h2>
+      <div class="h-1 w-20 bg-primary rounded-full"></div>
+      <p class="text-muted-foreground mt-4 text-center max-w-2xl">
+        Teknologi dan bidang yang saya kuasai
+      </p>
+    </div>
     
-    <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
-      {skills.map((skill) => (
-        <div class="bg-bg-secondary p-6 rounded-xl border border-border hover:border-accent-primary transition-colors">
-          <h3 class="text-lg font-semibold mb-3">{skill.title}</h3>
-          <p class="text-text-secondary text-sm">{skill.description}</p>
+    <div class="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
+      {skills.map((skill, index) => (
+        <div class="card hover:shadow-lg transition-shadow duration-300 group">
+          <div class="p-6">
+            <div class="text-4xl mb-4">{skill.icon}</div>
+            <h3 class="text-lg font-semibold mb-2 group-hover:text-primary transition-colors">
+              {skill.title}
+            </h3>
+            <p class="text-sm text-muted-foreground mb-4">
+              {skill.description}
+            </p>
+            <div class="flex flex-wrap gap-2">
+              {skill.tags.map((tag) => (
+                <span class="badge badge-secondary text-xs">
+                  {tag}
+                </span>
+              ))}
+            </div>
+          </div>
         </div>
       ))}
     </div>

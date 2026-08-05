@@ -8,7 +8,7 @@ const { title, description = "Website Personal Agung Gumelar Saputra" } = Astro.
 ---
 
 <!doctype html>
-<html lang="id">
+<html lang="id" class="dark">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width" />
@@ -16,7 +16,7 @@ const { title, description = "Website Personal Agung Gumelar Saputra" } = Astro.
     <meta name="description" content={description} />
     <title>{title} | Agung Gumelar Saputra</title>
   </head>
-  <body class="min-h-screen flex flex-col">
+  <body class="min-h-screen bg-background font-sans antialiased">
     <slot />
   </body>
 </html>

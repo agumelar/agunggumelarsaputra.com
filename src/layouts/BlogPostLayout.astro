@@ -17,30 +17,51 @@ const { post } = Astro.props;
     <article class="container-content">
       <!-- Header -->
       <header class="mb-12">
-        <h1 class="text-4xl font-bold mb-4">{post.data.title}</h1>
-        <div class="flex items-center gap-4 text-text-secondary text-sm">
-          <time>
-            {post.data.pubDate.toLocaleDateString('id-ID', { year: 'numeric', month: 'long', day: 'numeric' })}
-          </time>
+        <a href="/blog" class="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-primary transition-colors mb-6">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="m15 18-6-6 6-6"/>
+          </svg>
+          Kembali ke Blog
+        </a>
+        
+        <h1 class="text-3xl md:text-4xl font-bold mb-4 leading-tight">
+          {post.data.title}
+        </h1>
+        
+        <div class="flex flex-wrap items-center gap-4 text-sm text-muted-foreground">
+          <div class="flex items-center gap-2">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect width="18" height="18" x="3" y="4" rx="2" ry="2"/>
+              <line x1="16" x2="16" y1="2" y2="6"/>
+              <line x1="8" x2="8" y1="2" y2="6"/>
+              <line x1="3" x2="21" y1="10" y2="10"/>
+            </svg>
+            <time>
+              {post.data.pubDate.toLocaleDateString('id-ID', { year: 'numeric', month: 'long', day: 'numeric' })}
+            </time>
+          </div>
+          
           <div class="flex gap-2">
             {post.data.tags.map((tag) => (
-              <span class="px-2 py-1 bg-bg-tertiary rounded text-xs">{tag}</span>
+              <span class="badge badge-secondary text-xs">
+                {tag}
+              </span>
             ))}
           </div>
         </div>
       </header>
       
       <!-- Content -->
-      <div class="prose prose-invert max-w-none">
+      <div class="prose prose-invert prose-lg max-w-none">
         <slot />
       </div>
       
       <!-- Tags -->
-      <div class="mt-12 pt-8 border-t border-border">
-        <h3 class="text-sm font-semibold mb-4">Tags:</h3>
+      <div class="mt-12 pt-8 border-t">
+        <h3 class="text-sm font-semibold mb-4 text-muted-foreground">Tags:</h3>
         <div class="flex flex-wrap gap-2">
           {post.data.tags.map((tag) => (
-            <a href={`/blog?tag=${tag}`} class="px-3 py-1 bg-bg-tertiary text-text-secondary text-sm rounded-full hover:bg-accent-primary hover:text-white transition-colors">
+            <a href={`/blog?tag=${tag}`} class="badge badge-outline hover:bg-primary hover:text-primary-foreground transition-colors">
               {tag}
             </a>
           ))}
@@ -48,7 +69,7 @@ const { post } = Astro.props;
       </div>
       
       <!-- Giscus Comments -->
-      <div class="mt-12 pt-8 border-t border-border">
+      <div class="mt-12 pt-8 border-t">
         <script 
           src="https://giscus.app/client.js"
           data-repo="agumelar/agunggumelarsaputra.com"
