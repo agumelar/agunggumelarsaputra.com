@@ -10,13 +10,13 @@
     "astro": "astro"
   },
   "dependencies": {
-    "@astrojs/mdx": "^4.3.14",
-    "@astrojs/tailwind": "^6.0.0",
+    "@astrojs/mdx": "^7.0.5",
+    "@astrojs/tailwind": "^6.0.2",
     "@astrojs/vercel": "^11.0.4",
     "@neondatabase/serverless": "^1.1.0",
     "@tailwindcss/typography": "^0.5.19",
     "arctic": "^3.7.0",
-    "astro": "^5.18.2",
+    "astro": "^7.1.6",
     "bcryptjs": "^3.0.3",
     "drizzle-orm": "^0.45.2",
     "jsonwebtoken": "^9.0.3",
