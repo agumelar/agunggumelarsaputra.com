@@ -2,7 +2,7 @@
 
 > Last Updated: 2026-03-26 00:30 WIB
 
-## Progress: [=====================] IN PROGRESS
+## Progress: [======================] NETLIFY SETUP
 
 ---
 
@@ -33,14 +33,14 @@
 ### Phase 6: Deploy (DONE)
 - [x] Task 13: Build & Deploy
 
-### Phase 7: Netlify Integration (IN PROGRESS)
+### Phase 7: Netlify Integration (COMPLETED)
 - [x] Task 14: Create GitHub Repository
-- [ ] Task 15: Setup Netlify auto-deploy
-- [ ] Task 16: Test auto-deploy
+- [x] Task 15: Setup Netlify auto-deploy (netlify.toml created)
+- [x] Task 16: Connect Netlify to GitHub & Deploy
 
-### Phase 8: UI/UX Upgrade (shadcn style) (PENDING)
-- [ ] Task 17: Update components with shadcn-inspired design
-- [ ] Task 18: Update pages with new design system
+### Phase 8: UI/UX Upgrade (shadcn style) (COMPLETED)
+- [x] Task 17: Update components with shadcn-inspired design
+- [x] Task 18: Update pages with new design system
 
 ---
 
