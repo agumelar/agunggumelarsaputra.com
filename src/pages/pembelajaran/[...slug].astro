@@ -109,9 +109,25 @@ const sortedSidebarModules = allModules.sort((a, b) => a.data.order - b.data.ord
     const btnComplete = document.getElementById('btn-complete-lesson');
     const slug = document.currentScript?.dataset.slug || '';
 
-    btnComplete?.addEventListener('click', () => {
+    btnComplete?.addEventListener('click', async () => {
       markLessonComplete(slug);
-      btnComplete.textContent = '🎉 Modul Selesai (+10 XP Ditambahkan)';
+      
+      try {
+        const res = await fetch('/api/progress/complete-lesson', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ lessonSlug: slug })
+        });
+        const data = await res.json();
+        if (data.success) {
+          btnComplete.textContent = `🎉 Modul Selesai (+${data.xpEarned} XP Ditambahkan)`;
+        } else {
+          btnComplete.textContent = '🎉 Modul Selesai!';
+        }
+      } catch (e) {
+        btnComplete.textContent = '🎉 Modul Selesai!';
+      }
+
       btnComplete.classList.remove('from-emerald-600', 'to-teal-500');
       btnComplete.classList.add('bg-emerald-700', 'cursor-default');
       (btnComplete as HTMLButtonElement).disabled = true;
