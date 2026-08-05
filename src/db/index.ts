@@ -2,15 +2,17 @@ import { drizzle } from 'drizzle-orm/neon-http';
 import { neon } from '@neondatabase/serverless';
 import * as schema from './schema';
 
-const connectionString = process.env.POSTGRES_URL || process.env.DATABASE_URL || 'postgres://placeholder:placeholder@localhost/db';
-const sql = neon(connectionString);
-export const db = drizzle(sql, { schema });
+const connectionString = process.env.POSTGRES_URL || process.env.DATABASE_URL || '';
+const sql = connectionString ? neon(connectionString) : null;
+export const db = sql ? drizzle(sql, { schema }) : (null as any);
 
 let isInitialized = false;
 
 export async function ensureDbInitialized() {
   if (isInitialized) return;
-  if (!process.env.POSTGRES_URL && !process.env.DATABASE_URL) return;
+  if (!sql) {
+    throw new Error('Database Postgres belum dikonfigurasi. Variabel POSTGRES_URL belum diisi di Vercel Environment Variables.');
+  }
 
   try {
     await sql`
@@ -57,5 +59,6 @@ export async function ensureDbInitialized() {
     isInitialized = true;
   } catch (err) {
     console.error('Failed auto-init database tables:', err);
+    throw err;
   }
 }
