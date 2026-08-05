@@ -2,5 +2,60 @@ import { drizzle } from 'drizzle-orm/neon-http';
 import { neon } from '@neondatabase/serverless';
 import * as schema from './schema';
 
-const sql = neon(process.env.POSTGRES_URL || 'postgres://placeholder:placeholder@localhost/db');
+const connectionString = process.env.POSTGRES_URL || process.env.DATABASE_URL || 'postgres://placeholder:placeholder@localhost/db';
+const sql = neon(connectionString);
 export const db = drizzle(sql, { schema });
+
+let isInitialized = false;
+
+export async function ensureDbInitialized() {
+  if (isInitialized) return;
+  if (!process.env.POSTGRES_URL && !process.env.DATABASE_URL) return;
+
+  try {
+    await sql`
+      CREATE TABLE IF NOT EXISTS users (
+        id SERIAL PRIMARY KEY,
+        name TEXT NOT NULL,
+        email TEXT NOT NULL UNIQUE,
+        password_hash TEXT,
+        google_id TEXT UNIQUE,
+        role TEXT NOT NULL DEFAULT 'student',
+        avatar_url TEXT,
+        created_at TIMESTAMP NOT NULL DEFAULT NOW()
+      );
+    `;
+    await sql`
+      CREATE TABLE IF NOT EXISTS user_gamification (
+        id SERIAL PRIMARY KEY,
+        user_id INTEGER NOT NULL UNIQUE REFERENCES users(id) ON DELETE CASCADE,
+        xp INTEGER NOT NULL DEFAULT 0,
+        level INTEGER NOT NULL DEFAULT 1,
+        streak_days INTEGER NOT NULL DEFAULT 1,
+        last_active_date TIMESTAMP NOT NULL DEFAULT NOW()
+      );
+    `;
+    await sql`
+      CREATE TABLE IF NOT EXISTS user_progress (
+        id SERIAL PRIMARY KEY,
+        user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        lesson_slug TEXT NOT NULL,
+        completed_at TIMESTAMP NOT NULL DEFAULT NOW()
+      );
+    `;
+    await sql`
+      CREATE TABLE IF NOT EXISTS tka_attempts (
+        id SERIAL PRIMARY KEY,
+        user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        score INTEGER NOT NULL,
+        total_questions INTEGER NOT NULL,
+        correct_answers INTEGER NOT NULL,
+        xp_earned INTEGER NOT NULL DEFAULT 0,
+        created_at TIMESTAMP NOT NULL DEFAULT NOW()
+      );
+    `;
+    isInitialized = true;
+  } catch (err) {
+    console.error('Failed auto-init database tables:', err);
+  }
+}

@@ -1,17 +1,12 @@
 import type { APIRoute } from 'astro';
 import { Google } from 'arctic';
-import { db } from '../../../../db';
+import { db, ensureDbInitialized } from '../../../../db';
 import { users, userGamification } from '../../../../db/schema';
 import { eq } from 'drizzle-orm';
 import { signToken } from '../../../../utils/auth';
 
-const google = new Google(
-  process.env.GOOGLE_CLIENT_ID || '',
-  process.env.GOOGLE_CLIENT_SECRET || '',
-  `${process.env.SITE_URL || 'http://localhost:4321'}/api/auth/callback/google`
-);
-
 export const GET: APIRoute = async ({ url, cookies, redirect }) => {
+  await ensureDbInitialized();
   const clientId = process.env.GOOGLE_CLIENT_ID;
   const clientSecret = process.env.GOOGLE_CLIENT_SECRET;
   const siteUrl = process.env.SITE_URL || 'https://agunggumelarsaputracom.vercel.app';

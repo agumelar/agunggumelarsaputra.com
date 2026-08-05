@@ -1,11 +1,12 @@
 import type { APIRoute } from 'astro';
-import { db } from '../../../db';
+import { db, ensureDbInitialized } from '../../../db';
 import { users } from '../../../db/schema';
 import { eq } from 'drizzle-orm';
 import bcrypt from 'bcryptjs';
 import { signToken } from '../../../utils/auth';
 
 export const POST: APIRoute = async ({ request, cookies }) => {
+  await ensureDbInitialized();
   try {
     const { email, password } = await request.json();
 
