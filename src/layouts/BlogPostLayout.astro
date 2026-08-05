@@ -1,8 +1,6 @@
 ---
 import type { CollectionEntry } from 'astro:content';
 import BaseLayout from './BaseLayout.astro';
-import Navigation from '../components/Navigation.astro';
-import Footer from '../components/Footer.astro';
 
 interface Props {
   post: CollectionEntry<'blog'>;
@@ -12,7 +10,6 @@ const { post } = Astro.props;
 ---
 
 <BaseLayout title={post.data.title} description={post.data.description}>
-  <Navigation />
   <main class="pt-24 pb-16">
     <article class="container-content">
       <!-- Header -->
@@ -89,5 +86,4 @@ const { post } = Astro.props;
       </div>
     </article>
   </main>
-  <Footer />
 </BaseLayout>

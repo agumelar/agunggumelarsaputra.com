@@ -4,8 +4,13 @@ import { verifyToken } from './utils/auth';
 const PROTECTED_ROUTES = ['/dashboard', '/pembelajaran', '/admin'];
 
 export const onRequest = defineMiddleware(async (context, next) => {
-  const token = context.cookies.get('ags_session')?.value;
-  const user = token ? verifyToken(token) : null;
+  let user = null;
+  try {
+    const token = context.cookies.get('ags_session')?.value;
+    user = token ? verifyToken(token) : null;
+  } catch {
+    user = null;
+  }
   context.locals.user = user;
 
   const url = new URL(context.request.url);
