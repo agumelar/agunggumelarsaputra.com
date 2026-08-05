@@ -3,6 +3,8 @@ import { db } from '../../../../db';
 import { users } from '../../../../db/schema';
 import { eq } from 'drizzle-orm';
 
+import { isTeacherEmail } from '../../../../utils/auth';
+
 export const POST: APIRoute = async ({ request, locals }) => {
   const currentUser = locals.user;
 
@@ -18,6 +20,21 @@ export const POST: APIRoute = async ({ request, locals }) => {
 
     if (!targetUserId || !['student', 'admin'].includes(newRole)) {
       return new Response(JSON.stringify({ error: 'Data tidak valid.' }), { 
+        status: 400, 
+        headers: { 'Content-Type': 'application/json' } 
+      });
+    }
+
+    const [targetUser] = await db.select().from(users).where(eq(users.id, Number(targetUserId))).limit(1);
+    if (!targetUser) {
+      return new Response(JSON.stringify({ error: 'Pengguna tidak ditemukan.' }), { 
+        status: 404, 
+        headers: { 'Content-Type': 'application/json' } 
+      });
+    }
+
+    if (isTeacherEmail(targetUser.email) && newRole === 'student') {
+      return new Response(JSON.stringify({ error: 'Akun Guru Utama / Administrator Inti tidak dapat diturunkan menjadi Siswa demi keamanan sistem.' }), { 
         status: 400, 
         headers: { 'Content-Type': 'application/json' } 
       });

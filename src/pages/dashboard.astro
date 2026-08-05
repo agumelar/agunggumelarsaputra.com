@@ -57,10 +57,25 @@ function getLevelTitle(level: number) {
 const nextLevelXp = stats.level * 200;
 const xpProgressPercent = Math.min(100, Math.round((stats.xp / nextLevelXp) * 100));
 const isAdmin = user.role === 'admin';
+const isUnauthorizedError = Astro.url.searchParams.get('error') === 'unauthorized_admin';
 ---
 
 <DashboardLayout title="Ringkasan Belajar" activeNav="/dashboard">
   <div class="space-y-8">
+    
+    <!-- Unauthorized Admin Access Alert -->
+    {isUnauthorizedError && (
+      <div class="p-4 rounded-2xl bg-red-500/10 border border-red-500/30 flex items-center justify-between gap-4 animate-fadeIn">
+        <div class="flex items-center gap-3">
+          <span class="text-xl">⛔</span>
+          <div>
+            <h3 class="text-xs sm:text-sm font-bold text-red-400">Akses Ditolak: Panel Guru Terproteksi</h3>
+            <p class="text-[11px] sm:text-xs text-muted-foreground">Halaman Manajemen Guru hanya dapat diakses oleh akun Guru Pengampu & Administrator yang terverifikasi.</p>
+          </div>
+        </div>
+        <a href="/dashboard" class="text-xs text-muted-foreground hover:text-foreground px-2 py-1">✕</a>
+      </div>
+    )}
     
     <!-- Admin Notice Banner (If user is Admin/Teacher) -->
     {isAdmin && (

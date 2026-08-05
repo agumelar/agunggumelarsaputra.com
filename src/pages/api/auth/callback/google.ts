@@ -3,7 +3,7 @@ import { Google } from 'arctic';
 import { db, ensureDbInitialized } from '../../../../db';
 import { users, userGamification } from '../../../../db/schema';
 import { eq } from 'drizzle-orm';
-import { signToken } from '../../../../utils/auth';
+import { signToken, isTeacherEmail } from '../../../../utils/auth';
 
 export const GET: APIRoute = async ({ url, cookies, redirect }) => {
   await ensureDbInitialized();
@@ -37,20 +37,16 @@ export const GET: APIRoute = async ({ url, cookies, redirect }) => {
       return new Response('Gagal mendapatkan profil akun Google.', { status: 400 });
     }
 
-    const ADMIN_EMAILS = [
-      'rplchatgptpro@gmail.com',
-      'agunggumelarsaputra@gmail.com',
-      'agunggumelar@smkn1rongga.sch.id'
-    ];
-    const isTargetAdmin = ADMIN_EMAILS.includes(googleUser.email.toLowerCase());
+    const cleanEmail = googleUser.email.trim().toLowerCase();
+    const isTargetAdmin = isTeacherEmail(cleanEmail);
     const assignedRole = isTargetAdmin ? 'admin' : 'student';
 
-    let [existingUser] = await db.select().from(users).where(eq(users.email, googleUser.email)).limit(1);
+    let [existingUser] = await db.select().from(users).where(eq(users.email, cleanEmail)).limit(1);
 
     if (!existingUser) {
       [existingUser] = await db.insert(users).values({
         name: googleUser.name || 'Siswa PPLG',
-        email: googleUser.email,
+        email: cleanEmail,
         googleId: googleUser.sub,
         role: assignedRole,
         avatarUrl: googleUser.picture,

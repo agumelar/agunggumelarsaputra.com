@@ -3,7 +3,7 @@ import { db, ensureDbInitialized } from '../../../db';
 import { users, userGamification } from '../../../db/schema';
 import { eq } from 'drizzle-orm';
 import bcrypt from 'bcryptjs';
-import { signToken } from '../../../utils/auth';
+import { signToken, isTeacherEmail } from '../../../utils/auth';
 
 export const POST: APIRoute = async ({ request, cookies }) => {
   await ensureDbInitialized();
@@ -14,13 +14,20 @@ export const POST: APIRoute = async ({ request, cookies }) => {
       return new Response(JSON.stringify({ error: 'Input tidak valid. Password minimal 6 karakter.' }), { status: 400 });
     }
 
-    const existing = await db.select().from(users).where(eq(users.email, email)).limit(1);
+    const cleanEmail = email.trim().toLowerCase();
+    const existing = await db.select().from(users).where(eq(users.email, cleanEmail)).limit(1);
     if (existing.length > 0) {
       return new Response(JSON.stringify({ error: 'Email sudah terdaftar.' }), { status: 400 });
     }
 
+    const assignedRole = isTeacherEmail(cleanEmail) ? 'admin' : 'student';
     const passwordHash = await bcrypt.hash(password, 10);
-    const [newUser] = await db.insert(users).values({ name, email, passwordHash }).returning();
+    const [newUser] = await db.insert(users).values({ 
+      name, 
+      email: cleanEmail, 
+      passwordHash,
+      role: assignedRole,
+    }).returning();
     await db.insert(userGamification).values({ userId: newUser.id, xp: 0, level: 1 });
 
     const token = signToken({ userId: newUser.id, email: newUser.email, name: newUser.name, role: newUser.role });

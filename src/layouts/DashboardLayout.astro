@@ -29,6 +29,7 @@ if (!stats) {
 
 const currentPath = Astro.url.pathname;
 const isAdmin = user.role === 'admin';
+const isAdminRoute = currentPath.startsWith('/admin');
 
 const studentNavItems = [
   { href: '/dashboard', label: 'Ringkasan Belajar', icon: 'M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6' },
@@ -39,9 +40,9 @@ const studentNavItems = [
 ];
 
 const adminNavItems = [
-  { href: '/admin', label: 'Overview Panel Guru', icon: 'M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z' },
-  { href: '/admin#students', label: 'Kelola Data Siswa', icon: 'M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z' },
-  { href: '/admin#exams', label: 'Hasil Ujian Siswa', icon: 'M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01' },
+  { href: '/admin', label: 'Ringkasan & Metrik Kelas', icon: 'M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z' },
+  { href: '/admin#students', label: 'Kelola Data & Role Siswa', icon: 'M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z' },
+  { href: '/admin#exams', label: 'Hasil Ujian & Nilai Siswa', icon: 'M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01' },
 ];
 ---
 
@@ -78,25 +79,40 @@ const adminNavItems = [
     <!-- Backdrop Overlay for Mobile Drawer -->
     <div id="sidebar-backdrop" class="fixed inset-0 bg-black/60 z-40 lg:hidden hidden transition-opacity backdrop-blur-sm"></div>
 
-    <!-- LEFT SIDEBAR NAVIGATION (Ala Dicoding / W3Schools LMS) -->
+    <!-- LEFT SIDEBAR NAVIGATION (Strict Portal Separation) -->
     <aside id="app-sidebar" class="fixed top-0 left-0 bottom-0 z-50 w-72 bg-card/95 backdrop-blur-xl border-r border-border/60 flex flex-col justify-between transition-transform duration-300 ease-in-out -translate-x-full lg:translate-x-0">
       
       <!-- Top Brand Header -->
       <div class="p-5 border-b border-border/40">
         <div class="flex items-center justify-between">
-          <a href="/dashboard" class="flex items-center gap-3 group">
-            <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-600 via-indigo-500 to-cyan-400 p-0.5 shadow-lg shadow-blue-500/20 group-hover:scale-105 transition-transform flex items-center justify-center">
-              <div class="w-full h-full bg-background rounded-[10px] flex items-center justify-center">
-                <span class="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-cyan-300 font-extrabold text-sm">AGS</span>
+          <a href={isAdminRoute ? "/admin" : "/dashboard"} class="flex items-center gap-3 group">
+            {isAdminRoute ? (
+              <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-500 via-orange-500 to-yellow-400 p-0.5 shadow-lg shadow-amber-500/20 group-hover:scale-105 transition-transform flex items-center justify-center">
+                <div class="w-full h-full bg-background rounded-[10px] flex items-center justify-center">
+                  <span class="text-transparent bg-clip-text bg-gradient-to-r from-amber-400 to-yellow-300 font-extrabold text-sm">AGS</span>
+                </div>
               </div>
-            </div>
-            <div class="flex flex-col">
-              <span class="font-extrabold text-sm tracking-tight text-foreground flex items-center gap-1.5">
-                Learning Hub
-                <span class="text-[9px] px-1.5 py-0.5 rounded-full font-mono font-bold bg-blue-500/20 text-blue-400 border border-blue-500/30">PRO</span>
-              </span>
-              <span class="text-[11px] text-muted-foreground font-medium">SMKN 1 Rongga • PPLG</span>
-            </div>
+              <div class="flex flex-col">
+                <span class="font-extrabold text-sm tracking-tight text-foreground flex items-center gap-1.5">
+                  Panel Guru
+                  <span class="text-[9px] px-1.5 py-0.5 rounded-full font-mono font-bold bg-amber-500/20 text-amber-300 border border-amber-500/30">ADMIN</span>
+                </span>
+                <span class="text-[11px] text-muted-foreground font-medium">SMKN 1 Rongga • Manajemen</span>
+              </div>
+            ) : (
+              <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-600 via-indigo-500 to-cyan-400 p-0.5 shadow-lg shadow-blue-500/20 group-hover:scale-105 transition-transform flex items-center justify-center">
+                <div class="w-full h-full bg-background rounded-[10px] flex items-center justify-center">
+                  <span class="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-cyan-300 font-extrabold text-sm">AGS</span>
+                </div>
+              </div>
+              <div class="flex flex-col">
+                <span class="font-extrabold text-sm tracking-tight text-foreground flex items-center gap-1.5">
+                  Learning Hub
+                  <span class="text-[9px] px-1.5 py-0.5 rounded-full font-mono font-bold bg-blue-500/20 text-blue-400 border border-blue-500/30">PPLG</span>
+                </span>
+                <span class="text-[11px] text-muted-foreground font-medium">SMKN 1 Rongga • Siswa</span>
+              </div>
+            )}
           </a>
           <button id="close-sidebar-btn" class="lg:hidden p-1.5 rounded-lg text-muted-foreground hover:bg-accent">
             <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -109,53 +125,14 @@ const adminNavItems = [
       <!-- Main Navigation Menu -->
       <div class="flex-1 overflow-y-auto px-4 py-5 space-y-6">
         
-        <!-- Student Section -->
-        <div class="space-y-1.5">
-          <span class="px-3 text-[10px] font-bold uppercase tracking-wider text-muted-foreground font-mono">
-            Portal Belajar Siswa
-          </span>
-          <div class="space-y-1 pt-1">
-            {studentNavItems.map((item) => {
-              const isActive = currentPath === item.href || (item.href !== '/dashboard' && currentPath.startsWith(item.href));
-              return (
-                <a 
-                  href={item.href}
-                  class:list={[
-                    "flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-semibold transition-all group",
-                    isActive 
-                      ? "bg-blue-600/15 text-blue-400 border border-blue-500/30 shadow-sm" 
-                      : "text-muted-foreground hover:text-foreground hover:bg-accent/60"
-                  ]}
-                >
-                  <div class="flex items-center gap-3">
-                    <svg class:list={["w-4 h-4 transition-colors", isActive ? "text-blue-400" : "text-muted-foreground group-hover:text-foreground"]} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d={item.icon} />
-                    </svg>
-                    <span>{item.label}</span>
-                  </div>
-                  {item.badge && (
-                    <span class="text-[10px] font-mono px-2 py-0.5 rounded-full bg-cyan-500/20 text-cyan-400 border border-cyan-500/30">
-                      {item.badge}
-                    </span>
-                  )}
-                </a>
-              );
-            })}
-          </div>
-        </div>
-
-        <!-- Admin / Teacher Section (Rendered for Admins) -->
-        {isAdmin && (
-          <div class="space-y-1.5 pt-2 border-t border-border/40">
-            <div class="flex items-center justify-between px-3">
-              <span class="text-[10px] font-bold uppercase tracking-wider text-amber-400 font-mono flex items-center gap-1">
-                <span>🛡️ Panel Guru & Admin</span>
-              </span>
-              <span class="text-[9px] px-1.5 py-0.2 rounded bg-amber-500/20 text-amber-300 font-mono">ADMIN</span>
-            </div>
+        {isAdminRoute ? (
+          <div class="space-y-1.5">
+            <span class="px-3 text-[10px] font-bold uppercase tracking-wider text-amber-400 font-mono flex items-center gap-1.5">
+              <span>🛡️ Menu Manajemen Guru</span>
+            </span>
             <div class="space-y-1 pt-1">
               {adminNavItems.map((item) => {
-                const isActive = currentPath === item.href || currentPath.startsWith(item.href);
+                const isActive = currentPath === item.href || (item.href === '/admin' && currentPath === '/admin');
                 return (
                   <a 
                     href={item.href}
@@ -172,6 +149,87 @@ const adminNavItems = [
                       </svg>
                       <span>{item.label}</span>
                     </div>
+                  </a>
+                );
+              })}
+            </div>
+
+            <!-- Portal Mode Switcher to Student View -->
+            <div class="pt-5 mt-5 border-t border-border/40">
+              <span class="px-3 text-[10px] font-bold uppercase tracking-wider text-muted-foreground font-mono">
+                Beralih Workspace
+              </span>
+              <div class="pt-2">
+                <a 
+                  href="/dashboard"
+                  class="flex items-center gap-3 p-3 rounded-xl bg-gradient-to-r from-blue-500/10 to-indigo-500/10 border border-blue-500/30 hover:border-blue-500/60 hover:bg-blue-500/15 transition-all group"
+                >
+                  <div class="w-8 h-8 rounded-lg bg-blue-500/20 text-blue-400 flex items-center justify-center flex-shrink-0 group-hover:scale-105 transition-transform">
+                    🎓
+                  </div>
+                  <div class="min-w-0 flex-1">
+                    <div class="text-xs font-bold text-blue-400 group-hover:text-blue-300">Buka Portal Siswa</div>
+                    <div class="text-[10px] text-muted-foreground truncate">Mode belajar & tryout siswa</div>
+                  </div>
+                  <svg class="w-4 h-4 text-blue-400/60 group-hover:text-blue-400 group-hover:translate-x-0.5 transition-all" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                  </svg>
+                </a>
+              </div>
+            </div>
+
+          </div>
+        ) : (
+          <div class="space-y-1.5">
+            
+            {/* Quick Switcher for Teachers when in Student Portal */}
+            {isAdmin && (
+              <div class="mb-4 pb-4 border-b border-border/40">
+                <a 
+                  href="/admin"
+                  class="flex items-center gap-3 p-3 rounded-xl bg-gradient-to-r from-amber-500/10 via-orange-500/10 to-amber-500/5 border border-amber-500/30 hover:border-amber-500/60 hover:bg-amber-500/15 transition-all group"
+                >
+                  <div class="w-8 h-8 rounded-lg bg-amber-500/20 text-amber-400 flex items-center justify-center flex-shrink-0 group-hover:scale-105 transition-transform">
+                    👑
+                  </div>
+                  <div class="min-w-0 flex-1">
+                    <div class="text-xs font-bold text-amber-400 group-hover:text-amber-300">Mode Guru Aktif</div>
+                    <div class="text-[10px] text-muted-foreground truncate">Buka Panel Manajemen →</div>
+                  </div>
+                  <svg class="w-4 h-4 text-amber-400/60 group-hover:text-amber-400 group-hover:translate-x-0.5 transition-all" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                  </svg>
+                </a>
+              </div>
+            )}
+
+            <span class="px-3 text-[10px] font-bold uppercase tracking-wider text-muted-foreground font-mono">
+              Portal Belajar Siswa
+            </span>
+            <div class="space-y-1 pt-1">
+              {studentNavItems.map((item) => {
+                const isActive = currentPath === item.href || (item.href !== '/dashboard' && currentPath.startsWith(item.href));
+                return (
+                  <a 
+                    href={item.href}
+                    class:list={[
+                      "flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-semibold transition-all group",
+                      isActive 
+                        ? "bg-blue-600/15 text-blue-400 border border-blue-500/30 shadow-sm" 
+                        : "text-muted-foreground hover:text-foreground hover:bg-accent/60"
+                    ]}
+                  >
+                    <div class="flex items-center gap-3">
+                      <svg class:list={["w-4 h-4 transition-colors", isActive ? "text-blue-400" : "text-muted-foreground group-hover:text-foreground"]} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d={item.icon} />
+                      </svg>
+                      <span>{item.label}</span>
+                    </div>
+                    {item.badge && (
+                      <span class="text-[10px] font-mono px-2 py-0.5 rounded-full bg-cyan-500/20 text-cyan-400 border border-cyan-500/30">
+                        {item.badge}
+                      </span>
+                    )}
                   </a>
                 );
               })}
@@ -212,18 +270,19 @@ const adminNavItems = [
       <div class="p-4 border-t border-border/40 bg-accent/20">
         <div class="flex items-center justify-between gap-3">
           <div class="flex items-center gap-2.5 min-w-0">
-            <div class="w-9 h-9 rounded-xl bg-gradient-to-tr from-blue-600 to-cyan-400 p-0.5 flex-shrink-0 flex items-center justify-center text-white font-bold text-xs shadow">
+            <div class={isAdminRoute ? "w-9 h-9 rounded-xl bg-gradient-to-tr from-amber-600 to-yellow-400 p-0.5 flex-shrink-0 flex items-center justify-center text-white font-bold text-xs shadow" : "w-9 h-9 rounded-xl bg-gradient-to-tr from-blue-600 to-cyan-400 p-0.5 flex-shrink-0 flex items-center justify-center text-white font-bold text-xs shadow"}>
               {user.name.substring(0, 2).toUpperCase()}
             </div>
             <div class="min-w-0 flex-1">
               <div class="text-xs font-bold text-foreground truncate">{user.name}</div>
               <div class="flex items-center gap-1.5">
                 <span class:list={[
-                  "text-[10px] font-mono font-medium px-1.5 py-0.2 rounded",
-                  isAdmin ? "bg-amber-500/20 text-amber-300" : "bg-blue-500/20 text-blue-300"
+                  "text-[9px] px-1.5 py-0.2 rounded font-mono font-bold uppercase",
+                  isAdmin ? "bg-amber-500/20 text-amber-300 border border-amber-500/30" : "bg-blue-500/20 text-blue-400 border border-blue-500/30"
                 ]}>
                   {isAdmin ? 'Guru / Admin' : 'Siswa PPLG'}
                 </span>
+                <span class="text-[10px] text-muted-foreground truncate">{user.email}</span>
               </div>
             </div>
           </div>
@@ -254,7 +313,14 @@ const adminNavItems = [
             </svg>
           </button>
           <div class="flex flex-col">
-            <h1 class="text-sm sm:text-base font-bold text-foreground tracking-tight">{title}</h1>
+            <h1 class="text-sm sm:text-base font-bold text-foreground tracking-tight flex items-center gap-2">
+              <span>{title}</span>
+              {isAdminRoute && (
+                <span class="text-[10px] px-2 py-0.5 rounded-full font-mono font-bold bg-amber-500/20 text-amber-300 border border-amber-500/30">
+                  ADMIN CONSOLE
+                </span>
+              )}
+            </h1>
             <span class="text-[10px] text-muted-foreground hidden sm:block">SMKN 1 Rongga • PPLG Learning Management System</span>
           </div>
         </div>
@@ -270,11 +336,18 @@ const adminNavItems = [
             <span id="dashboard-level-val" class="font-bold font-mono text-emerald-400">Lvl {stats.level}</span>
           </a>
 
-          <!-- Role Indicator Pill -->
+          <!-- Workspace Switcher Button in Header -->
           {isAdmin && (
-            <a href="/admin" class="hidden sm:inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-amber-500/10 border border-amber-500/30 text-[11px] font-semibold text-amber-300 hover:bg-amber-500/20 transition-colors">
-              <span>👑</span>
-              <span>Panel Guru</span>
+            <a 
+              href={isAdminRoute ? "/dashboard" : "/admin"} 
+              class:list={[
+                "hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-semibold transition-all border shadow-sm",
+                isAdminRoute 
+                  ? "bg-blue-500/10 border-blue-500/30 text-blue-400 hover:bg-blue-500/20" 
+                  : "bg-amber-500/10 border-amber-500/30 text-amber-300 hover:bg-amber-500/20"
+              ]}
+            >
+              <span>{isAdminRoute ? '🎓 Buka Portal Siswa' : '👑 Panel Guru'}</span>
             </a>
           )}
 

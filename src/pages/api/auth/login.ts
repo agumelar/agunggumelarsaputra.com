@@ -3,14 +3,15 @@ import { db, ensureDbInitialized } from '../../../db';
 import { users } from '../../../db/schema';
 import { eq } from 'drizzle-orm';
 import bcrypt from 'bcryptjs';
-import { signToken } from '../../../utils/auth';
+import { signToken, isTeacherEmail } from '../../../utils/auth';
 
 export const POST: APIRoute = async ({ request, cookies }) => {
   await ensureDbInitialized();
   try {
     const { email, password } = await request.json();
 
-    const [user] = await db.select().from(users).where(eq(users.email, email)).limit(1);
+    const cleanEmail = (email || '').trim().toLowerCase();
+    const [user] = await db.select().from(users).where(eq(users.email, cleanEmail)).limit(1);
     if (!user || !user.passwordHash) {
       return new Response(JSON.stringify({ error: 'Email atau password salah.' }), { status: 400 });
     }
@@ -20,13 +21,8 @@ export const POST: APIRoute = async ({ request, cookies }) => {
       return new Response(JSON.stringify({ error: 'Email atau password salah.' }), { status: 400 });
     }
 
-    const ADMIN_EMAILS = [
-      'rplchatgptpro@gmail.com',
-      'agunggumelarsaputra@gmail.com',
-      'agunggumelar@smkn1rongga.sch.id'
-    ];
     let userRole = user.role;
-    if (ADMIN_EMAILS.includes(user.email.toLowerCase()) && user.role !== 'admin') {
+    if (isTeacherEmail(user.email) && user.role !== 'admin') {
       await db.update(users).set({ role: 'admin' }).where(eq(users.id, user.id));
       userRole = 'admin';
     }
