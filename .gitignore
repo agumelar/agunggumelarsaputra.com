@@ -24,3 +24,7 @@ npm-debug.log*
 .astro/
 # Local Netlify folder
 .netlify
+
+# Superpowers temporary workspace
+.superpowers/
+
