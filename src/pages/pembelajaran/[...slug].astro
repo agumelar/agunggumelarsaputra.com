@@ -1,19 +1,19 @@
 ---
 import BaseLayout from '../../layouts/BaseLayout.astro';
-import { getCollection } from 'astro:content';
+import { getCollection, render } from 'astro:content';
 
 export const prerender = true;
 
 export async function getStaticPaths() {
   const modules = await getCollection('pembelajaran');
   return modules.map((entry) => ({
-    params: { slug: entry.slug },
+    params: { slug: entry.id || entry.slug },
     props: { entry, allModules: modules },
   }));
 }
 
 const { entry, allModules } = Astro.props;
-const { Content } = await entry.render();
+const { Content } = await render(entry);
 const sortedSidebarModules = allModules.sort((a, b) => a.data.order - b.data.order);
 ---
 
@@ -59,10 +59,12 @@ const sortedSidebarModules = allModules.sort((a, b) => a.data.order - b.data.ord
 
           <nav class="space-y-1 text-sm">
             {sortedSidebarModules.map((mod) => {
-              const isCurrent = mod.slug === entry.slug;
+              const modSlug = mod.id || mod.slug;
+              const currentSlug = entry.id || entry.slug;
+              const isCurrent = modSlug === currentSlug;
               return (
                 <a 
-                  href={`/pembelajaran/${mod.slug}`}
+                  href={`/pembelajaran/${modSlug}`}
                   class:list={[
                     "block px-3 py-2 rounded-lg text-xs font-medium transition-all flex items-center justify-between",
                     isCurrent 
@@ -105,7 +107,7 @@ const sortedSidebarModules = allModules.sort((a, b) => a.data.order - b.data.ord
     </div>
   </div>
 
-  <script data-slug={entry.slug}>
+  <script data-slug={entry.id || entry.slug}>
     import { markLessonComplete } from '../../utils/gamification';
 
     const btnComplete = document.getElementById('btn-complete-lesson');
