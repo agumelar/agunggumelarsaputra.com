@@ -1,0 +1,94 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+
+const projects = [
+  {
+    title: "PPLG Learning Hub & TKA Simulator",
+    category: "EdTech & Web App",
+    description: "Platform pembelajaran vokasi RPL interaktif berbasis Astro v5 & Gamification Engine untuk siswa SMKN 1 Rongga.",
+    tags: ["Astro", "TailwindCSS", "Gamification", "Vercel"],
+    link: "https://agunggumelarsaputra.com",
+    github: "https://github.com"
+  },
+  {
+    title: "Sistem Informasi Akademik & Presensi Vokasi",
+    category: "Fullstack Web App",
+    description: "Sistem pencatatan kehadiran dan evaluasi kompetensi siswa jurusan RPL berbasis web modern.",
+    tags: ["Node.js", "Express", "MySQL", "TailwindCSS"],
+    link: "#",
+    github: "https://github.com"
+  },
+  {
+    title: "Media Pembelajaran Interaktif Media AR/VR PPLG",
+    category: "Research & EdTech",
+    description: "Pengembangan media ajar konsep logika pemrograman terstruktur bagi pendidikan kejuruan.",
+    tags: ["Research", "Educational Tech", "S2 Research"],
+    link: "#",
+    github: "https://github.com"
+  }
+];
+---
+
+<BaseLayout 
+  title="Portofolio & Projects"
+  description="Showcase aplikasi, media pembelajaran EdTech, dan proyek pengembangan perangkat lunak oleh Agung Gumelar Saputra."
+>
+  <section class="py-12 bg-gradient-to-b from-blue-950/20 to-background border-b border-border/40">
+    <div class="container-main space-y-4">
+      <div class="flex items-center gap-2">
+        <span class="px-3 py-1 rounded-full bg-blue-500/10 border border-blue-500/30 text-blue-400 text-xs font-semibold">
+          💼 Projects & Portfolio
+        </span>
+      </div>
+
+      <h1 class="text-3xl md:text-5xl font-extrabold text-foreground tracking-tight">
+        Portofolio & Showcase Karya
+      </h1>
+
+      <p class="text-base md:text-lg text-muted-foreground max-w-2xl">
+        Kumpulan proyek aplikasi web, media pembelajaran interaktif EdTech, dan riset teknologi vokasi.
+      </p>
+    </div>
+  </section>
+
+  <section class="py-12">
+    <div class="container-main">
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {projects.map((p) => (
+          <div class="card p-6 border-border/60 hover:border-blue-500/50 transition-all flex flex-col justify-between space-y-4 group">
+            <div class="space-y-3">
+              <span class="px-2.5 py-0.5 rounded-full bg-blue-500/10 text-blue-400 text-xs font-semibold">
+                {p.category}
+              </span>
+
+              <h3 class="text-xl font-bold text-foreground group-hover:text-blue-400 transition-colors">
+                {p.title}
+              </h3>
+
+              <p class="text-xs text-muted-foreground leading-relaxed">
+                {p.description}
+              </p>
+
+              <div class="flex flex-wrap gap-1.5 pt-2">
+                {p.tags.map((t) => (
+                  <span class="px-2 py-0.5 rounded bg-accent/60 text-[10px] text-muted-foreground font-mono">
+                    #{t}
+                  </span>
+                ))}
+              </div>
+            </div>
+
+            <div class="pt-4 border-t border-border/40 flex items-center justify-between text-xs">
+              <a href={p.github} target="_blank" rel="noopener noreferrer" class="text-muted-foreground hover:text-foreground font-medium flex items-center gap-1">
+                <span>💻 Source Code</span>
+              </a>
+              <a href={p.link} class="btn btn-primary btn-sm bg-blue-600 hover:bg-blue-500 text-white font-semibold">
+                Live Demo →
+              </a>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  </section>
+</BaseLayout>

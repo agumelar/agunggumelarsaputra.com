@@ -13,4 +13,18 @@ const blog = defineCollection({
   }),
 });
 
-export const collections = { blog };
+const pembelajaran = defineCollection({
+  type: 'content',
+  schema: z.object({
+    title: z.string(),
+    description: z.string(),
+    category: z.string(), // e.g. "Pemrograman Web", "Basis Data", "Algoritma", "OOP"
+    level: z.enum(['Pemula', 'Menengah', 'Lanjutan']).default('Pemula'),
+    order: z.number().default(1),
+    duration: z.string().default('10 min'),
+    tags: z.array(z.string()).default([]),
+    teacherTip: z.string().optional(),
+  }),
+});
+
+export const collections = { blog, pembelajaran };

@@ -1,0 +1,311 @@
+---
+import { TKA_PPLG_QUESTIONS } from '../utils/tkaEngine';
+---
+
+<div class="card p-6 md:p-8 border-cyan-500/30 bg-gradient-to-br from-card via-card to-cyan-950/20 shadow-2xl relative">
+  
+  <!-- Header Bar Quiz -->
+  <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-border/40 pb-4 mb-6">
+    <div>
+      <div class="flex items-center gap-2">
+        <span class="px-2.5 py-0.5 rounded-full bg-cyan-500/10 border border-cyan-500/30 text-cyan-400 text-xs font-semibold uppercase tracking-wider">Simulasi CBT TKA PPLG</span>
+        <span id="quiz-progress-text" class="text-xs text-muted-foreground font-mono">Soal 1 dari 6</span>
+      </div>
+      <h3 id="quiz-category-title" class="text-lg font-bold text-foreground mt-1">Proses Bisnis PPLG</h3>
+    </div>
+
+    <!-- Timer & Control -->
+    <div class="flex items-center gap-3">
+      <div class="px-3 py-1.5 rounded-lg bg-card border border-border font-mono text-sm font-bold text-amber-400 flex items-center gap-1.5">
+        <span>⏱️</span>
+        <span id="quiz-timer">10:00</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Question Box -->
+  <div id="quiz-question-box" class="space-y-4">
+    <div id="quiz-question-text" class="text-base md:text-lg text-foreground font-medium leading-relaxed">
+      <!-- Question text rendered by JS -->
+    </div>
+
+    <!-- Optional Code Snippet -->
+    <div id="quiz-code-container" class="hidden my-3">
+      <pre class="p-4 rounded-lg bg-slate-950 border border-slate-800 font-mono text-xs md:text-sm text-cyan-300 overflow-x-auto"><code id="quiz-code-text"></code></pre>
+    </div>
+
+    <!-- Options List -->
+    <div id="quiz-options-container" class="space-y-3 pt-2">
+      <!-- Options rendered by JS -->
+    </div>
+  </div>
+
+  <!-- Explanation & Teacher Note Box (Hidden until answered) -->
+  <div id="quiz-explanation-box" class="hidden mt-6 p-4 rounded-xl bg-blue-950/40 border border-blue-500/30 space-y-2">
+    <div class="flex items-center gap-2 text-sm font-bold text-cyan-400">
+      <span>💡 Pembahasan & Kunci Jawaban</span>
+    </div>
+    <p id="quiz-explanation-text" class="text-sm text-muted-foreground leading-relaxed"></p>
+    <div id="quiz-teacher-note" class="text-xs font-medium text-amber-300 bg-amber-500/10 p-3 rounded-lg border border-amber-500/20 mt-2"></div>
+  </div>
+
+  <!-- Navigation Buttons -->
+  <div class="flex items-center justify-between mt-8 pt-4 border-t border-border/40">
+    <button id="btn-prev-question" class="btn btn-outline btn-sm text-xs font-medium" disabled>
+      ← Soal Sebelumnya
+    </button>
+    
+    <div class="flex items-center gap-2">
+      <button id="btn-check-answer" class="btn btn-primary btn-sm px-5 text-xs font-semibold bg-cyan-600 hover:bg-cyan-500 text-white">
+        Periksa Jawaban
+      </button>
+      <button id="btn-next-question" class="btn btn-primary btn-sm px-5 text-xs font-semibold">
+        Soal Selanjutnya →
+      </button>
+    </div>
+  </div>
+
+  <!-- Final Result Screen (Hidden by default) -->
+  <div id="quiz-result-screen" class="hidden text-center py-10 space-y-6">
+    <div class="w-20 h-20 rounded-full bg-gradient-to-tr from-cyan-500 to-emerald-400 text-4xl flex items-center justify-center mx-auto shadow-xl">
+      🏆
+    </div>
+    <div>
+      <h3 class="text-2xl font-bold text-foreground">Simulasi TKA PPLG Selesai!</h3>
+      <p class="text-sm text-muted-foreground mt-1">Berikut adalah hasil capaian ujian Anda:</p>
+    </div>
+
+    <div class="inline-flex items-center gap-6 px-8 py-4 rounded-2xl bg-card border border-border">
+      <div>
+        <div class="text-xs text-muted-foreground uppercase font-mono">Skor Akhir</div>
+        <div id="result-score-val" class="text-4xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-emerald-400 font-mono">0</div>
+      </div>
+      <div class="h-10 w-px bg-border"></div>
+      <div>
+        <div class="text-xs text-muted-foreground uppercase font-mono">Jawaban Benar</div>
+        <div id="result-correct-val" class="text-2xl font-bold text-emerald-400 font-mono">0 / 6</div>
+      </div>
+      <div class="h-10 w-px bg-border"></div>
+      <div>
+        <div class="text-xs text-muted-foreground uppercase font-mono">Bonus XP</div>
+        <div id="result-xp-val" class="text-2xl font-bold text-amber-400 font-mono">+0 XP</div>
+      </div>
+    </div>
+
+    <div>
+      <button id="btn-restart-quiz" class="btn btn-primary btn-lg font-semibold bg-gradient-to-r from-blue-600 to-cyan-500">
+        Ulangi Simulasi Ujian 🔄
+      </button>
+    </div>
+  </div>
+</div>
+
+<script>
+  import { TKA_PPLG_QUESTIONS } from '../utils/tkaEngine';
+  import { addXp, unlockBadge, getGamificationState } from '../utils/gamification';
+
+  let currentIndex = 0;
+  let userAnswers: (number | null)[] = new Array(TKA_PPLG_QUESTIONS.length).fill(null);
+  let isAnswerChecked = new Array(TKA_PPLG_QUESTIONS.length).fill(false);
+  let secondsRemaining = 600; // 10 minutes
+  let timerInterval: any = null;
+
+  const progressText = document.getElementById('quiz-progress-text');
+  const categoryTitle = document.getElementById('quiz-category-title');
+  const questionText = document.getElementById('quiz-question-text');
+  const codeContainer = document.getElementById('quiz-code-container');
+  const codeText = document.getElementById('quiz-code-text');
+  const optionsContainer = document.getElementById('quiz-options-container');
+  const explanationBox = document.getElementById('quiz-explanation-box');
+  const explanationText = document.getElementById('quiz-explanation-text');
+  const teacherNote = document.getElementById('quiz-teacher-note');
+  const timerEl = document.getElementById('quiz-timer');
+
+  const btnPrev = document.getElementById('btn-prev-question') as HTMLButtonElement;
+  const btnNext = document.getElementById('btn-next-question') as HTMLButtonElement;
+  const btnCheck = document.getElementById('btn-check-answer') as HTMLButtonElement;
+  const btnRestart = document.getElementById('btn-restart-quiz');
+
+  const questionBox = document.getElementById('quiz-question-box');
+  const resultScreen = document.getElementById('quiz-result-screen');
+
+  function startTimer() {
+    if (timerInterval) clearInterval(timerInterval);
+    timerInterval = setInterval(() => {
+      secondsRemaining--;
+      if (timerEl) {
+        const m = Math.floor(secondsRemaining / 60);
+        const s = secondsRemaining % 60;
+        timerEl.textContent = `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+      }
+      if (secondsRemaining <= 0) {
+        clearInterval(timerInterval);
+        finishQuiz();
+      }
+    }, 1000);
+  }
+
+  function renderQuestion() {
+    const q = TKA_PPLG_QUESTIONS[currentIndex];
+    if (!q) return;
+
+    if (progressText) progressText.textContent = `Soal ${currentIndex + 1} dari ${TKA_PPLG_QUESTIONS.length}`;
+    if (categoryTitle) categoryTitle.textContent = q.category;
+    if (questionText) questionText.textContent = q.question;
+
+    if (q.codeSnippet && codeContainer && codeText) {
+      codeText.textContent = q.codeSnippet;
+      codeContainer.classList.remove('hidden');
+    } else if (codeContainer) {
+      codeContainer.classList.add('hidden');
+    }
+
+    // Render Options
+    if (optionsContainer) {
+      optionsContainer.innerHTML = q.options.map((opt, idx) => {
+        const isSelected = userAnswers[currentIndex] === idx;
+        const checked = isAnswerChecked[currentIndex];
+        const isCorrect = q.correctAnswer === idx;
+
+        let styleClass = "border-border/60 bg-card hover:bg-accent/40 text-foreground";
+        if (checked) {
+          if (isCorrect) {
+            styleClass = "border-emerald-500 bg-emerald-500/10 text-emerald-300 font-semibold";
+          } else if (isSelected && !isCorrect) {
+            styleClass = "border-red-500 bg-red-500/10 text-red-300 font-semibold";
+          }
+        } else if (isSelected) {
+          styleClass = "border-cyan-500 bg-cyan-500/10 text-cyan-300 font-semibold";
+        }
+
+        return `
+          <button data-opt-idx="${idx}" class="opt-btn w-full p-4 rounded-xl border text-left transition-all flex items-center justify-between text-sm ${styleClass}">
+            <div class="flex items-center gap-3">
+              <span class="w-6 h-6 rounded-full border border-current flex items-center justify-center font-mono text-xs font-bold">
+                ${String.fromCharCode(65 + idx)}
+              </span>
+              <span>${opt}</span>
+            </div>
+            ${checked && isCorrect ? '<span>✅</span>' : ''}
+            ${checked && isSelected && !isCorrect ? '<span>❌</span>' : ''}
+          </button>
+        `;
+      }).join('');
+
+      // Add click handlers for option buttons
+      const optBtns = optionsContainer.querySelectorAll('.opt-btn');
+      optBtns.forEach(btn => {
+        btn.addEventListener('click', () => {
+          if (isAnswerChecked[currentIndex]) return;
+          const selectedIdx = parseInt((btn as HTMLElement).dataset.optIdx || '0');
+          userAnswers[currentIndex] = selectedIdx;
+          renderQuestion();
+        });
+      });
+    }
+
+    // Show/Hide Explanation
+    if (isAnswerChecked[currentIndex] && explanationBox && explanationText && teacherNote) {
+      explanationText.textContent = q.explanation;
+      if (q.teacherNote) {
+        teacherNote.textContent = q.teacherNote;
+        teacherNote.classList.remove('hidden');
+      } else {
+        teacherNote.classList.add('hidden');
+      }
+      explanationBox.classList.remove('hidden');
+    } else if (explanationBox) {
+      explanationBox.classList.add('hidden');
+    }
+
+    // Controls status
+    if (btnPrev) btnPrev.disabled = currentIndex === 0;
+    if (btnNext) {
+      btnNext.textContent = currentIndex === TKA_PPLG_QUESTIONS.length - 1 ? 'Selesaikan Ujian 🏁' : 'Soal Selanjutnya →';
+    }
+  }
+
+  btnCheck?.addEventListener('click', () => {
+    if (userAnswers[currentIndex] === null) {
+      alert('Silakan pilih salah satu jawaban terlebih dahulu!');
+      return;
+    }
+    isAnswerChecked[currentIndex] = true;
+    const q = TKA_PPLG_QUESTIONS[currentIndex];
+    if (userAnswers[currentIndex] === q.correctAnswer) {
+      addXp(20, 'Jawaban TKA benar');
+    }
+    renderQuestion();
+  });
+
+  btnPrev?.addEventListener('click', () => {
+    if (currentIndex > 0) {
+      currentIndex--;
+      renderQuestion();
+    }
+  });
+
+  btnNext?.addEventListener('click', () => {
+    if (currentIndex < TKA_PPLG_QUESTIONS.length - 1) {
+      currentIndex++;
+      renderQuestion();
+    } else {
+      finishQuiz();
+    }
+  });
+
+  function finishQuiz() {
+    clearInterval(timerInterval);
+    let correctCount = 0;
+    TKA_PPLG_QUESTIONS.forEach((q, idx) => {
+      if (userAnswers[idx] === q.correctAnswer) {
+        correctCount++;
+      }
+    });
+
+    const score = Math.round((correctCount / TKA_PPLG_QUESTIONS.length) * 100);
+    const xpEarned = correctCount * 20 + (score >= 80 ? 100 : 0);
+
+    const state = getGamificationState();
+    unlockBadge(state, 'tka-warrior');
+    if (score >= 80) unlockBadge(state, 'tka-master');
+    addXp(score >= 80 ? 100 : 0, 'Bonus kelulusan TKA');
+
+    if (questionBox) questionBox.classList.add('hidden');
+    if (explanationBox) explanationBox.classList.add('hidden');
+    if (btnPrev) btnPrev.classList.add('hidden');
+    if (btnNext) btnNext.classList.add('hidden');
+    if (btnCheck) btnCheck.classList.add('hidden');
+
+    if (resultScreen) {
+      resultScreen.classList.remove('hidden');
+      const scoreVal = document.getElementById('result-score-val');
+      const correctVal = document.getElementById('result-correct-val');
+      const xpVal = document.getElementById('result-xp-val');
+
+      if (scoreVal) scoreVal.textContent = `${score}`;
+      if (correctVal) correctVal.textContent = `${correctCount} / ${TKA_PPLG_QUESTIONS.length}`;
+      if (xpVal) xpVal.textContent = `+${xpEarned} XP`;
+    }
+  }
+
+  btnRestart?.addEventListener('click', () => {
+    currentIndex = 0;
+    userAnswers = new Array(TKA_PPLG_QUESTIONS.length).fill(null);
+    isAnswerChecked = new Array(TKA_PPLG_QUESTIONS.length).fill(false);
+    secondsRemaining = 600;
+
+    if (questionBox) questionBox.classList.remove('hidden');
+    if (btnPrev) btnPrev.classList.remove('hidden');
+    if (btnNext) btnNext.classList.remove('hidden');
+    if (btnCheck) btnCheck.classList.remove('hidden');
+    if (resultScreen) resultScreen.classList.add('hidden');
+
+    startTimer();
+    renderQuestion();
+  });
+
+  // Init
+  startTimer();
+  renderQuestion();
+</script>

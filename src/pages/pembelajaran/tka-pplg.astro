@@ -1,0 +1,37 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import TkaQuiz from '../../components/TkaQuiz.astro';
+---
+
+<BaseLayout 
+  title="Drilling TKA PPLG Simulator"
+  description="Simulasi CBT Ujian Tes Keahlian Akademik PPLG Kurikulum Merdeka Kemendikdasmen oleh Agung Gumelar Saputra."
+>
+  <section class="py-12 bg-gradient-to-b from-cyan-950/20 via-background to-background border-b border-border/40">
+    <div class="container-main space-y-4">
+      <div class="flex items-center gap-2">
+        <span class="px-3 py-1 rounded-full bg-cyan-500/10 border border-cyan-500/30 text-cyan-400 text-xs font-semibold">
+          🎯 Ujian Vokasi SMK
+        </span>
+        <span class="px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-xs font-semibold">
+          ✨ Bonus +100 XP
+        </span>
+      </div>
+
+      <h1 class="text-3xl md:text-5xl font-extrabold text-foreground tracking-tight">
+        Drilling & Tryout TKA PPLG
+      </h1>
+
+      <p class="text-base md:text-lg text-muted-foreground max-w-3xl">
+        Asesmen Tes Keahlian Akademik untuk siswa **Pengembangan Perangkat Lunak dan Gim (PPLG)**. Uji pemahaman kamu mengenai Algoritma, Database, OOP, K3LH, dan Proses Bisnis PPLG secara real-time.
+      </p>
+    </div>
+  </section>
+
+  <!-- Quiz Engine Container -->
+  <section class="py-12">
+    <div class="container-main">
+      <TkaQuiz />
+    </div>
+  </section>
+</BaseLayout>

@@ -1,24 +1,62 @@
 ---
 import '../styles/global.css';
+import Navigation from '../components/Navigation.astro';
+import Footer from '../components/Footer.astro';
 
 interface Props {
   title: string;
   description?: string;
+  image?: string;
 }
 
-const { title, description = "Website Personal Agung Gumelar Saputra" } = Astro.props;
+const { 
+  title, 
+  description = "Website Personal & Learning Hub Agung Gumelar Saputra - Guru RPL SMKN 1 Rongga & Software Developer.",
+  image = "/favicon.svg"
+} = Astro.props;
 ---
 
 <!doctype html>
 <html lang="id" class="dark">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-    <meta name="description" content={description} />
+    
+    <!-- Primary Meta Tags -->
     <title>{title} | Agung Gumelar Saputra</title>
+    <meta name="title" content={`${title} | Agung Gumelar Saputra`} />
+    <meta name="description" content={description} />
+    <meta name="author" content="Agung Gumelar Saputra" />
+
+    <!-- Open Graph / Facebook / WhatsApp -->
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content={`${title} | Agung Gumelar Saputra`} />
+    <meta property="og:description" content={description} />
+    <meta property="og:image" content={image} />
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Outfit:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+
+    <!-- Theme Inline Script to prevent FOUC -->
+    <script is:inline>
+      (function() {
+        const storedTheme = localStorage.getItem('theme');
+        if (storedTheme === 'light') {
+          document.documentElement.classList.remove('dark');
+        } else {
+          document.documentElement.classList.add('dark');
+        }
+      })();
+    </script>
   </head>
-  <body class="min-h-screen bg-background font-sans antialiased">
-    <slot />
+  <body class="min-h-screen bg-background text-foreground font-sans antialiased flex flex-col selection:bg-blue-500/30 selection:text-blue-400">
+    <Navigation />
+    <main class="flex-1">
+      <slot />
+    </main>
+    <Footer />
   </body>
 </html>

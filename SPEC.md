@@ -1,8 +1,9 @@
-# Personal Website Specification - Agung Gumelar Saputra
+# Personal Website & Learning Hub Specification - Agung Gumelar Saputra
 
-> **Version:** 1.0  
-> **Last Updated:** 2026-03-25  
-> **Status:** Approved  
+> **Version:** 2.0 (Revamp)  
+> **Last Updated:** 2026-08-05  
+> **Status:** Active Development  
+> **Target Deployment:** Vercel Static (SSG)  
 > **Timezone:** GMT+7 (WIB)
 
 ---
@@ -10,202 +11,103 @@
 ## 1. Project Overview
 
 ### Project Name
-Agung Gumelar Saputra Personal Website
+Agung Gumelar Saputra Personal Website & PPLG Learning Hub
 
-### Project Type
-Personal portfolio website dengan blog system
+### Owner & Brand Identity
+- **Name:** Agung Gumelar Saputra, S.Pd. (Cand. M.Pd. Teknologi Pendidikan & Vokasi)
+- **Role:** Guru Rekayasa Perangkat Lunak (RPL / PPLG) SMKN 1 Rongga & Software Developer
+- **Focus:** Edukasi Vokasi IT, Pemrograman Web Modern, EdTech, & Software Engineering
 
 ### Core Functionality
-Website personal untuk memperkenalkan diri, menampilkan CV, blog/artikel, dan contact page. Menggunakan dark theme yang professional dan clean.
-
-### Target Audience
-- Rekruter/HR
-- Klien potensial
-- fellow developer dan tech enthusiast
-- Academic community (S2 Teknologi Pendidikan & Vokasi)
-
----
-
-## 2. Technology Stack
-
-| Component | Technology | Version |
-|-----------|------------|---------|
-| Framework | Astro | latest |
-| Styling | TailwindCSS | v3.x |
-| CMS | Decap CMS (formerly Netlify CMS) | latest |
-| Comments | Giscus | latest |
-| Deployment | Static files + Caddy | v2.x |
-
-### Why Astro?
-- Sangat ringan (zero JS by default)
-- Built-in support untuk Markdown/MDX
-- Perfect untuk static site
-- Island architecture untuk interaktivitas
+1. **Personal Portfolio & Showcase:** Memperkenalkan diri, pengalaman mengajar, riset teknologi pendidikan, serta showcase aplikasi/proyek.
+2. **Interactive Learning Hub:** Modul pembelajaran RPL/PPLG (W3Schools/Dicoding style sidebar navigation) untuk HTML, CSS, JavaScript, Database, OOP, & Git.
+3. **Drilling TKA PPLG CBT Simulator:** Bank soal & simulasi ujian Tes Keahlian Akademik PPLG Kurikulum Merdeka (Kemendikdasmen) dengan timer, scoring, breakdown topik, & pembahasan.
+4. **Gamification Engine:** Sistem XP, Level (Apprentice Coder s/d Code Master), Lencana Achievements (Rongga Coder, TKA Champion), & Daily Streak yang tersimpan secara lokal (localStorage).
+5. **Blog & Articles:** Artikel opini, tutorial dev, dan jurnal teknologi pendidikan vokasi.
+6. **Interactive CV & Contact:** Halaman riwayat karir, pendidikan, keahlian, dan form kontak.
 
 ---
 
-## 3. UI/UX Specification
+## 2. Technology Stack & Deployment
 
-### 3.1 Color Palette
+| Component | Technology | Version | Description |
+|---|---|---|---|
+| Framework | Astro | v5.x | High-performance SSG |
+| Styling | TailwindCSS | v3.4 | Modern utility-first CSS |
+| Typography | Google Fonts | Inter / Outfit & JetBrains Mono | Clean UI & Code readability |
+| Icons | Lucide / Feather SVG | Latest | Lightweight vector icons |
+| Gamification Engine | Native JS + LocalStorage | ES2024 | Fast client-side persistence |
+| Content Format | MDX / Markdown | Astro Content Collections | Structured modules & blogs |
+| Comments | Giscus | Latest | GitHub Discussions backed |
+| Deployment | Vercel | Static SSG | Global Edge Network, 100% Free |
+
+---
+
+## 3. UI/UX & Design System
+
+### 3.1 Color Palette (Sleek Modern Tech Aesthetic)
 
 | Color Role | Hex Code | Usage |
-|------------|----------|-------|
-| Background Primary | `#0a0a0a` | Main background |
-| Background Secondary | `#141414` | Cards, sections |
-| Background Tertiary | `#1f1f1f` | Hover states |
-| Text Primary | `#f5f5f5` | Main text |
-| Text Secondary | `#a3a3a3` | Muted text |
-| Accent Primary | `#2563eb` | Links, buttons |
-| Accent Hover | `#1d4ed8` | Hover states |
-| Border | `#262626` | Dividers, borders |
+|---|---|---|
+| Background Primary | `#090d16` (Dark) / `#f8fafc` (Light) | Main page background |
+| Background Secondary | `#111827` (Dark) / `#ffffff` (Light) | Cards, sidebars, containers |
+| Background Glass | `rgba(17, 24, 39, 0.7)` | Glassmorphism overlays |
+| Text Primary | `#f3f4f6` (Dark) / `#0f172a` (Light) | Main headings & content |
+| Text Muted | `#9ca3af` (Dark) / `#64748b` (Light) | Secondary captions & dates |
+| Accent Primary (Electric Sapphire)| `#2563eb` | Buttons, active navigation |
+| Accent Secondary (Cyan Glow) | `#06b6d4` | Highlights, badges, gradients |
+| Accent Success (Emerald) | `#10b981` | XP points, correct answers, status |
+| Border Color | `rgba(255, 255, 255, 0.1)` | Subtle divider lines |
 
-### 3.2 Typography
-
-| Element | Font | Size | Weight |
-|---------|------|------|--------|
-| H1 | Inter | 3rem (48px) | 700 |
-| H2 | Inter | 2rem (32px) | 600 |
-| H3 | Inter | 1.5rem (24px) | 600 |
-| Body | Inter | 1rem (16px) | 400 |
-| Small | Inter | 0.875rem (14px) | 400 |
-| Code | JetBrains Mono | 0.875rem | 400 |
-
-### 3.3 Spacing System
-
-- Base unit: 4px
-- Spacing scale: 4, 8, 12, 16, 24, 32, 48, 64, 96px
-- Container max-width: 1200px
-- Content max-width: 800px (untuk blog)
-
-### 3.4 Responsive Breakpoints
-
-| Breakpoint | Width | Target |
-|------------|-------|--------|
-| Mobile | < 640px | Phone |
-| Tablet | 640px - 1024px | Tablet |
-| Desktop | > 1024px | Desktop |
+### 3.2 Key Typography
+- **Headings & Body:** Inter / Outfit
+- **Code Snippets & Terminal:** JetBrains Mono
 
 ---
 
-## 4. Page Structure
+## 4. Site Architecture & Menu Navigation
 
-### 4.1 Landing Page (`/`)
-
-**Sections:**
-1. Navigation - Fixed top, logo + nav links (Home, Blog, CV, Contact)
-2. Hero - Full viewport height, nama besar, tagline, CTA button
-3. About - Foto profil (atau placeholder), bio paragraph
-4. Skills - Grid card untuk setiap skill category
-5. Footer - Copyright, social links
-
-### 4.2 Blog Index (`/blog`)
-
-**Components:**
-- Search input (filter by title)
-- Category filter chips
-- Article cards (thumbnail, title, excerpt, date, tags)
-- Pagination
-
-### 4.3 Blog Post (`/blog/[slug]`)
-
-**Components:**
-- Table of Contents (auto-generated from headings)
-- Article content (MDX rendered)
-- Social share buttons (Twitter, LinkedIn, Facebook)
-- Comment section (Giscus)
-- Tags list
-- Navigation (prev/next article)
-
-### 4.4 CV Page (`/cv`)
-
-**Sections:**
-- Header: Foto + Nama + Title
-- About: Bio singkat
-- Experience: List pengalaman kerja
-- Education: List pendidikan
-- Skills: Skills list (grouped)
-- Contact: Email, social links
-
-### 4.5 Contact Page (`/contact`)
-
-**Components:**
-- Contact form (Name, Email, Message)
-- Social links (GitHub, LinkedIn, Email)
-- Office hours / response time info
+```text
+[ Agung Gumelar Saputra - Logo ]
+├── 🏠 Beranda (Hero Section, About Educator & Developer, Featured Modules, Gamification Stats Preview)
+├── 📚 Learning Hub (/pembelajaran)
+│   ├── 📖 Modul Belajar (Sidebar Navigasi, Reading Progress, Copy Code, Tips Pak Agung)
+│   └── 🎯 Drilling TKA PPLG (/pembelajaran/tka-pplg)
+│       ├── Mode Latihan Kategori (Fokus per Topik TKA PPLG)
+│       └── Mode Tryout CBT (Timer & Scoring Real-time)
+├── 💼 Projects (/projects) (Showcase Karya, Live Demo, Filter Tech Stack)
+├── ✍️ Blog (/blog) (Artikel Tutorial & EdTech)
+├── 📄 CV / Resume (/cv) (Pengalaman Mengajar, Pendidikan, Skills)
+└── ✉️ Kontak (/contact) (Form & Social Links)
+```
 
 ---
 
-## 5. Functionality Specification
+## 5. Gamification System Specifications
 
-### 5.1 Blog System
-
-| Feature | Status | Description |
-|---------|--------|-------------|
-| MDX Support | Yes | Write articles in MDX |
-| Auto TOC | Yes | Generate from headings |
-| Tags/Categories | Yes | Filter by tag |
-| Search | Yes | Filter by title |
-| Reading time | Yes | Auto-calculated |
-
-### 5.2 CMS (Decap CMS)
-
-| Feature | Status | Description |
-|---------|--------|-------------|
-| Admin Dashboard | Yes | `/admin` route |
-| Media Library | Yes | Upload images |
-| Draft/Publish | Yes | Workflow status |
-| Collections | Yes | Blog posts collection |
-| Password Protection | Yes | Basic auth untuk admin page |
-
-### 5.3 Comments (Giscus)
-
-| Feature | Status | Description |
-|---------|--------|-------------|
-| GitHub Discussions | Yes | Comments stored in GitHub |
-| Lazy load | Yes | Load on scroll |
-| Theme sync | Yes | Match dark/light |
+- **XP Calculation:**
+  - Reading a lesson module: `+10 XP`
+  - Answering quiz correctly: `+20 XP`
+  - Finishing TKA Tryout with score ≥ 80: `+100 XP`
+- **Levels:**
+  - Level 1: *Apprentice Coder* (0 - 99 XP)
+  - Level 2: *Junior Developer* (100 - 299 XP)
+  - Level 3: *Logic Architect* (300 - 599 XP)
+  - Level 4: *PPLG Specialist* (600 - 999 XP)
+  - Level 5: *Code Master* (1000+ XP)
+- **Badges:**
+  - 🏅 **Rongga Coder**: Selesaikan 3 modul dasar PPLG.
+  - ⚡ **TKA Warrior**: Ikuti simulasi TKA PPLG pertama.
+  - 👑 **Perfect Score**: Dapatkan nilai 100 di Tryout TKA.
+  - 🔥 **Daily Learner**: Belajar 3 hari berturut-turut.
 
 ---
 
-## 6. Acceptance Criteria
+## 6. Acceptance Criteria & Quality Checklist
 
-### Landing Page
-- Navigation fixed di top saat scroll
-- Hero section full height dengan animasi fade-in
-- About section menampilkan bio
-- Skills section menampilkan grid cards
-- Footer dengan social links
-- Responsive di mobile/tablet/desktop
-
-### Blog System
-- Blog index menampilkan semua artikel
-- Search berfungsi untuk filter title
-- Tags filter berfungsi
-- Blog post menampilkan TOC
-- Social share buttons work
-- Giscus comments load properly
-
-### CMS
-- Admin accessible di `/admin` dengan password
-- Can create new post
-- Can upload images
-- Publish workflow works
-
-### CV Page
-- Semua sections terisi dengan data
-- Responsive layout
-
-### Contact Page
-- Form validation works
-- Form submission works
-- Social links functional
-
----
-
-## 7. Future Enhancements (Out of Scope)
-
-- Light mode toggle
-- Portfolio/Projects page
-- Newsletter subscription
-- Analytics dashboard
-- Multi-language support (i18n)
+- [x] Unik & Khas (Branding Agung Gumelar Saputra - SMKN 1 Rongga & S2 Tekpen).
+- [ ] Dark/Light mode toggle yang mulus tanpa FOUC.
+- [ ] Tampilan responsive sempurna di Mobile, Tablet, dan Desktop.
+- [ ] Engine Gamification berjalan 100% di browser client via LocalStorage.
+- [ ] Modul Drilling TKA PPLG dengan timer, scoring, dan pembahasan.
+- [ ] Deployable ke Vercel tanpa error build.
