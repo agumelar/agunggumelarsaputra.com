@@ -1,0 +1,132 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import { db } from '../db';
+import { userGamification, userProgress, tkaAttempts, users } from '../db/schema';
+import { eq, desc } from 'drizzle-orm';
+
+const user = Astro.locals.user;
+if (!user) {
+  return Astro.redirect('/login');
+}
+
+let [stats] = await db.select().from(userGamification).where(eq(userGamification.userId, user.userId)).limit(1);
+if (!stats) {
+  [stats] = await db.insert(userGamification).values({ userId: user.userId, xp: 0, level: 1 }).returning();
+}
+
+const completedLessons = await db.select().from(userProgress).where(eq(userProgress.userId, user.userId));
+const examHistory = await db.select().from(tkaAttempts).where(eq(tkaAttempts.userId, user.userId)).orderBy(desc(tkaAttempts.createdAt)).limit(5);
+
+const topUsers = await db.select({
+  name: users.name,
+  xp: userGamification.xp,
+  level: userGamification.level,
+}).from(userGamification)
+  .innerJoin(users, eq(userGamification.userId, users.id))
+  .orderBy(desc(userGamification.xp))
+  .limit(5);
+---
+
+<BaseLayout title="Student Dashboard" description="Dashboard Gamifikasi Belajar Siswa PPLG">
+  <section class="py-12 bg-gradient-to-b from-blue-950/20 via-background to-background">
+    <div class="container-main space-y-8">
+      
+      <!-- Welcome Header -->
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-border/40 pb-6">
+        <div>
+          <span class="text-xs text-cyan-400 font-mono">⚡ Student Portal Dashboard</span>
+          <h1 class="text-3xl font-extrabold text-foreground">Halo, {user.name}! 👋</h1>
+          <p class="text-xs text-muted-foreground">Siap melanjutkan petualangan kodingmu hari ini?</p>
+        </div>
+        <form action="/api/auth/logout" method="POST">
+          <button type="submit" class="btn btn-outline btn-sm text-red-400 border-red-500/30 hover:bg-red-500/10">
+            Keluar Portal
+          </button>
+        </form>
+      </div>
+
+      <!-- Gamification Stats Grid -->
+      <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
+        <div class="p-5 rounded-xl bg-card border border-border/60 space-y-1">
+          <span class="text-xs text-muted-foreground">Total Experience</span>
+          <div class="text-3xl font-extrabold text-amber-400 font-mono">{stats.xp} XP</div>
+        </div>
+        <div class="p-5 rounded-xl bg-card border border-border/60 space-y-1">
+          <span class="text-xs text-muted-foreground">Level Belajar</span>
+          <div class="text-3xl font-extrabold text-emerald-400 font-mono">Lvl {stats.level}</div>
+        </div>
+        <div class="p-5 rounded-xl bg-card border border-border/60 space-y-1">
+          <span class="text-xs text-muted-foreground">Modul Selesai</span>
+          <div class="text-3xl font-extrabold text-blue-400 font-mono">{completedLessons.length}</div>
+        </div>
+        <div class="p-5 rounded-xl bg-card border border-border/60 space-y-1">
+          <span class="text-xs text-muted-foreground">Ujian TKA Diikuti</span>
+          <div class="text-3xl font-extrabold text-cyan-400 font-mono">{examHistory.length}</div>
+        </div>
+      </div>
+
+      <!-- Dashboard Main Grid -->
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        
+        <!-- Left 2 Cols: Progress & Exam History -->
+        <div class="lg:col-span-2 space-y-6">
+          <div class="p-6 rounded-xl bg-card border border-border/60 space-y-4">
+            <h2 class="text-lg font-bold text-foreground">🎯 Mulai Belajar & Simulasi</h2>
+            <div class="flex flex-wrap gap-3">
+              <a href="/pembelajaran" class="btn btn-primary font-semibold bg-blue-600 hover:bg-blue-500 text-white">
+                📚 Buka Modul Learning Hub
+              </a>
+              <a href="/pembelajaran/tka-pplg" class="btn btn-outline border-cyan-500/40 text-cyan-400 hover:bg-cyan-500/10">
+                🎯 Simulasi Drilling TKA PPLG
+              </a>
+            </div>
+          </div>
+
+          <!-- Exam History -->
+          <div class="p-6 rounded-xl bg-card border border-border/60 space-y-4">
+            <h2 class="text-lg font-bold text-foreground">📊 Riwayat Ujian TKA</h2>
+            {examHistory.length === 0 ? (
+              <p class="text-xs text-muted-foreground">Belum ada riwayat ujian. Ikuti simulasi TKA untuk mendapatkan XP bonus!</p>
+            ) : (
+              <div class="space-y-2">
+                {examHistory.map((attempt) => (
+                  <div class="p-3 rounded-lg bg-background border border-border/40 flex items-center justify-between text-xs">
+                    <div>
+                      <span class="font-bold text-foreground">Skor TKA: {attempt.score}/100</span>
+                      <span class="text-[10px] text-muted-foreground block">Benar {attempt.correctAnswers} dari {attempt.totalQuestions} soal</span>
+                    </div>
+                    <span class="px-2 py-1 rounded bg-amber-500/10 text-amber-400 font-mono font-bold">+{attempt.xpEarned} XP</span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+
+        <!-- Right 1 Col: Leaderboard -->
+        <div class="space-y-6">
+          <div class="p-6 rounded-xl bg-card border border-border/60 space-y-4">
+            <h2 class="text-lg font-bold text-foreground flex items-center gap-2">
+              <span>🏆 Leaderboard Siswa</span>
+            </h2>
+            <div class="space-y-3">
+              {topUsers.map((top, idx) => (
+                <div class="flex items-center justify-between p-2.5 rounded-lg bg-background border border-border/40 text-xs">
+                  <div class="flex items-center gap-2">
+                    <span class="w-5 h-5 rounded-full bg-blue-500/20 text-blue-400 flex items-center justify-center font-bold font-mono text-[10px]">
+                      {idx + 1}
+                    </span>
+                    <span class="font-semibold text-foreground">{top.name}</span>
+                  </div>
+                  <span class="font-mono text-amber-400 font-bold">{top.xp} XP</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+  </section>
+</BaseLayout>
