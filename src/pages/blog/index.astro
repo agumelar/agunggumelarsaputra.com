@@ -1,0 +1,60 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import Navigation from '../../components/Navigation.astro';
+import Footer from '../../components/Footer.astro';
+import { getCollection } from 'astro:content';
+
+const posts = (await getCollection('blog'))
+  .filter(post => !post.data.draft)
+  .sort((a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf());
+
+const allTags = [...new Set(posts.flatMap(post => post.data.tags))];
+---
+
+<BaseLayout title="Blog" description="Articles and tutorials">
+  <Navigation />
+  <main class="pt-24 pb-16">
+    <div class="container-main">
+      <h1 class="text-4xl font-bold mb-8">Blog</h1>
+      
+      <!-- Tags Filter -->
+      <div class="flex flex-wrap gap-2 mb-8">
+        <a href="/blog" class="px-3 py-1 bg-accent-primary text-white text-sm rounded-full">
+          All
+        </a>
+        {allTags.map((tag) => (
+          <a href={`/blog?tag=${tag}`} class="px-3 py-1 bg-bg-tertiary text-text-secondary text-sm rounded-full hover:bg-accent-primary hover:text-white transition-colors">
+            {tag}
+          </a>
+        ))}
+      </div>
+      
+      <!-- Blog Posts -->
+      <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {posts.map((post) => (
+          <article class="bg-bg-secondary rounded-xl border border-border overflow-hidden hover:border-accent-primary transition-colors">
+            <a href={`/blog/${post.slug}`}>
+              <div class="p-6">
+                <h2 class="text-xl font-semibold mb-2">{post.data.title}</h2>
+                <p class="text-text-secondary text-sm mb-4">{post.data.description}</p>
+                <div class="flex items-center justify-between">
+                  <time class="text-text-secondary text-xs">
+                    {post.data.pubDate.toLocaleDateString('id-ID', { year: 'numeric', month: 'long', day: 'numeric' })}
+                  </time>
+                  <div class="flex gap-2">
+                    {post.data.tags.slice(0, 2).map((tag) => (
+                      <span class="text-xs px-2 py-1 bg-bg-tertiary text-text-secondary rounded">
+                        {tag}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </a>
+          </article>
+        ))}
+      </div>
+    </div>
+  </main>
+  <Footer />
+</BaseLayout>

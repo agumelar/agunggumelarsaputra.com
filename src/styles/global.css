@@ -1,0 +1,34 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html {
+    scroll-behavior: smooth;
+  }
+  
+  body {
+    @apply bg-bg-primary text-text-primary font-sans;
+  }
+  
+  h1 { @apply text-5xl font-bold; }
+  h2 { @apply text-3xl font-semibold; }
+  h3 { @apply text-xl font-semibold; }
+  p { @apply text-base text-text-secondary leading-relaxed; }
+  
+  a {
+    @apply text-accent-primary hover:text-accent-hover transition-colors;
+  }
+}
+
+@layer components {
+  .container-main {
+    @apply max-w-6xl mx-auto px-4;
+  }
+  
+  .container-content {
+    @apply max-w-3xl mx-auto px-4;
+  }
+}

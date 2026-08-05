@@ -1,0 +1,32 @@
+---
+const socialLinks = [
+  { href: 'https://github.com/agumelar', label: 'GitHub' },
+  { href: 'https://linkedin.com/in/agunggumelarsaputra', label: 'LinkedIn' },
+  { href: 'mailto:agumelarsaputra@gmail.com', label: 'Email' },
+];
+---
+
+<footer class="bg-bg-secondary border-t border-border py-8 mt-auto">
+  <div class="container-main text-center">
+    <p class="text-text-secondary text-sm">
+      &copy; {new Date().getFullYear()} Agung Gumelar Saputra. All rights reserved.
+    </p>
+    
+    <div class="flex justify-center gap-4 mt-4">
+      {socialLinks.map((link) => (
+        <a 
+          href={link.href}
+          target="_blank"
+          rel="noopener noreferrer"
+          class="text-text-secondary hover:text-accent-primary transition-colors"
+        >
+          {link.label}
+        </a>
+      ))}
+    </div>
+    
+    <p class="text-text-secondary text-xs mt-4 opacity-60">
+      Built with Astro & TailwindCSS • Hosted on VPS with Caddy
+    </p>
+  </div>
+</footer>

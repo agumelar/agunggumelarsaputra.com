@@ -1,0 +1,35 @@
+---
+const skills = [
+  {
+    title: "Software Development",
+    description: "Rekayasa Perangkat Lunak, Web Development, Mobile Apps"
+  },
+  {
+    title: "Artificial Intelligence",
+    description: "Machine Learning, NLP, AI Applications"
+  },
+  {
+    title: "EdTech",
+    description: "Educational Technology, Learning Management Systems"
+  },
+  {
+    title: "Teknologi Pendidikan",
+    description: "Instructional Design, Digital Learning"
+  },
+];
+---
+
+<section id="skills" class="py-24">
+  <div class="container-main">
+    <h2 class="text-3xl font-semibold text-center mb-12">Keahlian</h2>
+    
+    <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+      {skills.map((skill) => (
+        <div class="bg-bg-secondary p-6 rounded-xl border border-border hover:border-accent-primary transition-colors">
+          <h3 class="text-lg font-semibold mb-3">{skill.title}</h3>
+          <p class="text-text-secondary text-sm">{skill.description}</p>
+        </div>
+      ))}
+    </div>
+  </div>
+</section>
