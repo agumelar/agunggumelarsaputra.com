@@ -28,3 +28,5 @@ npm-debug.log*
 # Superpowers temporary workspace
 .superpowers/
 
+.vercel
+.env*
