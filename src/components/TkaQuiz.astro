@@ -271,6 +271,16 @@ import { TKA_PPLG_QUESTIONS } from '../utils/tkaEngine';
     if (score >= 80) unlockBadge(state, 'tka-master');
     addXp(score >= 80 ? 100 : 0, 'Bonus kelulusan TKA');
 
+    fetch('/api/tka/submit', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        score,
+        totalQuestions: TKA_PPLG_QUESTIONS.length,
+        correctAnswers: correctCount,
+      })
+    }).catch(err => console.log('TKA Submit API Error:', err));
+
     if (questionBox) questionBox.classList.add('hidden');
     if (explanationBox) explanationBox.classList.add('hidden');
     if (btnPrev) btnPrev.classList.add('hidden');
