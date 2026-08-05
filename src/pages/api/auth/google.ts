@@ -1,5 +1,5 @@
 import type { APIRoute } from 'astro';
-import { Google } from 'arctic';
+import { Google, generateState, generateCodeVerifier } from 'arctic';
 
 export const GET: APIRoute = async ({ cookies, redirect }) => {
   const clientId = process.env.GOOGLE_CLIENT_ID;
@@ -18,17 +18,27 @@ export const GET: APIRoute = async ({ cookies, redirect }) => {
     );
   }
 
-  const google = new Google(
-    clientId,
-    clientSecret,
-    `${process.env.SITE_URL || 'https://agunggumelarsaputracom.vercel.app'}/api/auth/callback/google`
-  );
+  const siteUrl = process.env.SITE_URL || 'https://agunggumelarsaputracom.vercel.app';
+  const google = new Google(clientId, clientSecret, `${siteUrl}/api/auth/callback/google`);
 
-  const state = Math.random().toString(36).substring(2);
-  const codeVerifier = Math.random().toString(36).substring(2);
+  const state = generateState();
+  const codeVerifier = generateCodeVerifier();
 
-  cookies.set('google_oauth_state', state, { path: '/', httpOnly: true, maxAge: 600 });
-  cookies.set('google_code_verifier', codeVerifier, { path: '/', httpOnly: true, maxAge: 600 });
+  cookies.set('google_oauth_state', state, {
+    path: '/',
+    httpOnly: true,
+    secure: import.meta.env.PROD,
+    sameSite: 'lax',
+    maxAge: 60 * 10,
+  });
+
+  cookies.set('google_code_verifier', codeVerifier, {
+    path: '/',
+    httpOnly: true,
+    secure: import.meta.env.PROD,
+    sameSite: 'lax',
+    maxAge: 60 * 10,
+  });
 
   const url = google.createAuthorizationURL(state, codeVerifier, ['openid', 'profile', 'email']);
   return redirect(url.toString());
