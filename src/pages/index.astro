@@ -12,58 +12,55 @@ const sortedModules = allModules.sort((a, b) => a.data.order - b.data.order);
   description="Website resmi Agung Gumelar Saputra - Guru Rekayasa Perangkat Lunak SMKN 1 Rongga, S2 Teknologi Pendidikan, & Software Engineer."
 >
   <!-- Hero Section -->
-  <section class="relative pt-12 pb-20 overflow-hidden border-b border-border/40 bg-gradient-to-b from-blue-950/20 via-background to-background">
-    <!-- Grid Overlay Pattern -->
-    <div class="absolute inset-0 bg-[linear-gradient(to_right,#1f293715_1px,transparent_1px),linear-gradient(to_bottom,#1f293715_1px,transparent_1px)] bg-[size:3rem_3rem] [mask-image:radial-gradient(ellipse_60%_50%_at_50%_0%,#000_70%,transparent_100%)] pointer-events-none"></div>
-
+  <section class="relative pt-12 pb-16 overflow-hidden border-b border-border bg-secondary/30">
     <div class="container-main relative">
       <div class="max-w-3xl space-y-6">
         
         <!-- Role Badges -->
         <div class="flex flex-wrap items-center gap-2">
-          <span class="px-3 py-1 rounded-full bg-blue-500/10 border border-blue-500/30 text-blue-400 text-xs font-semibold">
+          <span class="px-2.5 py-0.5 rounded-md bg-secondary border border-border text-foreground text-xs font-semibold">
             👨‍🏫 Guru RPL SMKN 1 Rongga
           </span>
-          <span class="px-3 py-1 rounded-full bg-cyan-500/10 border border-cyan-500/30 text-cyan-400 text-xs font-semibold">
+          <span class="px-2.5 py-0.5 rounded-md bg-secondary border border-border text-foreground text-xs font-semibold">
             🎓 S2 Teknologi Pendidikan
           </span>
-          <span class="px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-xs font-semibold">
+          <span class="px-2.5 py-0.5 rounded-md bg-secondary border border-border text-foreground text-xs font-semibold">
             💻 Software Engineer
           </span>
         </div>
 
         <!-- Hero Headline -->
-        <h1 class="text-4xl md:text-6xl font-extrabold tracking-tight text-foreground leading-[1.15]">
-          Mencetak Talenta <span class="text-transparent bg-clip-text bg-gradient-to-r from-blue-500 via-cyan-400 to-emerald-400">Vokasi IT & PPLG</span> Unggulan
+        <h1 class="text-3xl md:text-5xl font-bold tracking-tight text-foreground leading-[1.2]">
+          Mencetak Talenta Vokasi IT & PPLG Unggulan
         </h1>
 
         <!-- Bio Paragraph -->
-        <p class="text-lg md:text-xl text-muted-foreground leading-relaxed">
-          Selamat datang! Portal edukasi interaktif <strong class="text-foreground">Agung Gumelar Saputra</strong>. Berbagi modul pembelajaran Rekayasa Perangkat Lunak (RPL), simulasi <strong class="text-cyan-400">Drilling TKA PPLG</strong>, jurnal teknologi pendidikan, dan etalase karya.
+        <p class="text-base md:text-lg text-muted-foreground leading-relaxed">
+          Selamat datang di portal edukasi interaktif <strong class="text-foreground">Agung Gumelar Saputra</strong>. Berbagi modul pembelajaran Rekayasa Perangkat Lunak (RPL), simulasi <strong class="text-foreground">Drilling TKA PPLG</strong>, jurnal teknologi pendidikan, dan etalase karya vokasi.
         </p>
 
         <!-- CTA Action Buttons -->
-        <div class="flex flex-wrap items-center gap-4 pt-2">
-          <a href="/pembelajaran" class="btn btn-primary btn-lg font-semibold bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-500 hover:to-cyan-400 text-white shadow-lg shadow-blue-500/25">
+        <div class="flex flex-wrap items-center gap-3 pt-1">
+          <a href="/pembelajaran" class="btn btn-primary text-xs sm:text-sm font-semibold px-4 py-2.5 rounded-lg shadow-sm">
             📚 Mulai Belajar & Gamifikasi
           </a>
-          <a href="/pembelajaran/tka-pplg" class="btn btn-outline btn-lg font-semibold border-cyan-500/40 text-cyan-400 hover:bg-cyan-500/10">
+          <a href="/pembelajaran/tka-pplg" class="btn btn-outline text-xs sm:text-sm font-semibold px-4 py-2.5 rounded-lg border-border hover:bg-secondary">
             🎯 Drilling TKA PPLG
           </a>
         </div>
 
         <!-- Quick Stats Cards -->
-        <div class="grid grid-cols-2 sm:grid-cols-3 gap-4 pt-6 border-t border-border/40">
-          <div class="p-4 rounded-xl bg-card/60 border border-border/50 backdrop-blur">
-            <div class="text-2xl font-extrabold text-blue-400 font-mono">PPLG</div>
+        <div class="grid grid-cols-2 sm:grid-cols-3 gap-3.5 pt-6 border-t border-border">
+          <div class="p-3.5 rounded-lg bg-card border border-border">
+            <div class="text-xl font-bold text-foreground font-mono">PPLG</div>
             <div class="text-xs text-muted-foreground mt-0.5">Kurikulum Merdeka SMK</div>
           </div>
-          <div class="p-4 rounded-xl bg-card/60 border border-border/50 backdrop-blur">
-            <div class="text-2xl font-extrabold text-cyan-400 font-mono">TKA</div>
+          <div class="p-3.5 rounded-lg bg-card border border-border">
+            <div class="text-xl font-bold text-foreground font-mono">TKA</div>
             <div class="text-xs text-muted-foreground mt-0.5">CBT Simulator Ujian</div>
           </div>
-          <div class="p-4 rounded-xl bg-card/60 border border-border/50 backdrop-blur col-span-2 sm:col-span-1">
-            <div class="text-2xl font-extrabold text-emerald-400 font-mono">EdTech</div>
+          <div class="p-3.5 rounded-lg bg-card border border-border col-span-2 sm:col-span-1">
+            <div class="text-xl font-bold text-foreground font-mono">EdTech</div>
             <div class="text-xs text-muted-foreground mt-0.5">Gamified Learning</div>
           </div>
         </div>
@@ -73,14 +70,14 @@ const sortedModules = allModules.sort((a, b) => a.data.order - b.data.order);
   </section>
 
   <!-- Gamification Widget Preview Section -->
-  <section class="py-12 bg-background border-b border-border/40">
+  <section class="py-12 bg-background border-b border-border">
     <div class="container-main space-y-6">
       <div class="flex flex-col md:flex-row md:items-center justify-between gap-2">
         <div>
-          <h2 class="text-2xl font-bold text-foreground">Kemajuan & Gamifikasi Siswa</h2>
-          <p class="text-sm text-muted-foreground">Kumpulkan XP dan raih Lencana Prestasi setiap kali membaca modul & mengerjakan kuis.</p>
+          <h2 class="text-xl sm:text-2xl font-bold text-foreground">Kemajuan & Gamifikasi Siswa</h2>
+          <p class="text-xs sm:text-sm text-muted-foreground">Kumpulkan XP dan raih Lencana Prestasi setiap kali membaca modul & mengerjakan kuis.</p>
         </div>
-        <a href="/pembelajaran" class="text-xs font-semibold text-blue-400 hover:underline">Lihat Semua Modul Belajar →</a>
+        <a href="/pembelajaran" class="text-xs font-semibold text-primary hover:underline">Lihat Semua Modul Belajar →</a>
       </div>
 
       <GamificationWidget />
@@ -88,40 +85,40 @@ const sortedModules = allModules.sort((a, b) => a.data.order - b.data.order);
   </section>
 
   <!-- Featured Modules & Drilling Spotlight -->
-  <section class="py-16 bg-card/20">
-    <div class="container-main space-y-10">
+  <section class="py-14 bg-secondary/20">
+    <div class="container-main space-y-8">
       
       <!-- Module Grid Header -->
       <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <span class="px-2.5 py-0.5 rounded-full bg-blue-500/10 border border-blue-500/30 text-blue-400 text-xs font-semibold">MODUL TERPOPULER</span>
-          <h2 class="text-3xl font-extrabold text-foreground mt-1">Materi Pembelajaran PPLG</h2>
+          <span class="px-2 py-0.5 rounded text-[10px] bg-secondary text-foreground font-mono font-semibold border border-border">MODUL TERPOPULER</span>
+          <h2 class="text-2xl font-bold text-foreground mt-1.5">Materi Pembelajaran PPLG</h2>
         </div>
-        <a href="/pembelajaran" class="btn btn-outline btn-sm">Jelajahi Semua Modul →</a>
+        <a href="/pembelajaran" class="btn btn-outline btn-sm rounded-lg text-xs">Jelajahi Semua Modul →</a>
       </div>
 
       <!-- Modules List Grid -->
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
         {sortedModules.map((mod) => (
-          <div class="card p-6 border-border/60 hover:border-blue-500/40 transition-all group flex flex-col justify-between space-y-4">
-            <div class="space-y-3">
+          <div class="card p-5 border-border bg-card transition-colors flex flex-col justify-between space-y-3 rounded-xl shadow-sm hover:border-primary/50">
+            <div class="space-y-2.5">
               <div class="flex items-center justify-between">
-                <span class="px-2.5 py-0.5 rounded-full bg-blue-500/10 text-blue-400 text-xs font-semibold">
+                <span class="px-2 py-0.5 rounded text-[10px] bg-secondary text-foreground font-mono font-semibold border border-border">
                   {mod.data.category}
                 </span>
-                <span class="text-xs text-muted-foreground font-mono">⏳ {mod.data.duration}</span>
+                <span class="text-xs text-muted-foreground font-mono">{mod.data.duration}</span>
               </div>
-              <h3 class="text-xl font-bold text-foreground group-hover:text-blue-400 transition-colors">
+              <h3 class="text-base font-bold text-foreground hover:text-primary transition-colors">
                 <a href={`/pembelajaran/${mod.id || mod.slug}`}>{mod.data.title}</a>
               </h3>
-              <p class="text-sm text-muted-foreground leading-relaxed line-clamp-2">
+              <p class="text-xs text-muted-foreground leading-relaxed line-clamp-2">
                 {mod.data.description}
               </p>
             </div>
 
-            <div class="pt-4 border-t border-border/40 flex items-center justify-between text-xs">
-              <span class="text-emerald-400 font-medium">✨ +10 XP</span>
-              <a href={`/pembelajaran/${mod.id || mod.slug}`} class="btn btn-primary btn-sm bg-blue-600 hover:bg-blue-500 text-white font-semibold">
+            <div class="pt-3 border-t border-border flex items-center justify-between text-xs">
+              <span class="text-amber-600 dark:text-amber-400 font-medium font-mono">✨ +10 XP</span>
+              <a href={`/pembelajaran/${mod.id || mod.slug}`} class="btn btn-primary btn-sm text-xs font-semibold px-3 py-1.5 rounded-lg">
                 Baca Modul →
               </a>
             </div>
@@ -129,20 +126,20 @@ const sortedModules = allModules.sort((a, b) => a.data.order - b.data.order);
         ))}
 
         <!-- TKA Drilling Feature Spotlight Card -->
-        <div class="card p-6 border-cyan-500/40 bg-gradient-to-br from-cyan-950/40 to-blue-950/40 flex flex-col justify-between space-y-4 relative overflow-hidden">
-          <div class="space-y-3">
+        <div class="card p-5 border-border bg-secondary/50 flex flex-col justify-between space-y-3 rounded-xl shadow-sm">
+          <div class="space-y-2.5">
             <div class="flex items-center gap-2">
-              <span class="px-2.5 py-0.5 rounded-full bg-cyan-500/20 text-cyan-300 text-xs font-bold uppercase tracking-wider">FITUR UNGGULAN</span>
-              <span class="text-xs text-amber-400 font-mono font-bold">+100 XP</span>
+              <span class="px-2 py-0.5 rounded text-[10px] bg-secondary text-foreground font-mono font-semibold border border-border">FITUR UNGGULAN</span>
+              <span class="text-xs text-amber-600 dark:text-amber-400 font-mono font-bold">+100 XP</span>
             </div>
-            <h3 class="text-2xl font-extrabold text-foreground">Drilling & Tryout TKA PPLG</h3>
-            <p class="text-sm text-muted-foreground leading-relaxed">
+            <h3 class="text-base font-bold text-foreground">Drilling & Tryout TKA PPLG</h3>
+            <p class="text-xs text-muted-foreground leading-relaxed">
               Persiapkan Ujian Tes Keahlian Akademik PPLG dengan simulasi CBT interaktif berbasis kisi-kisi resmi Kemendikdasmen. Dilengkapi timer & pembahasan soal dari Pak Agung!
             </p>
           </div>
 
-          <div class="pt-4 border-t border-cyan-500/20">
-            <a href="/pembelajaran/tka-pplg" class="btn btn-primary btn-lg w-full font-bold bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-white shadow-lg">
+          <div class="pt-3 border-t border-border">
+            <a href="/pembelajaran/tka-pplg" class="btn btn-primary w-full text-xs font-semibold py-2.5 rounded-lg">
               🎯 Mulai Simulasi TKA Sekarang
             </a>
           </div>

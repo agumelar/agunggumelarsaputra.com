@@ -1,11 +1,15 @@
 import type { APIRoute } from 'astro';
-import { db, ensureDbInitialized } from '../../db';
+import { db, isDbConfigured, ensureDbInitialized } from '../../db';
 import { enrollmentTokens, userEnrollments, users } from '../../db/schema';
 import { eq, and } from 'drizzle-orm';
 
 export const POST: APIRoute = async ({ request, locals }) => {
   if (!locals.user) {
     return new Response(JSON.stringify({ error: 'Harap masuk (login) terlebih dahulu untuk mendaftar token sesi.' }), { status: 401 });
+  }
+
+  if (!isDbConfigured()) {
+    return new Response(JSON.stringify({ error: 'Database belum terhubung di server.' }), { status: 503 });
   }
 
   try {

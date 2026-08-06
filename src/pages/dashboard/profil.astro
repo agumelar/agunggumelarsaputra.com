@@ -1,27 +1,56 @@
 ---
 import DashboardLayout from '../../layouts/DashboardLayout.astro';
-import { db, ensureDbInitialized } from '../../db';
+import { db, isDbConfigured, ensureDbInitialized } from '../../db';
 import { users, userGamification } from '../../db/schema';
 import { eq } from 'drizzle-orm';
 import { isSuperAdmin, isSuperAdminEmail, canAccessAdminPanel } from '../../utils/auth';
-
-await ensureDbInitialized();
 
 const user = Astro.locals.user;
 if (!user) {
   return Astro.redirect('/login');
 }
 
-// Fetch live user data from DB
-let [dbUser] = await db.select().from(users).where(eq(users.id, user.userId)).limit(1);
-if (!dbUser) {
-  return Astro.redirect('/login');
-}
+let dbUser: any = {
+  id: user.userId,
+  name: user.name || 'Siswa PPLG',
+  email: user.email,
+  role: user.role || 'student',
+  studentClass: null,
+  createdAt: new Date(),
+};
 
-// Fetch gamification info
-let [stats] = await db.select().from(userGamification).where(eq(userGamification.userId, user.userId)).limit(1);
-if (!stats) {
-  [stats] = await db.insert(userGamification).values({ userId: user.userId, xp: 0, level: 1 }).returning();
+let stats: any = {
+  xp: 0,
+  level: 1,
+  streakDays: 1,
+};
+
+let dbErrorNotice = '';
+
+if (isDbConfigured()) {
+  try {
+    await ensureDbInitialized();
+
+    const [fetchedUser] = await db.select().from(users).where(eq(users.id, user.userId)).limit(1);
+    if (fetchedUser) {
+      dbUser = fetchedUser;
+    }
+
+    const [userStats] = await db.select().from(userGamification).where(eq(userGamification.userId, user.userId)).limit(1);
+    if (userStats) {
+      stats = userStats;
+    } else if (fetchedUser) {
+      try {
+        const [newStats] = await db.insert(userGamification).values({ userId: user.userId, xp: 0, level: 1 }).returning();
+        if (newStats) stats = newStats;
+      } catch (e) {}
+    }
+  } catch (err) {
+    console.error('Profil DB Query Error:', err);
+    dbErrorNotice = 'Database sedang mengalami kendala. Pastikan POSTGRES_URL dikonfigurasi di Vercel.';
+  }
+} else {
+  dbErrorNotice = 'Database belum terkonfigurasi pada Environment Variables di Vercel.';
 }
 
 const isSuperAdminUser = isSuperAdmin(dbUser.role) || isSuperAdminEmail(dbUser.email);

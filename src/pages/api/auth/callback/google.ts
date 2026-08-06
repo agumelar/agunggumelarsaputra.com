@@ -1,11 +1,14 @@
 import type { APIRoute } from 'astro';
 import { Google } from 'arctic';
-import { db, ensureDbInitialized } from '../../../../db';
+import { db, isDbConfigured, ensureDbInitialized } from '../../../../db';
 import { users, userGamification } from '../../../../db/schema';
 import { eq } from 'drizzle-orm';
 import { signToken, isSuperAdminEmail } from '../../../../utils/auth';
 
 export const GET: APIRoute = async ({ request, url, cookies, redirect }) => {
+  if (!isDbConfigured()) {
+    return new Response('Database belum terhubung di server.', { status: 503 });
+  }
   await ensureDbInitialized();
   const clientId = process.env.GOOGLE_CLIENT_ID;
   const clientSecret = process.env.GOOGLE_CLIENT_SECRET;

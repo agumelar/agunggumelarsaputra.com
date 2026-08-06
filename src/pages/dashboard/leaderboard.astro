@@ -1,6 +1,6 @@
 ---
 import DashboardLayout from '../../layouts/DashboardLayout.astro';
-import { db } from '../../db';
+import { db, isDbConfigured, ensureDbInitialized } from '../../db';
 import { userGamification, users } from '../../db/schema';
 import { eq, desc } from 'drizzle-orm';
 
@@ -9,19 +9,27 @@ if (!user) {
   return Astro.redirect('/login');
 }
 
-// Fetch all ranked users
-const allRankedUsers = await db.select({
-  id: users.id,
-  name: users.name,
-  role: users.role,
-  studentClass: users.studentClass,
-  avatarUrl: users.avatarUrl,
-  xp: userGamification.xp,
-  level: userGamification.level,
-  streakDays: userGamification.streakDays,
-}).from(userGamification)
-  .innerJoin(users, eq(userGamification.userId, users.id))
-  .orderBy(desc(userGamification.xp));
+let allRankedUsers: any[] = [];
+
+if (isDbConfigured()) {
+  try {
+    await ensureDbInitialized();
+    allRankedUsers = await db.select({
+      id: users.id,
+      name: users.name,
+      role: users.role,
+      studentClass: users.studentClass,
+      avatarUrl: users.avatarUrl,
+      xp: userGamification.xp,
+      level: userGamification.level,
+      streakDays: userGamification.streakDays,
+    }).from(userGamification)
+      .innerJoin(users, eq(userGamification.userId, users.id))
+      .orderBy(desc(userGamification.xp));
+  } catch (err) {
+    console.error('Leaderboard DB Error:', err);
+  }
+}
 
 // User's own rank
 const userRankIndex = allRankedUsers.findIndex(u => u.id === user.userId);

@@ -1,6 +1,6 @@
 ---
 import DashboardLayout from '../../layouts/DashboardLayout.astro';
-import { db } from '../../db';
+import { db, isDbConfigured, ensureDbInitialized } from '../../db';
 import { tkaAttempts, userProgress, userGamification } from '../../db/schema';
 import { eq, desc } from 'drizzle-orm';
 import { getCollection } from 'astro:content';
@@ -10,10 +10,21 @@ if (!user) {
   return Astro.redirect('/login');
 }
 
-// Fetch user history
-const examAttempts = await db.select().from(tkaAttempts).where(eq(tkaAttempts.userId, user.userId)).orderBy(desc(tkaAttempts.createdAt));
-const finishedLessons = await db.select().from(userProgress).where(eq(userProgress.userId, user.userId)).orderBy(desc(userProgress.completedAt));
-const [stats] = await db.select().from(userGamification).where(eq(userGamification.userId, user.userId)).limit(1);
+let examAttempts: any[] = [];
+let finishedLessons: any[] = [];
+let stats: any = { xp: 0, level: 1 };
+
+if (isDbConfigured()) {
+  try {
+    await ensureDbInitialized();
+    examAttempts = await db.select().from(tkaAttempts).where(eq(tkaAttempts.userId, user.userId)).orderBy(desc(tkaAttempts.createdAt));
+    finishedLessons = await db.select().from(userProgress).where(eq(userProgress.userId, user.userId)).orderBy(desc(userProgress.completedAt));
+    const [fetchedStats] = await db.select().from(userGamification).where(eq(userGamification.userId, user.userId)).limit(1);
+    if (fetchedStats) stats = fetchedStats;
+  } catch (err) {
+    console.error('Riwayat DB Error:', err);
+  }
+}
 
 let allModules: any[] = [];
 try {

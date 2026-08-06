@@ -1,5 +1,5 @@
 import type { APIRoute } from 'astro';
-import { db, ensureDbInitialized } from '../../../../db';
+import { db, isDbConfigured, ensureDbInitialized } from '../../../../db';
 import { enrollmentTokens } from '../../../../db/schema';
 import { canAccessAdminPanel } from '../../../../utils/auth';
 
@@ -15,6 +15,10 @@ function generateRandomToken(prefix: string = 'RPL'): string {
 export const POST: APIRoute = async ({ request, locals }) => {
   if (!locals.user || !canAccessAdminPanel(locals.user.role)) {
     return new Response(JSON.stringify({ error: 'Akses ditolak. Khusus Guru dan Admin.' }), { status: 403 });
+  }
+
+  if (!isDbConfigured()) {
+    return new Response(JSON.stringify({ error: 'Database belum terhubung di server.' }), { status: 503 });
   }
 
   try {

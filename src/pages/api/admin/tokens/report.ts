@@ -1,5 +1,5 @@
 import type { APIRoute } from 'astro';
-import { db, ensureDbInitialized } from '../../../../db';
+import { db, isDbConfigured, ensureDbInitialized } from '../../../../db';
 import { enrollmentTokens, userEnrollments, users, tkaAttempts, userProgress } from '../../../../db/schema';
 import { canAccessAdminPanel } from '../../../../utils/auth';
 import { eq, desc } from 'drizzle-orm';
@@ -7,6 +7,10 @@ import { eq, desc } from 'drizzle-orm';
 export const GET: APIRoute = async ({ url, locals }) => {
   if (!locals.user || !canAccessAdminPanel(locals.user.role)) {
     return new Response(JSON.stringify({ error: 'Akses ditolak.' }), { status: 403 });
+  }
+
+  if (!isDbConfigured()) {
+    return new Response(JSON.stringify({ error: 'Database belum terhubung di server.' }), { status: 503 });
   }
 
   const tokenIdParam = url.searchParams.get('tokenId');

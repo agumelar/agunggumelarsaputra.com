@@ -18,40 +18,40 @@ const sortedSidebarModules = allModules.sort((a, b) => a.data.order - b.data.ord
   <div class="container-main py-8">
     
     <!-- Module Header Banner -->
-    <div class="p-6 md:p-8 rounded-2xl bg-gradient-to-r from-blue-950/40 via-card to-card border border-blue-500/30 mb-8 space-y-4 shadow-xl">
+    <div class="p-6 md:p-7 rounded-xl bg-card border border-border mb-8 space-y-3 shadow-sm">
       <div class="flex items-center gap-2">
-        <a href="/pembelajaran" class="text-xs text-muted-foreground hover:text-blue-400 font-medium">← Kembali ke Learning Hub</a>
+        <a href="/pembelajaran" class="text-xs text-muted-foreground hover:text-foreground font-medium transition-colors">← Kembali ke Learning Hub</a>
         <span class="text-muted-foreground">•</span>
-        <span class="px-2.5 py-0.5 rounded-full bg-blue-500/10 text-blue-400 text-xs font-semibold">{entry.data.category}</span>
+        <span class="px-2 py-0.5 rounded bg-secondary text-foreground text-xs font-mono font-semibold border border-border">{entry.data.category}</span>
       </div>
 
-      <h1 class="text-3xl md:text-4xl font-extrabold text-foreground tracking-tight">
+      <h1 class="text-2xl md:text-3xl font-bold text-foreground tracking-tight">
         {entry.data.title}
       </h1>
 
-      <p class="text-base text-muted-foreground leading-relaxed max-w-3xl">
+      <p class="text-sm text-muted-foreground leading-relaxed max-w-3xl">
         {entry.data.description}
       </p>
 
       {entry.data.teacherTip && (
-        <div class="p-4 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-300 text-xs md:text-sm font-medium flex items-start gap-3">
-          <span class="text-lg">💡</span>
-          <div>
-            <strong class="font-bold text-amber-400">Tips dari Pak Agung:</strong> {entry.data.teacherTip}
+        <div class="p-3.5 rounded-lg bg-secondary/50 border border-border text-xs md:text-sm font-medium flex items-start gap-2.5">
+          <span class="text-base">💡</span>
+          <div class="text-muted-foreground">
+            <strong class="font-semibold text-foreground">Catatan Guru:</strong> {entry.data.teacherTip}
           </div>
         </div>
       )}
     </div>
 
-    <!-- W3Schools / Dicoding Style Layout: Sidebar + Main Content -->
+    <!-- Layout: Sidebar + Main Content -->
     <div class="grid grid-cols-1 lg:grid-cols-4 gap-8">
       
       <!-- Sticky Sidebar Navigation -->
       <aside class="lg:col-span-1 space-y-4">
-        <div class="sticky top-24 p-5 rounded-xl bg-card border border-border/60 space-y-4 shadow-md">
-          <div class="flex items-center justify-between border-b border-border/40 pb-3">
-            <h3 class="text-xs font-bold text-muted-foreground uppercase tracking-wider">Daftar Modul RPL</h3>
-            <span class="text-xs text-emerald-400 font-mono">XP System</span>
+        <div class="sticky top-24 p-4 rounded-xl bg-card border border-border space-y-3.5 shadow-sm">
+          <div class="flex items-center justify-between border-b border-border pb-2.5">
+            <h3 class="text-xs font-bold text-foreground uppercase tracking-wider font-mono">Daftar Modul RPL</h3>
+            <span class="text-[10px] text-amber-600 dark:text-amber-400 font-mono font-semibold">XP System</span>
           </div>
 
           <nav class="space-y-1 text-sm">
@@ -63,21 +63,21 @@ const sortedSidebarModules = allModules.sort((a, b) => a.data.order - b.data.ord
                 <a 
                   href={`/pembelajaran/${modSlug}`}
                   class:list={[
-                    "block px-3 py-2 rounded-lg text-xs font-medium transition-all flex items-center justify-between",
+                    "block px-2.5 py-1.5 rounded-md text-xs font-medium transition-colors flex items-center justify-between",
                     isCurrent 
-                      ? "bg-blue-600/20 text-blue-400 font-semibold border-l-2 border-blue-500" 
-                      : "text-muted-foreground hover:bg-accent hover:text-foreground"
+                      ? "bg-secondary text-foreground font-semibold border-l-2 border-primary" 
+                      : "text-muted-foreground hover:bg-secondary hover:text-foreground"
                   ]}
                 >
                   <span class="truncate">{mod.data.title}</span>
-                  {isCurrent && <span class="text-[10px] text-emerald-400 font-bold">Dibaca</span>}
+                  {isCurrent && <span class="text-[10px] text-emerald-600 dark:text-emerald-400 font-mono font-semibold">Aktif</span>}
                 </a>
               );
             })}
           </nav>
 
-          <div class="pt-4 border-t border-border/40">
-            <a href="/pembelajaran/tka-pplg" class="btn btn-primary btn-sm w-full text-xs font-semibold bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white">
+          <div class="pt-3 border-t border-border">
+            <a href="/pembelajaran/tka-pplg" class="btn btn-sm w-full text-xs font-semibold bg-cyan-600 hover:bg-cyan-500 text-white rounded-lg">
               🎯 Uji TKA PPLG (+100 XP)
             </a>
           </div>
@@ -86,16 +86,16 @@ const sortedSidebarModules = allModules.sort((a, b) => a.data.order - b.data.ord
 
       <!-- Main Lesson Content Area -->
       <main class="lg:col-span-3">
-        <article class="prose prose-invert max-w-none prose-blue prose-headings:font-bold prose-code:font-mono prose-code:bg-slate-900 prose-code:px-1.5 prose-code:py-0.5 prose-code:rounded prose-pre:bg-slate-950 prose-pre:border prose-pre:border-slate-800">
+        <article class="prose prose-invert max-w-none prose-headings:font-bold prose-code:font-mono prose-code:bg-secondary prose-code:px-1.5 prose-code:py-0.5 prose-code:rounded prose-pre:bg-secondary prose-pre:border prose-pre:border-border">
           <Content />
         </article>
 
         <!-- Completion Button & Mark XP -->
-        <div class="mt-12 p-6 rounded-2xl bg-card border border-border/60 text-center space-y-4">
-          <h3 class="text-lg font-bold text-foreground">Sudah Selesai Membaca Modul Ini?</h3>
-          <p class="text-xs text-muted-foreground">Tandai modul ini sebagai selesai untuk mengklaim **+10 XP Belajar**!</p>
+        <div class="mt-10 p-6 rounded-xl bg-card border border-border text-center space-y-3 shadow-sm">
+          <h3 class="text-base font-bold text-foreground">Sudah Selesai Membaca Modul Ini?</h3>
+          <p class="text-xs text-muted-foreground">Tandai modul ini sebagai selesai untuk mengklaim <strong>+10 XP Belajar</strong>!</p>
 
-          <button id="btn-complete-lesson" class="btn btn-primary btn-lg font-bold bg-gradient-to-r from-emerald-600 to-teal-500 hover:from-emerald-500 hover:to-teal-400 text-white">
+          <button id="btn-complete-lesson" class="btn btn-primary text-xs font-semibold px-5 py-2.5 rounded-lg">
             ✅ Tandai Selesai & Klaim XP
           </button>
         </div>
@@ -133,8 +133,7 @@ const sortedSidebarModules = allModules.sort((a, b) => a.data.order - b.data.ord
         btnComplete.textContent = '🎉 Modul Selesai!';
       }
 
-      btnComplete.classList.remove('from-emerald-600', 'to-teal-500');
-      btnComplete.classList.add('bg-emerald-700', 'cursor-default');
+      btnComplete.classList.add('opacity-75', 'cursor-default');
       (btnComplete as HTMLButtonElement).disabled = true;
     });
   </script>

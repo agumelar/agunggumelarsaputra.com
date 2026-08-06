@@ -1,11 +1,17 @@
 import type { APIRoute } from 'astro';
-import { db, ensureDbInitialized } from '../../../db';
+import { db, isDbConfigured, ensureDbInitialized } from '../../../db';
 import { users, userGamification } from '../../../db/schema';
 import { eq } from 'drizzle-orm';
 import bcrypt from 'bcryptjs';
 import { signToken, isSuperAdminEmail } from '../../../utils/auth';
 
 export const POST: APIRoute = async ({ request, cookies }) => {
+  if (!isDbConfigured()) {
+    return new Response(JSON.stringify({ 
+      error: 'Database belum terhubung. Harap isi POSTGRES_URL pada Environment Variables di Vercel.' 
+    }), { status: 503 });
+  }
+
   await ensureDbInitialized();
   try {
     const { name, email, password } = await request.json();

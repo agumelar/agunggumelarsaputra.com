@@ -1,178 +1,225 @@
 ---
 import DashboardLayout from '../layouts/DashboardLayout.astro';
-import { db } from '../db';
-import { userGamification, userProgress, tkaAttempts, users } from '../db/schema';
+import { db, isDbConfigured, ensureDbInitialized } from '../db';
+import { users, userGamification, userProgress, tkaAttempts } from '../db/schema';
 import { eq, desc } from 'drizzle-orm';
 import { getCollection } from 'astro:content';
+import { calculateLevel } from '../utils/gamification';
+import { canAccessAdminPanel, isSuperAdmin, isSuperAdminEmail } from '../utils/auth';
 
 const user = Astro.locals.user;
 if (!user) {
   return Astro.redirect('/login');
 }
 
-// Fetch dbUser details for profile info
-const [dbUser] = await db.select().from(users).where(eq(users.id, user.userId)).limit(1);
+let dbUser: any = {
+  id: user.userId,
+  name: user.name || 'Siswa PPLG',
+  email: user.email,
+  role: user.role || 'student',
+  studentClass: null,
+  createdAt: new Date(),
+};
 
-// Fetch live user stats
-let [stats] = await db.select().from(userGamification).where(eq(userGamification.userId, user.userId)).limit(1);
-if (!stats) {
-  [stats] = await db.insert(userGamification).values({ userId: user.userId, xp: 0, level: 1 }).returning();
+let stats: any = {
+  xp: 0,
+  level: 1,
+  streakDays: 1,
+};
+
+let completedLessons: any[] = [];
+let examHistory: any[] = [];
+let topUsers: any[] = [];
+let dbErrorNotice = '';
+
+const dbReady = isDbConfigured();
+
+if (dbReady) {
+  try {
+    await ensureDbInitialized();
+
+    const [fetchedUser] = await db.select().from(users).where(eq(users.id, user.userId)).limit(1);
+    if (fetchedUser) {
+      dbUser = fetchedUser;
+    }
+
+    const [userStats] = await db.select().from(userGamification).where(eq(userGamification.userId, user.userId)).limit(1);
+    if (userStats) {
+      stats = userStats;
+    } else if (fetchedUser) {
+      try {
+        const [newStats] = await db.insert(userGamification).values({ userId: user.userId, xp: 0, level: 1 }).returning();
+        if (newStats) stats = newStats;
+      } catch (insertErr) {
+        console.error('Gamification row auto-create error:', insertErr);
+      }
+    }
+
+    completedLessons = await db.select().from(userProgress).where(eq(userProgress.userId, user.userId));
+    examHistory = await db.select().from(tkaAttempts).where(eq(tkaAttempts.userId, user.userId)).orderBy(desc(tkaAttempts.createdAt)).limit(5);
+
+    topUsers = await db.select({
+      id: users.id,
+      name: users.name,
+      studentClass: users.studentClass,
+      avatarUrl: users.avatarUrl,
+      xp: userGamification.xp,
+      level: userGamification.level,
+    }).from(userGamification)
+      .innerJoin(users, eq(userGamification.userId, users.id))
+      .orderBy(desc(userGamification.xp))
+      .limit(5);
+  } catch (err: any) {
+    console.error('Dashboard DB Query Error:', err);
+    dbErrorNotice = 'Terjadi kendala saat membaca data dari database Neon Postgres. Pastikan POSTGRES_URL diatur di Vercel Environment Variables.';
+  }
+} else {
+  dbErrorNotice = 'Database Postgres belum terhubung. Silakan atur variabel POSTGRES_URL di Vercel Dashboard (Settings > Environment Variables) agar sistem autentikasi & rekap nilai tersimpan permanen.';
 }
 
-// Fetch user completed lessons & exam history
-const completedLessons = await db.select().from(userProgress).where(eq(userProgress.userId, user.userId));
-const examHistory = await db.select().from(tkaAttempts).where(eq(tkaAttempts.userId, user.userId)).orderBy(desc(tkaAttempts.createdAt)).limit(5);
-
-// Fetch all learning modules from content collections
+// 4. Fetch All Learning Modules from Content Collection
 let allModules: any[] = [];
 try {
   allModules = await getCollection('pembelajaran');
+  allModules.sort((a, b) => a.data.order - b.data.order);
 } catch (e) {
   allModules = [];
 }
 
-// Highest TKA score calculation
-const highestScore = examHistory.length > 0 ? Math.max(...examHistory.map(e => e.score)) : 0;
+// 5. Level Calculation
+const levelInfo = calculateLevel(stats.xp || 0);
+const currentLevelMinXp = levelInfo.currentLevelMinXp;
+const nextLevelXp = levelInfo.nextLevelXp;
+const currentLevelProgress = Math.max(0, (stats.xp || 0) - currentLevelMinXp);
+const levelRange = Math.max(1, nextLevelXp - currentLevelMinXp);
+const xpProgressPercent = Math.min(100, Math.round((currentLevelProgress / levelRange) * 100));
 
-// Leaderboard Top 5
-const topUsers = await db.select({
-  name: users.name,
-  role: users.role,
-  studentClass: users.studentClass,
-  xp: userGamification.xp,
-  level: userGamification.level,
-}).from(userGamification)
-  .innerJoin(users, eq(userGamification.userId, users.id))
-  .orderBy(desc(userGamification.xp))
-  .limit(5);
+// Highest Exam Score
+const highestScore = examHistory.length > 0 
+  ? Math.max(...examHistory.map(h => h.score)) 
+  : 0;
 
-import { canAccessAdminPanel, isSuperAdmin, isSuperAdminEmail } from '../utils/auth';
-
-// Level titles
-function getLevelTitle(level: number) {
-  switch (level) {
-    case 1: return 'Apprentice Coder';
-    case 2: return 'Junior Developer';
-    case 3: return 'Logic Architect';
-    case 4: return 'PPLG Specialist';
-    default: return 'Code Master';
-  }
+function getLevelTitle(lvl: number) {
+  if (lvl >= 10) return 'Principal Software Architect';
+  if (lvl >= 8) return 'Senior Fullstack Specialist';
+  if (lvl >= 6) return 'Advanced PPLG Developer';
+  if (lvl >= 4) return 'Proficient Web Engineer';
+  if (lvl >= 2) return 'Junior Software Craftsman';
+  return 'Apprentice Coder';
 }
 
-// Next level XP target
-const nextLevelXp = stats.level * 200;
-const xpProgressPercent = Math.min(100, Math.round((stats.xp / nextLevelXp) * 100));
-const isTeacherOrAdmin = canAccessAdminPanel(user.role);
-const isSuperAdminUser = isSuperAdmin(user.role) || isSuperAdminEmail(user.email);
-const isUnauthorizedError = Astro.url.searchParams.get('error') === 'unauthorized_admin';
+const isSuperAdminUser = isSuperAdmin(dbUser.role) || isSuperAdminEmail(dbUser.email);
+const isTeacherOrAdmin = canAccessAdminPanel(dbUser.role);
 ---
 
-<DashboardLayout title="Ringkasan Belajar" activeNav="/dashboard">
-  <div class="space-y-8">
-    
-    <!-- Unauthorized Admin Access Alert -->
-    {isUnauthorizedError && (
-      <div class="p-4 rounded-2xl bg-red-500/10 border border-red-500/30 flex items-center justify-between gap-4 animate-fadeIn">
+<DashboardLayout title="Portal Belajar Siswa" activeNav="/dashboard">
+  <div class="space-y-6">
+
+    <!-- Database Warning Banner (Only visible if DB is unconfigured or failed) -->
+    {dbErrorNotice && (
+      <div class="p-4 rounded-xl bg-amber-500/10 border border-amber-500/25 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-xs">
         <div class="flex items-center gap-3">
-          <span class="text-xl">⛔</span>
+          <span class="text-xl">⚠️</span>
           <div>
-            <h3 class="text-xs sm:text-sm font-bold text-red-400">Akses Ditolak: Panel Guru Terproteksi</h3>
-            <p class="text-[11px] sm:text-xs text-muted-foreground">Halaman Manajemen Guru hanya dapat diakses oleh akun Guru Pengampu & Administrator yang terverifikasi.</p>
+            <strong class="font-bold text-foreground">Perhatian Koneksi Database:</strong>
+            <p class="text-muted-foreground mt-0.5">{dbErrorNotice}</p>
           </div>
         </div>
-        <a href="/dashboard" class="text-xs text-muted-foreground hover:text-foreground px-2 py-1">✕</a>
+        <a 
+          href="https://vercel.com" 
+          target="_blank" 
+          rel="noopener noreferrer"
+          class="btn btn-sm bg-secondary hover:bg-accent text-foreground border border-border rounded-lg text-xs font-mono font-medium whitespace-nowrap self-end sm:self-auto"
+        >
+          Buka Vercel Settings ↗
+        </a>
       </div>
     )}
-    
-    <!-- Admin Notice Banner (If user is Admin/Teacher/SuperAdmin) -->
+
+    <!-- Super Admin / Guru Banner Alert (if applicable) -->
     {isTeacherOrAdmin && (
-      <div class="p-4 sm:p-5 rounded-2xl bg-gradient-to-r from-amber-500/15 via-amber-500/10 to-orange-500/15 border border-amber-500/30 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-lg shadow-amber-500/5">
+      <div class="p-4 rounded-xl bg-amber-500/10 border border-amber-500/25 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div class="flex items-center gap-3">
-          <div class="w-10 h-10 rounded-xl bg-amber-500/20 text-amber-400 flex items-center justify-center text-xl flex-shrink-0">
+          <div class="w-9 h-9 rounded-lg bg-amber-500/20 text-amber-500 flex items-center justify-center font-bold text-base flex-shrink-0">
             👑
           </div>
           <div>
-            <h2 class="text-sm font-bold text-foreground flex items-center gap-2">
-              <span>Selamat Datang, {isSuperAdminUser ? 'Super Admin / Pemilik Sistem' : 'Bapak/Ibu Guru Pengampu'}!</span>
-              <span class:list={[
-                "text-[10px] px-2 py-0.5 rounded-full font-mono font-bold uppercase",
-                isSuperAdminUser ? "bg-purple-500/20 text-purple-300 border border-purple-500/40" : "bg-amber-500/20 text-amber-300 border border-amber-500/40"
-              ]}>
+            <div class="text-xs font-bold text-foreground flex items-center gap-2">
+              <span>Akses Khusus Pengampu Terdeteksi</span>
+              <span class="text-[10px] px-2 py-0.2 rounded font-mono font-bold bg-amber-500/20 text-amber-600 dark:text-amber-400 border border-amber-500/30">
                 {isSuperAdminUser ? 'SUPER ADMIN' : 'GURU & ADMIN'}
               </span>
-            </h2>
-            <p class="text-xs text-muted-foreground">
+            </div>
+            <p class="text-xs text-muted-foreground mt-0.5">
               {isSuperAdminUser 
-                ? "Anda memiliki wewenang penuh menetapkan peran Guru, memonitor nilai ujian, dan mengelola pengguna."
+                ? "Anda memiliki wewenang penuh memonitor nilai ujian, menerbitkan token sesi, dan mengelola pengguna."
                 : "Anda memiliki akses untuk memonitor hasil pengerjaan soal siswa, nilai ujian, serta aktivitas belajar di Panel Guru."}
             </p>
           </div>
         </div>
-        <a href="/admin" class="btn btn-sm bg-amber-500 hover:bg-amber-400 text-black font-bold whitespace-nowrap shadow-md">
-          {isSuperAdminUser ? 'Buka Super Admin Panel →' : 'Buka Panel Guru & Admin →'}
+        <a href="/admin" class="btn btn-sm bg-amber-500 hover:bg-amber-400 text-black font-semibold whitespace-nowrap">
+          {isSuperAdminUser ? 'Buka Super Admin Panel →' : 'Buka Panel Guru →'}
         </a>
       </div>
     )}
 
     <!-- Welcome Hero Banner -->
-    <div class="relative overflow-hidden rounded-3xl bg-gradient-to-r from-blue-900/40 via-indigo-950/40 to-card border border-blue-500/20 p-6 sm:p-8 shadow-xl">
-      <div class="absolute -right-10 -bottom-10 w-64 h-64 bg-blue-500/10 rounded-full blur-3xl pointer-events-none"></div>
-      
-      <div class="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
+    <div class="rounded-xl bg-card border border-border p-6 shadow-sm">
+      <div class="flex flex-col md:flex-row md:items-center justify-between gap-6">
         <div class="space-y-2">
-          <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-500/10 border border-blue-500/30 text-blue-400 text-xs font-mono flex-wrap">
-            <span>✨ Student Learning Portal</span>
-            <span>•</span>
-            <span>SMKN 1 Rongga</span>
+          <div class="inline-flex items-center gap-2 px-2.5 py-0.5 rounded-md bg-secondary border border-border text-foreground text-xs font-mono">
+            <span class="font-semibold text-primary">Student Learning Portal</span>
+            <span class="text-muted-foreground">•</span>
+            <span class="text-muted-foreground">SMKN 1 Rongga</span>
             {dbUser?.studentClass && (
               <>
-                <span>•</span>
-                <span class="text-cyan-300 font-bold bg-cyan-500/20 px-2 py-0.5 rounded-full">{dbUser.studentClass}</span>
+                <span class="text-muted-foreground">•</span>
+                <span class="font-bold text-primary">{dbUser.studentClass}</span>
               </>
             )}
           </div>
-          <h1 class="text-2xl sm:text-4xl font-extrabold text-foreground tracking-tight">
-            Halo, <span class="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 via-cyan-300 to-emerald-400">{user.name}</span>! 👋
+          <h1 class="text-2xl sm:text-3xl font-bold text-foreground tracking-tight">
+            Halo, {user.name} 👋
           </h1>
           <p class="text-xs sm:text-sm text-muted-foreground max-w-xl leading-relaxed">
-            Selamat datang di pusat pembelajaran interaktif Rekayasa Perangkat Lunak. Terus tingkatkan kemampuan koding dan persiapkan dirimu menghadapi Ujian Kejuruan TKA PPLG!
+            Selamat datang di pusat pembelajaran interaktif Rekayasa Perangkat Lunak. Terus tingkatkan kemampuan koding dan persiapkan dirimu menghadapi Ujian Kejuruan TKA PPLG.
           </p>
         </div>
 
         <!-- Quick Streak & Level Card -->
-        <div class="flex items-center gap-4 bg-background/80 backdrop-blur-md p-4 rounded-2xl border border-border/60 shadow-md flex-shrink-0">
-          <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-amber-500 to-orange-500 flex items-center justify-center text-2xl shadow-lg shadow-orange-500/20">
+        <div class="flex items-center gap-3.5 bg-secondary/50 p-3.5 rounded-lg border border-border flex-shrink-0">
+          <div class="w-10 h-10 rounded-lg bg-amber-500/10 border border-amber-500/25 flex items-center justify-center text-xl flex-shrink-0">
             🔥
           </div>
           <div class="space-y-0.5">
-            <span class="text-[11px] text-muted-foreground font-mono">Daily Streak</span>
-            <div class="text-base font-extrabold text-foreground font-mono">{stats.streakDays || 1} Hari Beruntun</div>
-            <span class="text-[10px] text-emerald-400 font-medium">Status Aktif Hari Ini</span>
+            <div class="text-[11px] text-muted-foreground font-mono">Daily Streak</div>
+            <div class="text-sm font-bold text-foreground font-mono">{stats.streakDays || 1} Hari Beruntun</div>
+            <div class="text-[10px] text-emerald-600 dark:text-emerald-400 font-medium">Aktif Hari Ini</div>
           </div>
         </div>
       </div>
     </div>
 
     <!-- Gamification KPI Cards (4 Columns) -->
-    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
       
       <!-- Card 1: Experience Points -->
-      <div class="card p-6 rounded-2xl border-border/60 bg-card/80 backdrop-blur space-y-3 hover:border-amber-500/40 transition-all group">
+      <div class="card p-5 rounded-xl border-border bg-card space-y-3">
         <div class="flex items-center justify-between">
           <span class="text-xs font-medium text-muted-foreground">Total Experience</span>
-          <div class="w-8 h-8 rounded-xl bg-amber-500/10 text-amber-400 flex items-center justify-center font-bold text-sm">⚡</div>
+          <div class="w-7 h-7 rounded-md bg-amber-500/10 text-amber-500 flex items-center justify-center font-bold text-xs">⚡</div>
         </div>
-        <div class="space-y-1">
-          <div class="text-3xl font-extrabold text-foreground font-mono tracking-tight group-hover:text-amber-400 transition-colors">
-            {stats.xp} <span class="text-sm font-sans font-semibold text-muted-foreground">XP</span>
+        <div class="space-y-1.5">
+          <div class="text-2xl font-bold text-foreground font-mono tracking-tight">
+            {stats.xp} <span class="text-xs font-sans font-normal text-muted-foreground">XP</span>
           </div>
           <!-- Progress Bar to Next Level -->
           <div class="space-y-1 pt-1">
-            <div class="w-full bg-accent rounded-full h-1.5 overflow-hidden">
-              <div class="bg-gradient-to-r from-amber-500 to-orange-500 h-full rounded-full transition-all duration-500" style={`width: ${xpProgressPercent}%`}></div>
+            <div class="w-full bg-secondary rounded-full h-1.5 overflow-hidden">
+              <div class="bg-amber-500 h-full rounded-full transition-all duration-300" style={`width: ${xpProgressPercent}%`}></div>
             </div>
             <div class="flex justify-between text-[10px] text-muted-foreground font-mono">
-              <span>Next Lvl: {nextLevelXp} XP</span>
+              <span>Berikutnya: {nextLevelXp} XP</span>
               <span>{xpProgressPercent}%</span>
             </div>
           </div>
@@ -180,44 +227,44 @@ const isUnauthorizedError = Astro.url.searchParams.get('error') === 'unauthorize
       </div>
 
       <!-- Card 2: Level Belajar -->
-      <div class="card p-6 rounded-2xl border-border/60 bg-card/80 backdrop-blur space-y-3 hover:border-emerald-500/40 transition-all group">
+      <div class="card p-5 rounded-xl border-border bg-card space-y-3">
         <div class="flex items-center justify-between">
           <span class="text-xs font-medium text-muted-foreground">Tingkat Level</span>
-          <div class="w-8 h-8 rounded-xl bg-emerald-500/10 text-emerald-400 flex items-center justify-center font-bold text-sm">🏅</div>
+          <div class="w-7 h-7 rounded-md bg-emerald-500/10 text-emerald-500 flex items-center justify-center font-bold text-xs">🏅</div>
         </div>
-        <div class="space-y-1">
-          <div class="text-3xl font-extrabold text-emerald-400 font-mono tracking-tight">
+        <div class="space-y-0.5">
+          <div class="text-2xl font-bold text-foreground font-mono tracking-tight">
             Level {stats.level}
           </div>
-          <p class="text-xs text-muted-foreground font-medium">{getLevelTitle(stats.level)}</p>
+          <p class="text-xs text-muted-foreground truncate">{getLevelTitle(stats.level)}</p>
         </div>
       </div>
 
       <!-- Card 3: Modul Selesai -->
-      <div class="card p-6 rounded-2xl border-border/60 bg-card/80 backdrop-blur space-y-3 hover:border-blue-500/40 transition-all group">
+      <div class="card p-5 rounded-xl border-border bg-card space-y-3">
         <div class="flex items-center justify-between">
           <span class="text-xs font-medium text-muted-foreground">Modul Diselesaikan</span>
-          <div class="w-8 h-8 rounded-xl bg-blue-500/10 text-blue-400 flex items-center justify-center font-bold text-sm">📚</div>
+          <div class="w-7 h-7 rounded-md bg-primary/10 text-primary flex items-center justify-center font-bold text-xs">📚</div>
         </div>
-        <div class="space-y-1">
-          <div class="text-3xl font-extrabold text-blue-400 font-mono tracking-tight">
-            {completedLessons.length} <span class="text-sm font-sans font-normal text-muted-foreground">/ {allModules.length || 3}</span>
+        <div class="space-y-0.5">
+          <div class="text-2xl font-bold text-foreground font-mono tracking-tight">
+            {completedLessons.length} <span class="text-xs font-sans font-normal text-muted-foreground">/ {allModules.length || 3}</span>
           </div>
-          <a href="/pembelajaran" class="text-xs text-blue-400 font-semibold hover:underline block pt-1">
+          <a href="/pembelajaran" class="text-xs text-primary font-medium hover:underline block">
             Buka Katalog Modul →
           </a>
         </div>
       </div>
 
       <!-- Card 4: Ujian & Skor Tertinggi -->
-      <div class="card p-6 rounded-2xl border-border/60 bg-card/80 backdrop-blur space-y-3 hover:border-cyan-500/40 transition-all group">
+      <div class="card p-5 rounded-xl border-border bg-card space-y-3">
         <div class="flex items-center justify-between">
           <span class="text-xs font-medium text-muted-foreground">Simulasi TKA Diikuti</span>
-          <div class="w-8 h-8 rounded-xl bg-cyan-500/10 text-cyan-400 flex items-center justify-center font-bold text-sm">🎯</div>
+          <div class="w-7 h-7 rounded-md bg-cyan-500/10 text-cyan-600 dark:text-cyan-400 flex items-center justify-center font-bold text-xs">🎯</div>
         </div>
-        <div class="space-y-1">
-          <div class="text-3xl font-extrabold text-cyan-400 font-mono tracking-tight">
-            {examHistory.length} <span class="text-sm font-sans font-normal text-muted-foreground">Kali</span>
+        <div class="space-y-0.5">
+          <div class="text-2xl font-bold text-foreground font-mono tracking-tight">
+            {examHistory.length} <span class="text-xs font-sans font-normal text-muted-foreground">Kali</span>
           </div>
           <p class="text-xs text-muted-foreground">Skor Terbaik: <span class="font-bold text-foreground font-mono">{highestScore}/100</span></p>
         </div>
@@ -226,64 +273,64 @@ const isUnauthorizedError = Astro.url.searchParams.get('error') === 'unauthorize
     </div>
 
     <!-- Main Grid Sections: Left (Courses & Drilling CTA) + Right (Leaderboard & Exam Log) -->
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
       
       <!-- LEFT 2 COLS: Curriculum & Quick Actions -->
-      <div class="lg:col-span-2 space-y-8">
+      <div class="lg:col-span-2 space-y-6">
         
         <!-- Quick Action Banner for Drilling TKA -->
-        <div class="p-6 rounded-2xl bg-gradient-to-r from-cyan-950/40 via-blue-950/30 to-card border border-cyan-500/30 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6 shadow-md">
-          <div class="space-y-2">
-            <div class="inline-flex items-center gap-1.5 text-xs font-mono font-bold text-cyan-400">
+        <div class="p-5 rounded-xl bg-card border border-border flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-sm">
+          <div class="space-y-1.5">
+            <div class="inline-flex items-center gap-1.5 text-xs font-mono font-semibold text-cyan-600 dark:text-cyan-400">
               <span>🎯 SIMULASI DRILLING UJIAN</span>
             </div>
-            <h2 class="text-lg font-bold text-foreground">Tes Kemampuan Akademik (TKA) PPLG</h2>
+            <h2 class="text-base font-bold text-foreground">Tes Kemampuan Akademik (TKA) PPLG</h2>
             <p class="text-xs text-muted-foreground max-w-md">
               Uji pemahaman komprehensif terkait Pemrograman Web, OOP, SQL Basis Data, dan Rekayasa Perangkat Lunak berbasis standar industri SMK.
             </p>
           </div>
-          <a href="/pembelajaran/tka-pplg" class="btn btn-primary bg-cyan-600 hover:bg-cyan-500 text-white font-bold whitespace-nowrap px-5 py-3 rounded-xl shadow-lg shadow-cyan-600/20">
-            Mulai Ujian Sekarang 🚀
+          <a href="/pembelajaran/tka-pplg" class="btn btn-sm bg-primary hover:bg-primary/90 text-primary-foreground font-semibold whitespace-nowrap px-4 py-2.5 rounded-lg flex-shrink-0">
+            Mulai Ujian Sekarang →
           </a>
         </div>
 
         <!-- Learning Modules List -->
-        <div class="p-6 rounded-2xl bg-card border border-border/60 space-y-6 shadow-sm">
+        <div class="p-5 rounded-xl bg-card border border-border space-y-5 shadow-sm">
           <div class="flex items-center justify-between">
-            <div class="space-y-1">
-              <h2 class="text-lg font-bold text-foreground flex items-center gap-2">
+            <div class="space-y-0.5">
+              <h2 class="text-base font-bold text-foreground flex items-center gap-2">
                 <span>📚 Modul Pembelajaran PPLG</span>
               </h2>
               <p class="text-xs text-muted-foreground">Pilih materi yang ingin Anda pelajari atau lanjutkan.</p>
             </div>
-            <a href="/pembelajaran" class="text-xs font-semibold text-blue-400 hover:underline">
+            <a href="/pembelajaran" class="text-xs font-semibold text-primary hover:underline">
               Lihat Semua Modul →
             </a>
           </div>
 
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-3.5">
             {allModules.length > 0 ? (
               allModules.map((mod: any) => {
                 const isCompleted = completedLessons.some(c => c.lessonSlug === mod.slug);
                 return (
                   <a 
                     href={`/pembelajaran/${mod.slug}`} 
-                    class="p-4 rounded-xl bg-background border border-border/50 hover:border-blue-500/40 hover:bg-accent/40 transition-all flex flex-col justify-between gap-3 group"
+                    class="p-4 rounded-lg bg-background border border-border hover:border-primary/40 hover:bg-accent/30 transition-all flex flex-col justify-between gap-3 group"
                   >
                     <div class="space-y-1.5">
                       <div class="flex items-center justify-between">
-                        <span class="text-[10px] font-mono px-2 py-0.5 rounded bg-blue-500/10 text-blue-400 border border-blue-500/20">
+                        <span class="text-[10px] font-mono px-2 py-0.5 rounded bg-secondary text-muted-foreground border border-border">
                           {mod.data.category || 'Materi PPLG'}
                         </span>
                         {isCompleted ? (
-                          <span class="text-[10px] font-bold text-emerald-400 flex items-center gap-1">
+                          <span class="text-[10px] font-semibold text-emerald-600 dark:text-emerald-400 flex items-center gap-1">
                             <span>✓</span> Selesai
                           </span>
                         ) : (
                           <span class="text-[10px] text-muted-foreground font-mono">+10 XP</span>
                         )}
                       </div>
-                      <h3 class="text-sm font-bold text-foreground group-hover:text-blue-400 transition-colors line-clamp-1">
+                      <h3 class="text-xs font-bold text-foreground group-hover:text-primary transition-colors line-clamp-1">
                         {mod.data.title}
                       </h3>
                       <p class="text-xs text-muted-foreground line-clamp-2">
@@ -291,15 +338,15 @@ const isUnauthorizedError = Astro.url.searchParams.get('error') === 'unauthorize
                       </p>
                     </div>
 
-                    <div class="text-[11px] font-semibold text-blue-400 flex items-center gap-1 pt-1">
+                    <div class="text-[11px] font-medium text-primary flex items-center gap-1 pt-1">
                       <span>{isCompleted ? 'Pelajari Ulang' : 'Buka Materi'}</span>
-                      <span class="group-hover:translate-x-1 transition-transform">→</span>
+                      <span class="group-hover:translate-x-0.5 transition-transform">→</span>
                     </div>
                   </a>
                 );
               })
             ) : (
-              <div class="col-span-2 p-6 rounded-xl bg-background text-center text-xs text-muted-foreground">
+              <div class="col-span-2 p-6 rounded-lg bg-background text-center text-xs text-muted-foreground">
                 Katalog materi siap diakses di menu Pembelajaran.
               </div>
             )}
@@ -309,86 +356,90 @@ const isUnauthorizedError = Astro.url.searchParams.get('error') === 'unauthorize
       </div>
 
       <!-- RIGHT 1 COL: Leaderboard & Recent Exams -->
-      <div class="space-y-8">
+      <div class="space-y-6">
         
         <!-- Top Leaderboard Preview -->
-        <div class="p-6 rounded-2xl bg-card border border-border/60 space-y-5 shadow-sm">
+        <div class="p-5 rounded-xl bg-card border border-border space-y-4 shadow-sm">
           <div class="flex items-center justify-between">
             <div class="flex items-center gap-2">
-              <span class="text-lg">🏆</span>
-              <h2 class="text-base font-bold text-foreground">Papan Peringkat</h2>
+              <span class="text-base">🏆</span>
+              <h2 class="text-sm font-bold text-foreground">Papan Peringkat</h2>
             </div>
-            <a href="/dashboard/leaderboard" class="text-xs font-semibold text-blue-400 hover:underline">
+            <a href="/dashboard/leaderboard" class="text-xs font-semibold text-primary hover:underline">
               Semua →
             </a>
           </div>
 
-          <div class="space-y-2.5">
-            {topUsers.map((top, idx) => (
-              <div class:list={[
-                "flex items-center justify-between p-3 rounded-xl border text-xs transition-all",
-                idx === 0 
-                  ? "bg-amber-500/10 border-amber-500/30 text-amber-300 font-bold" 
-                  : "bg-background border-border/40 hover:bg-accent/40"
-              ]}>
-                <div class="flex items-center gap-3 min-w-0">
-                  <span class:list={[
-                    "w-6 h-6 rounded-full flex items-center justify-center font-bold font-mono text-xs flex-shrink-0",
-                    idx === 0 ? "bg-amber-500 text-black shadow-md shadow-amber-500/30" :
-                    idx === 1 ? "bg-slate-300 text-black" :
-                    idx === 2 ? "bg-amber-700 text-white" :
-                    "bg-accent text-muted-foreground"
-                  ]}>
-                    {idx + 1}
-                  </span>
-                  <div class="min-w-0">
-                    <span class="text-xs font-semibold text-foreground truncate block">{top.name}</span>
-                    <div class="flex items-center gap-1.5 flex-wrap">
-                      <span class="text-[10px] text-muted-foreground font-mono">Lvl {top.level}</span>
-                      {top.studentClass && (
-                        <span class="text-[9px] px-1.5 py-0.2 rounded bg-cyan-500/15 text-cyan-300 font-mono">
-                          {top.studentClass}
-                        </span>
-                      )}
+          <div class="space-y-2">
+            {topUsers.length === 0 ? (
+              <p class="text-xs text-muted-foreground text-center py-4">Belum ada data peringkat.</p>
+            ) : (
+              topUsers.map((top, idx) => (
+                <div class:list={[
+                  "flex items-center justify-between p-2.5 rounded-lg border text-xs transition-colors",
+                  idx === 0 
+                    ? "bg-amber-500/10 border-amber-500/25 text-foreground" 
+                    : "bg-background border-border hover:bg-accent/40"
+                ]}>
+                  <div class="flex items-center gap-2.5 min-w-0">
+                    <span class:list={[
+                      "w-5 h-5 rounded-full flex items-center justify-center font-bold font-mono text-[10px] flex-shrink-0",
+                      idx === 0 ? "bg-amber-500 text-black font-bold" :
+                      idx === 1 ? "bg-slate-300 text-black" :
+                      idx === 2 ? "bg-amber-700 text-white" :
+                      "bg-secondary text-muted-foreground"
+                    ]}>
+                      {idx + 1}
+                    </span>
+                    <div class="min-w-0">
+                      <span class="text-xs font-medium text-foreground truncate block">{top.name}</span>
+                      <div class="flex items-center gap-1.5 flex-wrap">
+                        <span class="text-[10px] text-muted-foreground font-mono">Lvl {top.level}</span>
+                        {top.studentClass && (
+                          <span class="text-[9px] px-1.5 py-0.2 rounded bg-secondary text-muted-foreground font-mono">
+                            {top.studentClass}
+                          </span>
+                        )}
+                      </div>
                     </div>
                   </div>
+                  <span class="font-mono text-xs font-semibold text-amber-600 dark:text-amber-400 flex-shrink-0">{top.xp} XP</span>
                 </div>
-                <span class="font-mono text-amber-400 font-bold flex-shrink-0">{top.xp} XP</span>
-              </div>
-            ))}
+              ))
+            )}
           </div>
         </div>
 
         <!-- Recent Exam History -->
-        <div class="p-6 rounded-2xl bg-card border border-border/60 space-y-5 shadow-sm">
+        <div class="p-5 rounded-xl bg-card border border-border space-y-4 shadow-sm">
           <div class="flex items-center justify-between">
             <div class="flex items-center gap-2">
-              <span class="text-lg">📊</span>
-              <h2 class="text-base font-bold text-foreground">Riwayat Ujian</h2>
+              <span class="text-base">📊</span>
+              <h2 class="text-sm font-bold text-foreground">Riwayat Ujian</h2>
             </div>
-            <a href="/dashboard/riwayat" class="text-xs font-semibold text-blue-400 hover:underline">
+            <a href="/dashboard/riwayat" class="text-xs font-semibold text-primary hover:underline">
               Detail →
             </a>
           </div>
 
           {examHistory.length === 0 ? (
-            <div class="p-6 rounded-xl bg-background text-center text-xs text-muted-foreground space-y-2">
+            <div class="p-5 rounded-lg bg-background text-center text-xs text-muted-foreground space-y-1.5">
               <p>Belum ada riwayat pengerjaan ujian.</p>
-              <a href="/pembelajaran/tka-pplg" class="text-blue-400 font-semibold hover:underline block text-xs">
+              <a href="/pembelajaran/tka-pplg" class="text-primary font-medium hover:underline block text-xs">
                 Mulai Drilling TKA Pertama →
               </a>
             </div>
           ) : (
-            <div class="space-y-2.5">
+            <div class="space-y-2">
               {examHistory.map((attempt) => (
-                <div class="p-3 rounded-xl bg-background border border-border/40 flex items-center justify-between text-xs">
+                <div class="p-2.5 rounded-lg bg-background border border-border flex items-center justify-between text-xs">
                   <div>
-                    <span class="font-bold text-foreground">Skor: {attempt.score}/100</span>
+                    <span class="font-semibold text-foreground">Skor: {attempt.score}/100</span>
                     <span class="text-[10px] text-muted-foreground block font-mono">
                       Benar {attempt.correctAnswers}/{attempt.totalQuestions} soal
                     </span>
                   </div>
-                  <span class="px-2.5 py-1 rounded-lg bg-amber-500/10 border border-amber-500/20 text-amber-400 font-mono font-bold">
+                  <span class="px-2 py-0.5 rounded bg-amber-500/10 border border-amber-500/20 text-amber-600 dark:text-amber-400 font-mono font-semibold text-[11px]">
                     +{attempt.xpEarned} XP
                   </span>
                 </div>

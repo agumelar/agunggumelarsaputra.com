@@ -1,10 +1,13 @@
 import type { APIRoute } from 'astro';
-import { db, ensureDbInitialized } from '../../../../db';
+import { db, isDbConfigured, ensureDbInitialized } from '../../../../db';
 import { users } from '../../../../db/schema';
 import { eq } from 'drizzle-orm';
 import { isSuperAdminEmail, isSuperAdmin, canAccessAdminPanel } from '../../../../utils/auth';
 
 export const POST: APIRoute = async ({ request, locals }) => {
+  if (!isDbConfigured()) {
+    return new Response(JSON.stringify({ error: 'Database belum terhubung di server.' }), { status: 503 });
+  }
   await ensureDbInitialized();
   const currentUser = locals.user;
 
