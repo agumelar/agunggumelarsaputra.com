@@ -1,7 +1,7 @@
 ---
 import '../styles/global.css';
 import { db } from '../db';
-import { userGamification } from '../db/schema';
+import { users, userGamification } from '../db/schema';
 import { eq } from 'drizzle-orm';
 
 import { canAccessAdminPanel, isSuperAdmin, isSuperAdminEmail } from '../utils/auth';
@@ -14,7 +14,7 @@ interface Props {
 
 const { 
   title, 
-  description = "Student & Teacher Learning Hub Dashboard PPLG SMKN 1 Rongga",
+  description = "Student & Teacher Learning Hub Dashboard RPL SMKN 1 Rongga",
   activeNav = '/dashboard'
 } = Astro.props;
 
@@ -23,15 +23,30 @@ if (!user) {
   return Astro.redirect('/login');
 }
 
-// Fetch live user gamification stats for header/sidebar
+// Fetch live user info & gamification stats for header/sidebar
+const [dbCurrentUserData] = await db.select({
+  role: users.role,
+  studentClass: users.studentClass
+}).from(users).where(eq(users.id, user.userId)).limit(1);
+
 let [stats] = await db.select().from(userGamification).where(eq(userGamification.userId, user.userId)).limit(1);
 if (!stats) {
   [stats] = await db.insert(userGamification).values({ userId: user.userId, xp: 0, level: 1 }).returning();
 }
 
 const currentPath = Astro.url.pathname;
-const isTeacherOrAdmin = canAccessAdminPanel(user.role);
-const isSuperAdminUser = isSuperAdmin(user.role) || isSuperAdminEmail(user.email);
+const isTeacherOrAdmin = canAccessAdminPanel(dbCurrentUserData?.role || user.role);
+const isSuperAdminUser = isSuperAdmin(dbCurrentUserData?.role || user.role) || isSuperAdminEmail(user.email);
+const userStudentClass = dbCurrentUserData?.studentClass;
+
+const sidebarRoleLabel = isSuperAdminUser 
+  ? 'Super Admin' 
+  : isTeacherOrAdmin 
+    ? 'Guru Pengampu' 
+    : (userStudentClass === 'Guru / Staf Pengampu' 
+        ? 'Guru Pengampu' 
+        : (userStudentClass ? `Siswa ${userStudentClass}` : 'Siswa RPL'));
+
 const isAdminRoute = currentPath.startsWith('/admin');
 
 const studentNavItems = [
@@ -115,7 +130,7 @@ const adminNavItems = [
               <div class="flex flex-col">
                 <span class="font-extrabold text-sm tracking-tight text-foreground flex items-center gap-1.5">
                   Learning Hub
-                  <span class="text-[9px] px-1.5 py-0.5 rounded-full font-mono font-bold bg-blue-500/20 text-blue-400 border border-blue-500/30">PPLG</span>
+                  <span class="text-[9px] px-1.5 py-0.5 rounded-full font-mono font-bold bg-blue-500/20 text-blue-400 border border-blue-500/30">RPL</span>
                 </span>
                 <span class="text-[11px] text-muted-foreground font-medium">SMKN 1 Rongga • Siswa</span>
               </div>
@@ -292,7 +307,7 @@ const adminNavItems = [
                   "text-[9px] px-1.5 py-0.2 rounded font-mono font-bold uppercase",
                   isSuperAdminUser ? "bg-purple-500/20 text-purple-300 border border-purple-500/30" : isTeacherOrAdmin ? "bg-amber-500/20 text-amber-300 border border-amber-500/30" : "bg-blue-500/20 text-blue-400 border border-blue-500/30"
                 ]}>
-                  {isSuperAdminUser ? 'Super Admin' : isTeacherOrAdmin ? 'Guru Pengampu' : 'Siswa PPLG'}
+                  {sidebarRoleLabel}
                 </span>
                 <span class="text-[10px] text-muted-foreground truncate">{user.email}</span>
               </div>

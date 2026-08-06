@@ -25,7 +25,7 @@ if (!stats) {
 }
 
 const isSuperAdminUser = isSuperAdmin(dbUser.role) || isSuperAdminEmail(dbUser.email);
-const isTeacher = !isSuperAdminUser && (dbUser.role === 'teacher' || dbUser.role === 'admin');
+const isTeacher = !isSuperAdminUser && (dbUser.role === 'teacher' || dbUser.role === 'admin' || dbUser.studentClass === 'Guru / Staf Pengampu');
 const isStudent = !isSuperAdminUser && !isTeacher;
 
 const standardClasses = [
@@ -35,6 +35,12 @@ const standardClasses = [
   'Guru / Staf Pengampu'
 ];
 const isCustomClass = Boolean(dbUser.studentClass && !standardClasses.includes(dbUser.studentClass));
+
+const displayRole = isSuperAdminUser 
+  ? 'Super Admin' 
+  : isTeacher 
+    ? 'Guru Pengampu' 
+    : (dbUser.studentClass ? `Siswa ${dbUser.studentClass}` : 'Siswa RPL');
 
 const joinDate = new Date(dbUser.createdAt).toLocaleDateString('id-ID', {
   day: 'numeric',
@@ -80,7 +86,7 @@ const joinDate = new Date(dbUser.createdAt).toLocaleDateString('id-ID', {
           <div class="space-y-0.5">
             <span class="text-[10px] text-muted-foreground font-mono">Peran Saat Ini</span>
             <div class="text-xs font-bold text-foreground">
-              {isSuperAdminUser ? 'Super Admin' : isTeacher ? 'Guru Pengampu' : 'Siswa PPLG'}
+              {displayRole}
             </div>
             <span class="text-[10px] text-emerald-400 font-medium">Akun Terverifikasi</span>
           </div>
@@ -140,7 +146,7 @@ const joinDate = new Date(dbUser.createdAt).toLocaleDateString('id-ID', {
                 "font-mono font-bold px-2 py-0.5 rounded-full text-[10px] uppercase",
                 isSuperAdminUser ? "bg-purple-500/20 text-purple-300 border border-purple-500/30" : isTeacher ? "bg-amber-500/20 text-amber-300 border border-amber-500/30" : "bg-blue-500/20 text-blue-400 border border-blue-500/30"
               ]}>
-                {isSuperAdminUser ? 'Super Admin' : isTeacher ? 'Guru Pengampu' : 'Siswa PPLG'}
+                {displayRole}
               </span>
             </div>
 
