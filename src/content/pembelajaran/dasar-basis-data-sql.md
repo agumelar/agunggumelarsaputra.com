@@ -3,7 +3,7 @@ title: "Dasar Basis Data & Query SQL SELECT"
 description: "Memahami struktur tabel, Primary Key, Foreign Key, dan sintaks dasar SQL SELECT di RDBMS."
 category: "Basis Data"
 level: "Pemula"
-order: 2
+order: 10
 duration: "20 min"
 tags: ["SQL", "MySQL", "Database", "RPL"]
 teacherTip: "Sebelum menulis query SQL, selalu gambar ERD (Entity Relationship Diagram) sederhana di buku catatannya!"

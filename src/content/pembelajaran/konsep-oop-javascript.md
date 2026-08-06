@@ -3,7 +3,7 @@ title: "Konsep Pemrograman Berorientasi Objek (OOP) JavaScript"
 description: "Memahami Pilar OOP: Encapsulation, Inheritance, Polymorphism, dan Abstraction untuk siswa SMK PPLG."
 category: "Algoritma & OOP"
 level: "Menengah"
-order: 3
+order: 11
 duration: "20 min"
 tags: ["OOP", "JavaScript", "ES6 Class", "SMK RPL"]
 teacherTip: "Pikirkan 'Class' seperti cetakan kue (blueprint), dan 'Object' seperti kue asli yang dibuat dari cetakan tersebut!"

@@ -3,7 +3,7 @@ title: "Pengenalan HTML5 & Struktur Dokumen Web"
 description: "Panduan dasar memahami tag HTML5, struktur semantik, dan hierarki elemen web untuk siswa SMK RPL."
 category: "Pemrograman Web"
 level: "Pemula"
-order: 1
+order: 9
 duration: "15 min"
 tags: ["HTML5", "Web Dev", "SMK RPL", "PPLG"]
 teacherTip: "Selalu gunakan struktur semantik seperti <header>, <main>, dan <footer> agar kode Anda rapi dan ramah SEO!"
