@@ -159,40 +159,96 @@ if (user && isDbConfigured()) {
       </div>
 
       <!-- Modules Catalog Cards -->
-      <div class="space-y-4">
-        <div class="border-b border-border pb-2.5">
-          <h2 class="text-base font-bold text-foreground">Daftar Modul Tersedia</h2>
-          <p class="text-xs text-muted-foreground">Pilih topik materi untuk mulai membaca dan belajar.</p>
-        </div>
+      <div class="space-y-8">
+        
+        <!-- SECTION 1: ORIENTASI PPLG (FASE E) -->
+        <div class="space-y-4">
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-border pb-3">
+            <div>
+              <div class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded bg-primary/10 text-primary border border-primary/20 text-[11px] font-mono font-bold mb-1">
+                ⭐ MATA PELAJARAN DASAR-DASAR PPLG • KELAS 10
+              </div>
+              <h2 class="text-lg sm:text-xl font-bold text-foreground">
+                Modul Orientasi PPLG & Skill Passport (Fase E)
+              </h2>
+              <p class="text-xs text-muted-foreground">
+                Materi semester ganjil TA 2026/2027 mencakup Wawasan Profesi (OR-01) dan Analisis Produk Digital (OR-02).
+              </p>
+            </div>
+            <span class="text-xs font-mono font-semibold px-2.5 py-1 rounded bg-secondary text-foreground border border-border self-start sm:self-auto">
+              8 Modul Lengkap + LKPD
+            </span>
+          </div>
 
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {sortedModules.map((mod) => (
-            <div class="card p-5 border-border bg-card transition-colors flex flex-col justify-between space-y-4 rounded-xl shadow-sm hover:border-primary/50">
-              <div class="space-y-2.5">
-                <div class="flex items-center justify-between">
-                  <span class="px-2 py-0.5 rounded text-[10px] bg-secondary text-foreground font-mono font-semibold border border-border">
-                    {mod.data.category}
-                  </span>
-                  <span class="text-xs text-muted-foreground font-mono">{mod.data.duration}</span>
+          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {sortedModules.filter((m) => m.data.category.startsWith('Orientasi PPLG')).map((mod) => (
+              <div class="card p-5 border-border bg-card transition-all duration-200 flex flex-col justify-between space-y-4 rounded-xl shadow-sm hover:border-primary/50 hover:shadow-md">
+                <div class="space-y-2.5">
+                  <div class="flex items-center justify-between">
+                    <span class="px-2 py-0.5 rounded text-[10px] bg-secondary text-foreground font-mono font-semibold border border-border">
+                      {mod.data.category}
+                    </span>
+                    <span class="text-xs text-muted-foreground font-mono">{mod.data.duration}</span>
+                  </div>
+
+                  <h3 class="text-sm font-bold text-foreground hover:text-primary transition-colors">
+                    <a href={`/pembelajaran/${mod.id || mod.slug}`}>{mod.data.title}</a>
+                  </h3>
+                  <p class="text-xs text-muted-foreground leading-relaxed line-clamp-2">
+                    {mod.data.description}
+                  </p>
                 </div>
 
-                <h3 class="text-sm font-bold text-foreground hover:text-primary transition-colors">
-                  <a href={`/pembelajaran/${mod.id || mod.slug}`}>{mod.data.title}</a>
-                </h3>
-                <p class="text-xs text-muted-foreground leading-relaxed line-clamp-2">
-                  {mod.data.description}
-                </p>
+                <div class="pt-3 border-t border-border flex items-center justify-between text-xs">
+                  <span class="text-amber-600 dark:text-amber-400 font-medium font-mono">✨ +15 XP</span>
+                  <a href={`/pembelajaran/${mod.id || mod.slug}`} class="btn btn-sm btn-primary text-xs font-semibold px-3 py-1.5 rounded-lg">
+                    Buka Modul & LKPD →
+                  </a>
+                </div>
               </div>
-
-              <div class="pt-3 border-t border-border flex items-center justify-between text-xs">
-                <span class="text-amber-600 dark:text-amber-400 font-medium font-mono">✨ +15 XP</span>
-                <a href={`/pembelajaran/${mod.id || mod.slug}`} class="btn btn-sm btn-primary text-xs font-semibold px-3 py-1.5 rounded-lg">
-                  Mulai Belajar →
-                </a>
-              </div>
-            </div>
-          ))}
+            ))}
+          </div>
         </div>
+
+        <!-- SECTION 2: MATERI PENGAYAAN & KEAHLIAN TEKNIS -->
+        {sortedModules.filter((m) => !m.data.category.startsWith('Orientasi PPLG')).length > 0 && (
+          <div class="space-y-4 pt-4">
+            <div class="border-b border-border pb-2.5">
+              <h2 class="text-base font-bold text-foreground">Modul Kejuruan & Pengayaan Praktis</h2>
+              <p class="text-xs text-muted-foreground">Materi tambahan untuk mengasah kemampuan teknis Web, Database, dan Pemrograman.</p>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {sortedModules.filter((m) => !m.data.category.startsWith('Orientasi PPLG')).map((mod) => (
+                <div class="card p-5 border-border bg-card transition-colors flex flex-col justify-between space-y-4 rounded-xl shadow-sm hover:border-primary/50">
+                  <div class="space-y-2.5">
+                    <div class="flex items-center justify-between">
+                      <span class="px-2 py-0.5 rounded text-[10px] bg-secondary text-foreground font-mono font-semibold border border-border">
+                        {mod.data.category}
+                      </span>
+                      <span class="text-xs text-muted-foreground font-mono">{mod.data.duration}</span>
+                    </div>
+
+                    <h3 class="text-sm font-bold text-foreground hover:text-primary transition-colors">
+                      <a href={`/pembelajaran/${mod.id || mod.slug}`}>{mod.data.title}</a>
+                    </h3>
+                    <p class="text-xs text-muted-foreground leading-relaxed line-clamp-2">
+                      {mod.data.description}
+                    </p>
+                  </div>
+
+                  <div class="pt-3 border-t border-border flex items-center justify-between text-xs">
+                    <span class="text-amber-600 dark:text-amber-400 font-medium font-mono">✨ +15 XP</span>
+                    <a href={`/pembelajaran/${mod.id || mod.slug}`} class="btn btn-sm btn-primary text-xs font-semibold px-3 py-1.5 rounded-lg">
+                      Mulai Belajar →
+                    </a>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
       </div>
     </div>
   </DashboardLayout>
@@ -225,29 +281,70 @@ if (user && isDbConfigured()) {
 
     <!-- Public Preview of Modules -->
     <section class="py-10">
-      <div class="container-main space-y-6">
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {sortedModules.map((mod) => (
-            <div class="card p-5 border-border bg-card flex flex-col justify-between space-y-3 rounded-xl shadow-sm">
-              <div class="space-y-2">
-                <span class="px-2 py-0.5 rounded text-[10px] bg-secondary text-foreground font-mono font-semibold border border-border">
-                  {mod.data.category}
-                </span>
-                <h3 class="text-sm font-bold text-foreground">
-                  <a href={`/pembelajaran/${mod.id || mod.slug}`} class="hover:text-primary transition-colors">{mod.data.title}</a>
-                </h3>
-                <p class="text-xs text-muted-foreground line-clamp-2">{mod.data.description}</p>
-              </div>
+      <div class="container-main space-y-8">
+        <!-- Public Orientasi Section -->
+        <div class="space-y-4">
+          <div class="border-b border-border pb-2.5">
+            <h2 class="text-lg font-bold text-foreground">⭐ Modul Orientasi PPLG (Kelas 10 RPL / Fase E)</h2>
+            <p class="text-xs text-muted-foreground">Wawasan Dunia Kerja & Skill Passport Semester Ganjil 2026/2027.</p>
+          </div>
 
-              <div class="pt-3 border-t border-border flex items-center justify-between text-xs">
-                <span class="text-amber-600 dark:text-amber-400 font-mono font-medium">✨ +15 XP</span>
-                <a href={`/pembelajaran/${mod.id || mod.slug}`} class="text-primary hover:underline font-semibold">
-                  Baca Modul →
-                </a>
+          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {sortedModules.filter((m) => m.data.category.startsWith('Orientasi PPLG')).map((mod) => (
+              <div class="card p-5 border-border bg-card flex flex-col justify-between space-y-3 rounded-xl shadow-sm">
+                <div class="space-y-2">
+                  <span class="px-2 py-0.5 rounded text-[10px] bg-secondary text-foreground font-mono font-semibold border border-border">
+                    {mod.data.category}
+                  </span>
+                  <h3 class="text-sm font-bold text-foreground">
+                    <a href={`/pembelajaran/${mod.id || mod.slug}`} class="hover:text-primary transition-colors">{mod.data.title}</a>
+                  </h3>
+                  <p class="text-xs text-muted-foreground line-clamp-2">{mod.data.description}</p>
+                </div>
+
+                <div class="pt-3 border-t border-border flex items-center justify-between text-xs">
+                  <span class="text-amber-600 dark:text-amber-400 font-mono font-medium">✨ +15 XP</span>
+                  <a href={`/pembelajaran/${mod.id || mod.slug}`} class="text-primary hover:underline font-semibold">
+                    Baca Modul & LKPD →
+                  </a>
+                </div>
               </div>
-            </div>
-          ))}
+            ))}
+          </div>
         </div>
+
+        <!-- Public Other Modules -->
+        {sortedModules.filter((m) => !m.data.category.startsWith('Orientasi PPLG')).length > 0 && (
+          <div class="space-y-4 pt-4">
+            <div class="border-b border-border pb-2.5">
+              <h2 class="text-base font-bold text-foreground">Modul Kejuruan & Pengayaan</h2>
+              <p class="text-xs text-muted-foreground">Materi pengembangan web, basis data, dan algoritma.</p>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {sortedModules.filter((m) => !m.data.category.startsWith('Orientasi PPLG')).map((mod) => (
+                <div class="card p-5 border-border bg-card flex flex-col justify-between space-y-3 rounded-xl shadow-sm">
+                  <div class="space-y-2">
+                    <span class="px-2 py-0.5 rounded text-[10px] bg-secondary text-foreground font-mono font-semibold border border-border">
+                      {mod.data.category}
+                    </span>
+                    <h3 class="text-sm font-bold text-foreground">
+                      <a href={`/pembelajaran/${mod.id || mod.slug}`} class="hover:text-primary transition-colors">{mod.data.title}</a>
+                    </h3>
+                    <p class="text-xs text-muted-foreground line-clamp-2">{mod.data.description}</p>
+                  </div>
+
+                  <div class="pt-3 border-t border-border flex items-center justify-between text-xs">
+                    <span class="text-amber-600 dark:text-amber-400 font-mono font-medium">✨ +15 XP</span>
+                    <a href={`/pembelajaran/${mod.id || mod.slug}`} class="text-primary hover:underline font-semibold">
+                      Baca Modul →
+                    </a>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
     </section>
   </BaseLayout>
