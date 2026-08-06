@@ -49,6 +49,14 @@ import BaseLayout from '../layouts/BaseLayout.astro';
     const form = document.getElementById('login-form');
     const alert = document.getElementById('error-alert');
 
+    // Check if redirected after account deletion
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.get('deleted') === '1' && alert) {
+      alert.className = 'p-3 rounded-xl bg-amber-500/15 border border-amber-500/30 text-amber-300 text-xs text-center font-medium block shadow-sm';
+      alert.textContent = '✓ Akun Anda telah berhasil dihapus secara permanen.';
+      alert.classList.remove('hidden');
+    }
+
     form?.addEventListener('submit', async (e) => {
       e.preventDefault();
       alert?.classList.add('hidden');
@@ -67,12 +75,14 @@ import BaseLayout from '../layouts/BaseLayout.astro';
           window.location.href = '/dashboard';
         } else {
           if (alert) {
+            alert.className = 'p-3 rounded-xl bg-red-500/10 border border-red-500/30 text-red-400 text-xs text-center font-medium block';
             alert.textContent = data.error || 'Gagal masuk.';
             alert.classList.remove('hidden');
           }
         }
       } catch (err) {
         if (alert) {
+          alert.className = 'p-3 rounded-xl bg-red-500/10 border border-red-500/30 text-red-400 text-xs text-center font-medium block';
           alert.textContent = 'Koneksi bermasalah.';
           alert.classList.remove('hidden');
         }
