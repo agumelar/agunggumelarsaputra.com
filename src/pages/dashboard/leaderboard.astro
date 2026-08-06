@@ -14,6 +14,7 @@ const allRankedUsers = await db.select({
   id: users.id,
   name: users.name,
   role: users.role,
+  studentClass: users.studentClass,
   avatarUrl: users.avatarUrl,
   xp: userGamification.xp,
   level: userGamification.level,
@@ -75,7 +76,14 @@ const otherRanked = allRankedUsers.slice(3);
             </div>
             <div class="space-y-1">
               <h3 class="text-sm font-bold text-foreground truncate">{top3[1].name}</h3>
-              <p class="text-[11px] text-muted-foreground font-mono">Level {top3[1].level}</p>
+              <div class="flex items-center justify-center gap-1.5 flex-wrap">
+                <span class="text-[11px] text-muted-foreground font-mono">Level {top3[1].level}</span>
+                {top3[1].studentClass && (
+                  <span class="text-[9px] px-1.5 py-0.2 rounded bg-cyan-500/20 text-cyan-300 font-mono">
+                    {top3[1].studentClass}
+                  </span>
+                )}
+              </div>
             </div>
             <div class="text-xl font-extrabold text-slate-300 font-mono">
               {top3[1].xp} XP
@@ -90,11 +98,18 @@ const otherRanked = allRankedUsers.slice(3);
             <div class="w-12 h-12 rounded-full bg-gradient-to-r from-amber-400 to-yellow-500 text-black font-extrabold text-xl flex items-center justify-center mx-auto shadow-lg shadow-amber-500/30">
               1
             </div>
-            <div class="space-y-1">
+            <div class="space-y-1.5">
               <h3 class="text-base font-extrabold text-foreground truncate">{top3[0].name}</h3>
-              <span class="text-xs px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300 font-mono font-semibold">
-                Level {top3[0].level}
-              </span>
+              <div class="flex items-center justify-center gap-1.5 flex-wrap">
+                <span class="text-xs px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300 font-mono font-semibold">
+                  Level {top3[0].level}
+                </span>
+                {top3[0].studentClass && (
+                  <span class="text-[10px] px-2 py-0.5 rounded-full bg-cyan-500/20 text-cyan-300 font-mono font-medium">
+                    {top3[0].studentClass}
+                  </span>
+                )}
+              </div>
             </div>
             <div class="text-2xl font-extrabold text-amber-400 font-mono tracking-tight">
               {top3[0].xp} XP
@@ -110,7 +125,14 @@ const otherRanked = allRankedUsers.slice(3);
             </div>
             <div class="space-y-1">
               <h3 class="text-sm font-bold text-foreground truncate">{top3[2].name}</h3>
-              <p class="text-[11px] text-muted-foreground font-mono">Level {top3[2].level}</p>
+              <div class="flex items-center justify-center gap-1.5 flex-wrap">
+                <span class="text-[11px] text-muted-foreground font-mono">Level {top3[2].level}</span>
+                {top3[2].studentClass && (
+                  <span class="text-[9px] px-1.5 py-0.2 rounded bg-cyan-500/20 text-cyan-300 font-mono">
+                    {top3[2].studentClass}
+                  </span>
+                )}
+              </div>
             </div>
             <div class="text-xl font-extrabold text-amber-500 font-mono">
               {top3[2].xp} XP
@@ -132,6 +154,7 @@ const otherRanked = allRankedUsers.slice(3);
           <tr>
             <th class="py-3 px-4">Peringkat</th>
             <th class="py-3 px-4">Nama Siswa</th>
+            <th class="py-3 px-4">Kelas</th>
             <th class="py-3 px-4">Tingkat Level</th>
             <th class="py-3 px-4">Streak Aktif</th>
             <th class="py-3 px-4 text-right">Total XP</th>
@@ -174,6 +197,15 @@ const otherRanked = allRankedUsers.slice(3);
                       </span>
                     ) : null}
                   </div>
+                </td>
+                <td class="py-3.5 px-4 font-mono">
+                  {ranked.studentClass ? (
+                    <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-cyan-500/15 text-cyan-300 border border-cyan-500/30">
+                      {ranked.studentClass}
+                    </span>
+                  ) : (
+                    <span class="text-muted-foreground text-[10px]">-</span>
+                  )}
                 </td>
                 <td class="py-3.5 px-4 font-mono text-emerald-400">
                   Level {ranked.level}

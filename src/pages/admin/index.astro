@@ -26,6 +26,7 @@ const allUsers = await db.select({
   name: users.name,
   email: users.email,
   role: users.role,
+  studentClass: users.studentClass,
   avatarUrl: users.avatarUrl,
   createdAt: users.createdAt,
   xp: userGamification.xp,
@@ -41,6 +42,7 @@ const allExamLogs = await db.select({
   userId: tkaAttempts.userId,
   userName: users.name,
   userEmail: users.email,
+  studentClass: users.studentClass,
   score: tkaAttempts.score,
   totalQuestions: tkaAttempts.totalQuestions,
   correctAnswers: tkaAttempts.correctAnswers,
@@ -55,6 +57,7 @@ const allLessonLogs = await db.select({
   id: userProgress.id,
   userName: users.name,
   userEmail: users.email,
+  studentClass: users.studentClass,
   lessonSlug: userProgress.lessonSlug,
   completedAt: userProgress.completedAt,
 }).from(userProgress)
@@ -201,6 +204,7 @@ const passRate = totalExamsTaken > 0 ? Math.round((passingExams / totalExamsTake
           <thead class="text-[11px] text-muted-foreground uppercase font-mono border-b border-border/60">
             <tr>
               <th class="py-3 px-4">Pengguna</th>
+              <th class="py-3 px-4">Kelas / Rombel</th>
               <th class="py-3 px-4">Email</th>
               <th class="py-3 px-4">Role Hak Akses</th>
               <th class="py-3 px-4">Level & XP</th>
@@ -242,6 +246,15 @@ const passRate = totalExamsTaken > 0 ? Math.round((passingExams / totalExamsTake
                         )}
                       </div>
                     </div>
+                  </td>
+                  <td class="py-3.5 px-4 font-mono">
+                    {u.studentClass ? (
+                      <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-cyan-500/15 text-cyan-300 border border-cyan-500/30 user-class">
+                        {u.studentClass}
+                      </span>
+                    ) : (
+                      <span class="text-muted-foreground text-[10px] user-class">-</span>
+                    )}
                   </td>
                   <td class="py-3.5 px-4 text-muted-foreground font-mono user-email">
                     {u.email}
@@ -323,6 +336,7 @@ const passRate = totalExamsTaken > 0 ? Math.round((passingExams / totalExamsTake
             <thead class="text-[11px] text-muted-foreground uppercase font-mono border-b border-border/60">
               <tr>
                 <th class="py-3 px-4">Nama Siswa</th>
+                <th class="py-3 px-4">Kelas</th>
                 <th class="py-3 px-4">Waktu Pengerjaan</th>
                 <th class="py-3 px-4">Skor Nilai</th>
                 <th class="py-3 px-4">Ketepatan</th>
@@ -346,6 +360,15 @@ const passRate = totalExamsTaken > 0 ? Math.round((passingExams / totalExamsTake
                     <td class="py-3.5 px-4 font-bold text-foreground">
                       {exam.userName}
                       <span class="block text-[10px] text-muted-foreground font-mono font-normal">{exam.userEmail}</span>
+                    </td>
+                    <td class="py-3.5 px-4 font-mono">
+                      {exam.studentClass ? (
+                        <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-cyan-500/15 text-cyan-300 border border-cyan-500/30">
+                          {exam.studentClass}
+                        </span>
+                      ) : (
+                        <span class="text-muted-foreground text-[10px]">-</span>
+                      )}
                     </td>
                     <td class="py-3.5 px-4 font-mono text-muted-foreground">
                       {examDate}
@@ -397,6 +420,7 @@ const passRate = totalExamsTaken > 0 ? Math.round((passingExams / totalExamsTake
             <thead class="text-[11px] text-muted-foreground uppercase font-mono border-b border-border/60">
               <tr>
                 <th class="py-3 px-4">Nama Siswa</th>
+                <th class="py-3 px-4">Kelas</th>
                 <th class="py-3 px-4">Slug Modul Materi</th>
                 <th class="py-3 px-4 text-right">Waktu Selesai</th>
               </tr>
@@ -415,6 +439,15 @@ const passRate = totalExamsTaken > 0 ? Math.round((passingExams / totalExamsTake
                   <tr class="hover:bg-accent/40 transition-colors">
                     <td class="py-3.5 px-4 font-bold text-foreground">
                       {log.userName}
+                    </td>
+                    <td class="py-3.5 px-4 font-mono">
+                      {log.studentClass ? (
+                        <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-cyan-500/15 text-cyan-300 border border-cyan-500/30">
+                          {log.studentClass}
+                        </span>
+                      ) : (
+                        <span class="text-muted-foreground text-[10px]">-</span>
+                      )}
                     </td>
                     <td class="py-3.5 px-4 font-mono text-blue-400">
                       /pembelajaran/{log.lessonSlug}
@@ -444,7 +477,8 @@ const passRate = totalExamsTaken > 0 ? Math.round((passingExams / totalExamsTake
     userRows.forEach(row => {
       const name = row.querySelector('.user-name')?.textContent?.toLowerCase() || '';
       const email = row.querySelector('.user-email')?.textContent?.toLowerCase() || '';
-      if (name.includes(query) || email.includes(query)) {
+      const uClass = row.querySelector('.user-class')?.textContent?.toLowerCase() || '';
+      if (name.includes(query) || email.includes(query) || uClass.includes(query)) {
         (row as HTMLElement).style.display = '';
       } else {
         (row as HTMLElement).style.display = 'none';

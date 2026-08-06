@@ -23,10 +23,12 @@ export async function ensureDbInitialized() {
         password_hash TEXT,
         google_id TEXT UNIQUE,
         role TEXT NOT NULL DEFAULT 'student',
+        student_class TEXT,
         avatar_url TEXT,
         created_at TIMESTAMP NOT NULL DEFAULT NOW()
       );
     `;
+    await sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS student_class TEXT;`;
     await sql`
       CREATE TABLE IF NOT EXISTS user_gamification (
         id SERIAL PRIMARY KEY,

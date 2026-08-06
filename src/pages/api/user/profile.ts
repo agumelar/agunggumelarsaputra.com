@@ -16,7 +16,7 @@ export const POST: APIRoute = async ({ request, cookies }) => {
 
   try {
     const body = await request.json();
-    const { name, currentPassword, newPassword } = body;
+    const { name, studentClass, currentPassword, newPassword } = body;
 
     // Validate name
     if (!name || typeof name !== 'string' || name.trim().length < 2) {
@@ -28,6 +28,7 @@ export const POST: APIRoute = async ({ request, cookies }) => {
     }
 
     const cleanName = name.trim();
+    const cleanClass = typeof studentClass === 'string' ? studentClass.trim().substring(0, 50) : null;
 
     // Fetch user from DB
     const [dbUser] = await db.select().from(users).where(eq(users.id, sessionUser.userId)).limit(1);
@@ -66,6 +67,7 @@ export const POST: APIRoute = async ({ request, cookies }) => {
     // Update in database
     const updateData: any = {
       name: cleanName,
+      studentClass: cleanClass,
       role: currentRole,
     };
     if (passwordHashToUpdate) {
@@ -98,6 +100,7 @@ export const POST: APIRoute = async ({ request, cookies }) => {
           id: dbUser.id,
           name: cleanName,
           email: dbUser.email,
+          studentClass: cleanClass,
           role: currentRole,
         },
       }),
