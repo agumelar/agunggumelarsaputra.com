@@ -2,100 +2,134 @@
 import { TKA_PPLG_QUESTIONS } from '../utils/tkaEngine';
 ---
 
-<div class="card p-6 md:p-8 border-cyan-500/30 bg-gradient-to-br from-card via-card to-cyan-950/20 shadow-2xl relative">
-  
-  <!-- Header Bar Quiz -->
-  <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-border/40 pb-4 mb-6">
-    <div>
-      <div class="flex items-center gap-2">
-        <span class="px-2.5 py-0.5 rounded-full bg-cyan-500/10 border border-cyan-500/30 text-cyan-400 text-xs font-semibold uppercase tracking-wider">Simulasi CBT TKA PPLG</span>
-        <span id="quiz-progress-text" class="text-xs text-muted-foreground font-mono">Soal 1 dari 6</span>
-      </div>
-      <h3 id="quiz-category-title" class="text-lg font-bold text-foreground mt-1">Proses Bisnis PPLG</h3>
-    </div>
-
-    <!-- Timer & Control -->
+<div class="space-y-4">
+  <!-- Active Token Session Indicator Banner -->
+  <div id="quiz-token-banner" class="hidden p-4 rounded-2xl bg-cyan-950/30 border border-cyan-500/40 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-md animate-fadeIn">
     <div class="flex items-center gap-3">
-      <div class="px-3 py-1.5 rounded-lg bg-card border border-border font-mono text-sm font-bold text-amber-400 flex items-center gap-1.5">
-        <span>⏱️</span>
-        <span id="quiz-timer">10:00</span>
+      <div class="w-9 h-9 rounded-xl bg-cyan-500/20 border border-cyan-500/40 flex items-center justify-center text-cyan-300 text-lg flex-shrink-0">
+        🎟️
+      </div>
+      <div>
+        <div class="flex items-center gap-2">
+          <span class="text-xs font-bold text-cyan-300">Sesi Ujian Terdaftar:</span>
+          <span id="banner-token-code" class="px-2 py-0.5 rounded-md bg-cyan-500/20 text-cyan-200 font-mono font-extrabold text-xs tracking-wider border border-cyan-500/30">
+            TOKEN
+          </span>
+        </div>
+        <p class="text-[11px] text-muted-foreground mt-0.5" id="banner-token-title">
+          Hasil ujian ini akan otomatis disinkronkan ke rekapitulasi nilai guru pengampu.
+        </p>
       </div>
     </div>
-  </div>
 
-  <!-- Question Box -->
-  <div id="quiz-question-box" class="space-y-4">
-    <div id="quiz-question-text" class="text-base md:text-lg text-foreground font-medium leading-relaxed">
-      <!-- Question text rendered by JS -->
-    </div>
-
-    <!-- Optional Code Snippet -->
-    <div id="quiz-code-container" class="hidden my-3">
-      <pre class="p-4 rounded-lg bg-slate-950 border border-slate-800 font-mono text-xs md:text-sm text-cyan-300 overflow-x-auto"><code id="quiz-code-text"></code></pre>
-    </div>
-
-    <!-- Options List -->
-    <div id="quiz-options-container" class="space-y-3 pt-2">
-      <!-- Options rendered by JS -->
-    </div>
-  </div>
-
-  <!-- Explanation & Teacher Note Box (Hidden until answered) -->
-  <div id="quiz-explanation-box" class="hidden mt-6 p-4 rounded-xl bg-blue-950/40 border border-blue-500/30 space-y-2">
-    <div class="flex items-center gap-2 text-sm font-bold text-cyan-400">
-      <span>💡 Pembahasan & Kunci Jawaban</span>
-    </div>
-    <p id="quiz-explanation-text" class="text-sm text-muted-foreground leading-relaxed"></p>
-    <div id="quiz-teacher-note" class="text-xs font-medium text-amber-300 bg-amber-500/10 p-3 rounded-lg border border-amber-500/20 mt-2"></div>
-  </div>
-
-  <!-- Navigation Buttons -->
-  <div class="flex items-center justify-between mt-8 pt-4 border-t border-border/40">
-    <button id="btn-prev-question" class="btn btn-outline btn-sm text-xs font-medium" disabled>
-      ← Soal Sebelumnya
+    <button 
+      type="button" 
+      id="btn-leave-session" 
+      class="text-[11px] text-muted-foreground hover:text-red-400 font-mono underline whitespace-nowrap self-end sm:self-auto"
+      title="Ganti atau keluar dari sesi ini"
+    >
+      Ganti Sesi Token
     </button>
-    
-    <div class="flex items-center gap-2">
-      <button id="btn-check-answer" class="btn btn-primary btn-sm px-5 text-xs font-semibold bg-cyan-600 hover:bg-cyan-500 text-white">
-        Periksa Jawaban
-      </button>
-      <button id="btn-next-question" class="btn btn-primary btn-sm px-5 text-xs font-semibold">
-        Soal Selanjutnya →
-      </button>
-    </div>
   </div>
 
-  <!-- Final Result Screen (Hidden by default) -->
-  <div id="quiz-result-screen" class="hidden text-center py-10 space-y-6">
-    <div class="w-20 h-20 rounded-full bg-gradient-to-tr from-cyan-500 to-emerald-400 text-4xl flex items-center justify-center mx-auto shadow-xl">
-      🏆
-    </div>
-    <div>
-      <h3 class="text-2xl font-bold text-foreground">Simulasi TKA PPLG Selesai!</h3>
-      <p class="text-sm text-muted-foreground mt-1">Berikut adalah hasil capaian ujian Anda:</p>
-    </div>
+  <div class="card p-6 md:p-8 border-cyan-500/30 bg-gradient-to-br from-card via-card to-cyan-950/20 shadow-2xl relative">
+    
+    <!-- Header Bar Quiz -->
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-border/40 pb-4 mb-6">
+      <div>
+        <div class="flex items-center gap-2">
+          <span class="px-2.5 py-0.5 rounded-full bg-cyan-500/10 border border-cyan-500/30 text-cyan-400 text-xs font-semibold uppercase tracking-wider">Simulasi CBT TKA PPLG</span>
+          <span id="quiz-progress-text" class="text-xs text-muted-foreground font-mono">Soal 1 dari 6</span>
+        </div>
+        <h3 id="quiz-category-title" class="text-lg font-bold text-foreground mt-1">Proses Bisnis PPLG</h3>
+      </div>
 
-    <div class="inline-flex items-center gap-6 px-8 py-4 rounded-2xl bg-card border border-border">
-      <div>
-        <div class="text-xs text-muted-foreground uppercase font-mono">Skor Akhir</div>
-        <div id="result-score-val" class="text-4xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-emerald-400 font-mono">0</div>
-      </div>
-      <div class="h-10 w-px bg-border"></div>
-      <div>
-        <div class="text-xs text-muted-foreground uppercase font-mono">Jawaban Benar</div>
-        <div id="result-correct-val" class="text-2xl font-bold text-emerald-400 font-mono">0 / 6</div>
-      </div>
-      <div class="h-10 w-px bg-border"></div>
-      <div>
-        <div class="text-xs text-muted-foreground uppercase font-mono">Bonus XP</div>
-        <div id="result-xp-val" class="text-2xl font-bold text-amber-400 font-mono">+0 XP</div>
+      <!-- Timer & Control -->
+      <div class="flex items-center gap-3">
+        <div class="px-3 py-1.5 rounded-lg bg-card border border-border font-mono text-sm font-bold text-amber-400 flex items-center gap-1.5">
+          <span>⏱️</span>
+          <span id="quiz-timer">10:00</span>
+        </div>
       </div>
     </div>
 
-    <div>
-      <button id="btn-restart-quiz" class="btn btn-primary btn-lg font-semibold bg-gradient-to-r from-blue-600 to-cyan-500">
-        Ulangi Simulasi Ujian 🔄
+    <!-- Question Box -->
+    <div id="quiz-question-box" class="space-y-4">
+      <div id="quiz-question-text" class="text-base md:text-lg text-foreground font-medium leading-relaxed">
+        <!-- Question text rendered by JS -->
+      </div>
+
+      <!-- Optional Code Snippet -->
+      <div id="quiz-code-container" class="hidden my-3">
+        <pre class="p-4 rounded-lg bg-slate-950 border border-slate-800 font-mono text-xs md:text-sm text-cyan-300 overflow-x-auto"><code id="quiz-code-text"></code></pre>
+      </div>
+
+      <!-- Options List -->
+      <div id="quiz-options-container" class="space-y-3 pt-2">
+        <!-- Options rendered by JS -->
+      </div>
+    </div>
+
+    <!-- Explanation & Teacher Note Box (Hidden until answered) -->
+    <div id="quiz-explanation-box" class="hidden mt-6 p-4 rounded-xl bg-blue-950/40 border border-blue-500/30 space-y-2">
+      <div class="flex items-center gap-2 text-sm font-bold text-cyan-400">
+        <span>💡 Pembahasan & Kunci Jawaban</span>
+      </div>
+      <p id="quiz-explanation-text" class="text-sm text-muted-foreground leading-relaxed"></p>
+      <div id="quiz-teacher-note" class="text-xs font-medium text-amber-300 bg-amber-500/10 p-3 rounded-lg border border-amber-500/20 mt-2"></div>
+    </div>
+
+    <!-- Navigation Buttons -->
+    <div class="flex items-center justify-between mt-8 pt-4 border-t border-border/40">
+      <button id="btn-prev-question" class="btn btn-outline btn-sm text-xs font-medium" disabled>
+        ← Soal Sebelumnya
       </button>
+      
+      <div class="flex items-center gap-2">
+        <button id="btn-check-answer" class="btn btn-primary btn-sm px-5 text-xs font-semibold bg-cyan-600 hover:bg-cyan-500 text-white">
+          Periksa Jawaban
+        </button>
+        <button id="btn-next-question" class="btn btn-primary btn-sm px-5 text-xs font-semibold">
+          Soal Selanjutnya →
+        </button>
+      </div>
+    </div>
+
+    <!-- Final Result Screen (Hidden by default) -->
+    <div id="quiz-result-screen" class="hidden text-center py-10 space-y-6">
+      <div class="w-20 h-20 rounded-full bg-gradient-to-tr from-cyan-500 to-emerald-400 text-4xl flex items-center justify-center mx-auto shadow-xl">
+        🏆
+      </div>
+      <div>
+        <h3 class="text-2xl font-bold text-foreground">Simulasi TKA PPLG Selesai!</h3>
+        <p class="text-sm text-muted-foreground mt-1">Berikut adalah hasil capaian ujian Anda:</p>
+      </div>
+
+      <div class="inline-flex items-center gap-6 px-8 py-4 rounded-2xl bg-card border border-border">
+        <div>
+          <div class="text-xs text-muted-foreground uppercase font-mono">Skor Akhir</div>
+          <div id="result-score-val" class="text-4xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-emerald-400 font-mono">0</div>
+        </div>
+        <div class="h-10 w-px bg-border"></div>
+        <div>
+          <div class="text-xs text-muted-foreground uppercase font-mono">Jawaban Benar</div>
+          <div id="result-correct-val" class="text-2xl font-bold text-emerald-400 font-mono">0 / 6</div>
+        </div>
+        <div class="h-10 w-px bg-border"></div>
+        <div>
+          <div class="text-xs text-muted-foreground uppercase font-mono">Bonus XP</div>
+          <div id="result-xp-val" class="text-2xl font-bold text-amber-400 font-mono">+0 XP</div>
+        </div>
+      </div>
+
+      <div class="flex items-center justify-center gap-3">
+        <a href="/pembelajaran" class="btn btn-outline btn-lg font-semibold">
+          ← Kembali ke Katalog
+        </a>
+        <button id="btn-restart-quiz" class="btn btn-primary btn-lg font-semibold bg-gradient-to-r from-blue-600 to-cyan-500">
+          Ulangi Simulasi Ujian 🔄
+        </button>
+      </div>
     </div>
   </div>
 </div>
@@ -109,6 +143,40 @@ import { TKA_PPLG_QUESTIONS } from '../utils/tkaEngine';
   let isAnswerChecked = new Array(TKA_PPLG_QUESTIONS.length).fill(false);
   let secondsRemaining = 600; // 10 minutes
   let timerInterval: any = null;
+
+  // Active Token Detection
+  const urlParams = new URLSearchParams(window.location.search);
+  const paramTokenId = urlParams.get('tokenId');
+  const paramTokenCode = urlParams.get('tokenCode');
+
+  if (paramTokenId) {
+    localStorage.setItem('ags_active_token_id', paramTokenId);
+    if (paramTokenCode) localStorage.setItem('ags_active_token_code', paramTokenCode);
+  }
+
+  const activeTokenId = localStorage.getItem('ags_active_token_id');
+  const activeTokenCode = localStorage.getItem('ags_active_token_code');
+  const activeTokenTitle = localStorage.getItem('ags_active_token_title');
+
+  const tokenBanner = document.getElementById('quiz-token-banner');
+  const bannerTokenCode = document.getElementById('banner-token-code');
+  const bannerTokenTitle = document.getElementById('banner-token-title');
+  const btnLeaveSession = document.getElementById('btn-leave-session');
+
+  if (activeTokenId && activeTokenCode && tokenBanner) {
+    tokenBanner.classList.remove('hidden');
+    if (bannerTokenCode) bannerTokenCode.textContent = activeTokenCode;
+    if (bannerTokenTitle && activeTokenTitle) {
+      bannerTokenTitle.textContent = `Sesi: ${activeTokenTitle} — Nilai akan disinkronkan ke rekapitulasi guru.`;
+    }
+  }
+
+  btnLeaveSession?.addEventListener('click', () => {
+    localStorage.removeItem('ags_active_token_id');
+    localStorage.removeItem('ags_active_token_code');
+    localStorage.removeItem('ags_active_token_title');
+    window.location.href = '/pembelajaran';
+  });
 
   const progressText = document.getElementById('quiz-progress-text');
   const categoryTitle = document.getElementById('quiz-category-title');
@@ -271,6 +339,8 @@ import { TKA_PPLG_QUESTIONS } from '../utils/tkaEngine';
     if (score >= 80) unlockBadge(state, 'tka-master');
     addXp(score >= 80 ? 100 : 0, 'Bonus kelulusan TKA');
 
+    const currentSavedTokenId = localStorage.getItem('ags_active_token_id');
+
     fetch('/api/tka/submit', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -278,6 +348,7 @@ import { TKA_PPLG_QUESTIONS } from '../utils/tkaEngine';
         score,
         totalQuestions: TKA_PPLG_QUESTIONS.length,
         correctAnswers: correctCount,
+        tokenId: currentSavedTokenId ? Number(currentSavedTokenId) : null,
       })
     }).catch(err => console.log('TKA Submit API Error:', err));
 

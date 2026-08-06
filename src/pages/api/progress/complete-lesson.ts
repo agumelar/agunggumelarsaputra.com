@@ -1,5 +1,5 @@
 import type { APIRoute } from 'astro';
-import { db } from '../../../db';
+import { db, ensureDbInitialized } from '../../../db';
 import { userGamification, userProgress } from '../../../db/schema';
 import { eq, and } from 'drizzle-orm';
 
@@ -9,7 +9,8 @@ export const POST: APIRoute = async ({ request, locals }) => {
   }
 
   try {
-    const { lessonSlug } = await request.json();
+    await ensureDbInitialized();
+    const { lessonSlug, tokenId } = await request.json();
     const userId = locals.user.userId;
 
     const [existing] = await db.select().from(userProgress)
@@ -19,7 +20,11 @@ export const POST: APIRoute = async ({ request, locals }) => {
       return new Response(JSON.stringify({ message: 'Sudah diselesaikan sebelumnya.' }), { status: 200 });
     }
 
-    await db.insert(userProgress).values({ userId, lessonSlug });
+    await db.insert(userProgress).values({
+      userId,
+      tokenId: tokenId ? Number(tokenId) : null,
+      lessonSlug
+    });
 
     let [stats] = await db.select().from(userGamification).where(eq(userGamification.userId, userId)).limit(1);
     if (!stats) {

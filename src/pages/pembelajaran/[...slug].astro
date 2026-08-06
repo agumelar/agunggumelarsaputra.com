@@ -112,12 +112,16 @@ const sortedSidebarModules = allModules.sort((a, b) => a.data.order - b.data.ord
 
     btnComplete?.addEventListener('click', async () => {
       markLessonComplete(slug);
+      const activeTokenId = localStorage.getItem('ags_active_token_id');
       
       try {
         const res = await fetch('/api/progress/complete-lesson', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ lessonSlug: slug })
+          body: JSON.stringify({ 
+            lessonSlug: slug,
+            tokenId: activeTokenId ? Number(activeTokenId) : null
+          })
         });
         const data = await res.json();
         if (data.success) {

@@ -1,7 +1,7 @@
 ---
 import DashboardLayout from '../../layouts/DashboardLayout.astro';
 import { db, ensureDbInitialized } from '../../db';
-import { users, userGamification, tkaAttempts, userProgress } from '../../db/schema';
+import { users, userGamification, tkaAttempts, userProgress, enrollmentTokens, userEnrollments } from '../../db/schema';
 import { eq, desc } from 'drizzle-orm';
 
 import { canAccessAdminPanel, isSuperAdmin, isSuperAdminEmail } from '../../utils/auth';
@@ -40,6 +40,7 @@ const allUsers = await db.select({
 const allExamLogs = await db.select({
   id: tkaAttempts.id,
   userId: tkaAttempts.userId,
+  tokenId: tkaAttempts.tokenId,
   userName: users.name,
   userEmail: users.email,
   studentClass: users.studentClass,
@@ -55,6 +56,8 @@ const allExamLogs = await db.select({
 // 3. Fetch All Lesson Progress + User Info
 const allLessonLogs = await db.select({
   id: userProgress.id,
+  userId: userProgress.userId,
+  tokenId: userProgress.tokenId,
   userName: users.name,
   userEmail: users.email,
   studentClass: users.studentClass,
@@ -64,7 +67,43 @@ const allLessonLogs = await db.select({
   .innerJoin(users, eq(userProgress.userId, users.id))
   .orderBy(desc(userProgress.completedAt));
 
-// 4. Metrics Calculations
+// 4. Fetch All Enrollment Tokens
+const allTokens = await db.select({
+  id: enrollmentTokens.id,
+  token: enrollmentTokens.token,
+  title: enrollmentTokens.title,
+  description: enrollmentTokens.description,
+  targetType: enrollmentTokens.targetType,
+  targetSlug: enrollmentTokens.targetSlug,
+  targetClass: enrollmentTokens.targetClass,
+  isActive: enrollmentTokens.isActive,
+  createdAt: enrollmentTokens.createdAt,
+  expiresAt: enrollmentTokens.expiresAt,
+  creatorName: users.name,
+}).from(enrollmentTokens)
+  .leftJoin(users, eq(enrollmentTokens.createdBy, users.id))
+  .orderBy(desc(enrollmentTokens.createdAt));
+
+// 5. Fetch Enrollment counts
+const allEnrollments = await db.select({
+  id: userEnrollments.id,
+  tokenId: userEnrollments.tokenId,
+  userId: userEnrollments.userId,
+}).from(userEnrollments);
+
+const enrollmentCountMap: Record<number, number> = {};
+for (const e of allEnrollments) {
+  enrollmentCountMap[e.tokenId] = (enrollmentCountMap[e.tokenId] || 0) + 1;
+}
+
+const examCountMap: Record<number, number> = {};
+for (const ex of allExamLogs) {
+  if (ex.tokenId) {
+    examCountMap[ex.tokenId] = (examCountMap[ex.tokenId] || 0) + 1;
+  }
+}
+
+// 6. Metrics Calculations
 const totalStudents = allUsers.filter(u => u.role === 'student' && !isSuperAdminEmail(u.email)).length;
 const totalTeachers = allUsers.filter(u => (u.role === 'teacher' || u.role === 'admin') && !isSuperAdminEmail(u.email)).length;
 const totalSuperAdmins = allUsers.filter(u => u.role === 'superadmin' || isSuperAdminEmail(u.email)).length;
@@ -91,11 +130,14 @@ const passRate = totalExamsTaken > 0 ? Math.round((passingExams / totalExamsTake
           Panel Manajemen Guru & Monitoring Siswa
         </h1>
         <p class="text-xs sm:text-sm text-muted-foreground max-w-xl">
-          Pantau progres belajar seluruh siswa SMKN 1 Rongga, kelola perizinan hak akses role admin/siswa, dan evaluasi hasil nilai ujian Drilling TKA secara real-time.
+          Kelola token sesi pembelajaran (Roll Token), pantau partisipasi siswa per-token, kelola perizinan hak akses, dan evaluasi hasil nilai ujian Drilling TKA secara real-time.
         </p>
       </div>
 
-      <div class="flex items-center gap-3">
+      <div class="flex flex-wrap items-center gap-2.5">
+        <a href="#tokens" class="btn btn-sm bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white font-bold shadow-lg shadow-cyan-600/20">
+          🎟️ Token Sesi ({allTokens.length})
+        </a>
         <a href="#students" class="btn btn-sm bg-amber-500 hover:bg-amber-400 text-black font-bold">
           👥 Data Siswa ({allUsers.length})
         </a>
@@ -124,22 +166,22 @@ const passRate = totalExamsTaken > 0 ? Math.round((passingExams / totalExamsTake
         </div>
       </div>
 
-      <!-- Metric 2: Ujian Dikerjakan -->
+      <!-- Metric 2: Sesi Token Aktif -->
       <div class="card p-6 rounded-2xl border-border/60 bg-card/80 space-y-2">
         <div class="flex items-center justify-between">
-          <span class="text-xs font-medium text-muted-foreground">Total Ujian TKA Diikuti</span>
-          <span class="text-lg">📝</span>
+          <span class="text-xs font-medium text-muted-foreground">Token Sesi Kelas</span>
+          <span class="text-lg">🎟️</span>
         </div>
         <div class="text-3xl font-extrabold text-cyan-400 font-mono">
-          {totalExamsTaken} <span class="text-xs text-muted-foreground font-sans font-normal">Sesi</span>
+          {allTokens.filter(t => t.isActive).length} <span class="text-xs text-muted-foreground font-sans font-normal">Aktif</span>
         </div>
-        <p class="text-[11px] text-muted-foreground">Simulasi Drilling PPLG</p>
+        <p class="text-[11px] text-muted-foreground">Total {allTokens.length} sesi terdaftar</p>
       </div>
 
       <!-- Metric 3: Rata-Rata Nilai -->
       <div class="card p-6 rounded-2xl border-border/60 bg-card/80 space-y-2">
         <div class="flex items-center justify-between">
-          <span class="text-xs font-medium text-muted-foreground">Rata-Rata Nilai Kelas</span>
+          <span class="text-xs font-medium text-muted-foreground">Rata-Rata Nilai TKA</span>
           <span class="text-lg">📊</span>
         </div>
         <div class="text-3xl font-extrabold text-amber-400 font-mono">
@@ -151,7 +193,7 @@ const passRate = totalExamsTaken > 0 ? Math.round((passingExams / totalExamsTake
       <!-- Metric 4: Modul Diselesaikan -->
       <div class="card p-6 rounded-2xl border-border/60 bg-card/80 space-y-2">
         <div class="flex items-center justify-between">
-          <span class="text-xs font-medium text-muted-foreground">Modul Diselesaikan Siswa</span>
+          <span class="text-xs font-medium text-muted-foreground">Modul Diselesaikan</span>
           <span class="text-lg">📚</span>
         </div>
         <div class="text-3xl font-extrabold text-emerald-400 font-mono">
@@ -162,10 +204,295 @@ const passRate = totalExamsTaken > 0 ? Math.round((passingExams / totalExamsTake
 
     </div>
 
-    <!-- Alert Notification for Role Updates -->
+    <!-- Alert Notification -->
     <div id="admin-alert" class="hidden p-4 rounded-xl text-xs font-medium text-center transition-all"></div>
 
+    <!-- ========================================== -->
+    <!-- SECTION 0: MANAJEMEN TOKEN SESI (ROLL & REKAP PER-TOKEN) -->
+    <!-- ========================================== -->
+    <div id="tokens" class="card p-6 sm:p-8 rounded-3xl border-cyan-500/40 bg-card/90 space-y-8 shadow-xl relative overflow-hidden">
+      <div class="absolute top-0 right-0 w-96 h-96 bg-cyan-500/5 rounded-full blur-3xl pointer-events-none"></div>
+
+      <!-- Header & Create Token Form -->
+      <div class="space-y-6">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-border/40 pb-4">
+          <div>
+            <h2 class="text-lg font-bold text-foreground flex items-center gap-2">
+              <span>🎟️ Manajemen Token Sesi Belajar & Ujian (Roll Token)</span>
+              <span class="text-[10px] px-2.5 py-0.5 rounded-full font-mono bg-cyan-500/20 text-cyan-300 border border-cyan-500/40">
+                PENGUMPULAN DATA PER-TOKEN
+              </span>
+            </h2>
+            <p class="text-xs text-muted-foreground mt-1">
+              Buat (Roll) Token baru untuk sesi kelas tertentu. Siswa wajib melakukan <b>Enroll Token</b> agar data pengerjaan ujian dan modul tercatat rapi per-sesi.
+            </p>
+          </div>
+
+          <button 
+            type="button" 
+            id="toggle-create-token-btn"
+            class="px-4 py-2.5 rounded-xl bg-cyan-600 hover:bg-cyan-500 text-white font-bold text-xs shadow-lg shadow-cyan-600/20 transition-all flex items-center gap-2 flex-shrink-0"
+          >
+            <span>+ Buat (Roll) Token Baru</span>
+          </button>
+        </div>
+
+        <!-- Form Pembuatan Token Baru (Collapsible) -->
+        <div id="create-token-card" class="hidden p-6 rounded-2xl bg-cyan-950/20 border border-cyan-500/30 space-y-5 animate-fadeIn">
+          <div class="flex items-center justify-between border-b border-cyan-500/20 pb-3">
+            <h3 class="text-sm font-bold text-cyan-300 flex items-center gap-2">
+              <span>🎲 Formulir Penerbitan Token Sesi Baru</span>
+            </h3>
+            <span class="text-[10px] text-muted-foreground">Oleh: {user.name}</span>
+          </div>
+
+          <form id="create-token-form" class="space-y-4 text-xs">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+              
+              <!-- Judul Sesi -->
+              <div class="md:col-span-2 space-y-1">
+                <label class="block font-medium text-foreground">Judul / Nama Sesi Belajar <span class="text-red-400">*</span></label>
+                <input 
+                  type="text" 
+                  id="token-title" 
+                  required 
+                  placeholder="Contoh: Tryout TKA PPLG Sesi 1 - 10 RPL 1" 
+                  class="w-full px-3.5 py-2.5 rounded-xl bg-background border border-border text-foreground text-xs focus:outline-none focus:border-cyan-500"
+                />
+              </div>
+
+              <!-- Target Kelas -->
+              <div class="space-y-1">
+                <label class="block font-medium text-foreground">Target Kelas / Rombel</label>
+                <select 
+                  id="token-target-class" 
+                  class="w-full px-3.5 py-2.5 rounded-xl bg-background border border-border text-foreground text-xs focus:outline-none focus:border-cyan-500"
+                >
+                  <option value="Semua Kelas">Semua Kelas (Umum)</option>
+                  <optgroup label="Kelas 10 RPL">
+                    <option value="10 RPL 1">10 RPL 1</option>
+                    <option value="10 RPL 2">10 RPL 2</option>
+                    <option value="10 RPL 3">10 RPL 3</option>
+                    <option value="10 RPL 4">10 RPL 4</option>
+                  </optgroup>
+                  <optgroup label="Kelas 11 RPL">
+                    <option value="11 RPL 1">11 RPL 1</option>
+                    <option value="11 RPL 2">11 RPL 2</option>
+                    <option value="11 RPL 3">11 RPL 3</option>
+                    <option value="11 RPL 4">11 RPL 4</option>
+                  </optgroup>
+                  <optgroup label="Kelas 12 RPL">
+                    <option value="12 RPL 1">12 RPL 1</option>
+                    <option value="12 RPL 2">12 RPL 2</option>
+                    <option value="12 RPL 3">12 RPL 3</option>
+                    <option value="12 RPL 4">12 RPL 4</option>
+                  </optgroup>
+                </select>
+              </div>
+
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+              
+              <!-- Tipe Sesi -->
+              <div class="space-y-1">
+                <label class="block font-medium text-foreground">Tipe Target Sesi</label>
+                <select 
+                  id="token-target-type" 
+                  class="w-full px-3.5 py-2.5 rounded-xl bg-background border border-border text-foreground text-xs focus:outline-none focus:border-cyan-500"
+                >
+                  <option value="tka">🎯 Drilling TKA Simulator (Ujian CBT)</option>
+                  <option value="all">📚 Semua Modul & Tryout (Global)</option>
+                  <option value="module">📖 Modul Pembelajaran Tertentu</option>
+                </select>
+              </div>
+
+              <!-- Kode Token Kustom (Opsional) -->
+              <div class="space-y-1">
+                <label class="block font-medium text-foreground">
+                  Kode Token Kustom (Opsional - Kosongkan jika ingin auto-generate)
+                </label>
+                <input 
+                  type="text" 
+                  id="token-custom-code" 
+                  placeholder="Contoh: RPL1-TKA8 (Auto-generate jika kosong)" 
+                  class="w-full px-3.5 py-2.5 rounded-xl bg-background border border-border text-foreground text-xs font-mono uppercase focus:outline-none focus:border-cyan-500"
+                />
+              </div>
+
+            </div>
+
+            <!-- Deskripsi / Petunjuk untuk Siswa -->
+            <div class="space-y-1">
+              <label class="block font-medium text-foreground">Catatan / Petunjuk untuk Siswa (Opsional)</label>
+              <input 
+                type="text" 
+                id="token-description" 
+                placeholder="Contoh: Harap dikerjakan mandiri dalam waktu 30 menit." 
+                class="w-full px-3.5 py-2.5 rounded-xl bg-background border border-border text-foreground text-xs focus:outline-none focus:border-cyan-500"
+              />
+            </div>
+
+            <div class="pt-2 flex items-center justify-end gap-3">
+              <button 
+                type="button" 
+                id="cancel-create-token-btn"
+                class="px-4 py-2.5 rounded-xl bg-accent hover:bg-accent/80 text-foreground font-semibold"
+              >
+                Batal
+              </button>
+              <button 
+                type="submit" 
+                id="submit-token-btn"
+                class="px-5 py-2.5 rounded-xl bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white font-bold shadow-lg shadow-cyan-600/30 flex items-center gap-2"
+              >
+                <span id="token-btn-text">🎲 Terbitkan Token Sesi</span>
+              </button>
+            </div>
+          </form>
+        </div>
+
+        <!-- Tabel Daftar Token Sesi -->
+        {allTokens.length === 0 ? (
+          <div class="p-8 text-center text-xs text-muted-foreground bg-accent/20 rounded-2xl border border-dashed border-border/80">
+            Belum ada Token Sesi yang dibuat. Klik tombol <b>"+ Buat (Roll) Token Baru"</b> untuk membuat token sesi kelas pertama Anda.
+          </div>
+        ) : (
+          <div class="overflow-x-auto">
+            <table class="w-full text-left text-xs">
+              <thead class="text-[11px] text-muted-foreground uppercase font-mono border-b border-border/60">
+                <tr>
+                  <th class="py-3 px-4">Kode Token</th>
+                  <th class="py-3 px-4">Nama Sesi & Tipe</th>
+                  <th class="py-3 px-4">Target Kelas</th>
+                  <th class="py-3 px-4">Siswa Enroll</th>
+                  <th class="py-3 px-4">Ujian Selesai</th>
+                  <th class="py-3 px-4">Status Sesi</th>
+                  <th class="py-3 px-4 text-right">Aksi & Rekap Data</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-border/40 font-medium">
+                {allTokens.map((t) => {
+                  const enrolledCount = enrollmentCountMap[t.id] || 0;
+                  const examCount = examCountMap[t.id] || 0;
+                  const createdDate = new Date(t.createdAt).toLocaleDateString('id-ID', {
+                    day: 'numeric',
+                    month: 'short',
+                    year: 'numeric'
+                  });
+
+                  return (
+                    <tr class="hover:bg-accent/40 transition-colors">
+                      <!-- Token Code with Copy Button -->
+                      <td class="py-3.5 px-4 font-mono">
+                        <div class="flex items-center gap-2">
+                          <span class="px-2.5 py-1 rounded-lg font-mono font-extrabold text-xs bg-cyan-500/15 text-cyan-300 border border-cyan-500/30 tracking-wider">
+                            {t.token}
+                          </span>
+                          <button 
+                            type="button" 
+                            data-copy-token={t.token}
+                            class="copy-token-btn p-1.5 rounded-lg text-muted-foreground hover:text-cyan-400 hover:bg-cyan-500/10 transition-colors"
+                            title="Salin Kode Token"
+                          >
+                            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                            </svg>
+                          </button>
+                        </div>
+                      </td>
+
+                      <!-- Judul Sesi -->
+                      <td class="py-3.5 px-4">
+                        <span class="font-bold text-foreground block">{t.title}</span>
+                        <div class="flex items-center gap-2 text-[10px] text-muted-foreground mt-0.5">
+                          <span class="font-mono text-cyan-400">
+                            {t.targetType === 'tka' ? '🎯 Ujian TKA' : t.targetType === 'module' ? '📖 Modul Materi' : '📚 Global Hub'}
+                          </span>
+                          <span>•</span>
+                          <span>{createdDate}</span>
+                        </div>
+                      </td>
+
+                      <!-- Target Kelas -->
+                      <td class="py-3.5 px-4 font-mono">
+                        <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-500/15 text-amber-300 border border-amber-500/30">
+                          {t.targetClass}
+                        </span>
+                      </td>
+
+                      <!-- Siswa Enroll -->
+                      <td class="py-3.5 px-4 font-mono font-bold text-foreground">
+                        <span class="px-2.5 py-0.5 rounded-full bg-blue-500/10 text-blue-400 text-xs">
+                          👥 {enrolledCount} Siswa
+                        </span>
+                      </td>
+
+                      <!-- Ujian Selesai -->
+                      <td class="py-3.5 px-4 font-mono font-bold text-emerald-400">
+                        {examCount} Selesai
+                      </td>
+
+                      <!-- Toggle Status -->
+                      <td class="py-3.5 px-4">
+                        <button 
+                          type="button"
+                          data-token-id={t.id}
+                          data-token-active={t.isActive ? 'true' : 'false'}
+                          class="toggle-token-status-btn px-2.5 py-1 rounded-full text-[10px] font-mono font-bold uppercase transition-all"
+                          class:list={[
+                            t.isActive 
+                              ? "bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 hover:bg-emerald-500/30" 
+                              : "bg-red-500/20 text-red-300 border border-red-500/40 hover:bg-red-500/30"
+                          ]}
+                          title="Klik untuk mengubah status sesi"
+                        >
+                          {t.isActive ? '● SESI AKTIF' : '○ NONAKTIF'}
+                        </button>
+                      </td>
+
+                      <!-- Actions -->
+                      <td class="py-3.5 px-4 text-right">
+                        <div class="flex items-center justify-end gap-2">
+                          <button 
+                            type="button"
+                            data-view-report-token-id={t.id}
+                            data-token-code={t.token}
+                            data-token-title={t.title}
+                            class="view-report-btn px-3 py-1.5 rounded-xl text-xs font-bold bg-cyan-600 hover:bg-cyan-500 text-white shadow-md shadow-cyan-600/20 transition-all flex items-center gap-1.5"
+                          >
+                            <span>📊 Rekap Nilai</span>
+                          </button>
+
+                          <button 
+                            type="button"
+                            data-delete-token-id={t.id}
+                            data-token-title={t.title}
+                            data-token-code={t.token}
+                            class="delete-token-btn p-1.5 rounded-xl text-muted-foreground hover:text-red-400 hover:bg-red-500/10 border border-border/40 hover:border-red-500/30 transition-all"
+                            title="Hapus Token Sesi"
+                          >
+                            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                            </svg>
+                          </button>
+                        </div>
+                      </td>
+
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        )}
+
+      </div>
+    </div>
+
+    <!-- ========================================== -->
     <!-- SECTION 1: MANAJEMEN DATA PENGGUNA & ROLE SISWA -->
+    <!-- ========================================== -->
     <div id="students" class="card p-6 sm:p-8 rounded-3xl border-border/60 bg-card/90 space-y-6 shadow-md">
       <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-border/40 pb-4">
         <div>
@@ -335,13 +662,15 @@ const passRate = totalExamsTaken > 0 ? Math.round((passingExams / totalExamsTake
       </div>
     </div>
 
-    <!-- SECTION 2: LOG HASIL UJIAN SISWA -->
+    <!-- ========================================== -->
+    <!-- SECTION 2: LOG HASIL UJIAN SISWA (GLOBAL) -->
+    <!-- ========================================== -->
     <div id="exams" class="card p-6 sm:p-8 rounded-3xl border-border/60 bg-card/90 space-y-6 shadow-md">
       <div class="border-b border-border/40 pb-4">
         <h2 class="text-lg font-bold text-foreground flex items-center gap-2">
-          <span>🎯 Log Nilai Ujian Drilling TKA PPLG Seluruh Siswa</span>
+          <span>🎯 Log Seluruh Nilai Ujian Drilling TKA PPLG</span>
         </h2>
-        <p class="text-xs text-muted-foreground">Riwayat lengkap nilai simulasi ujian yang telah dikerjakan oleh siswa.</p>
+        <p class="text-xs text-muted-foreground">Riwayat lengkap seluruh nilai simulasi ujian yang telah dikerjakan oleh siswa.</p>
       </div>
 
       {allExamLogs.length === 0 ? (
@@ -419,7 +748,9 @@ const passRate = totalExamsTaken > 0 ? Math.round((passingExams / totalExamsTake
       )}
     </div>
 
+    <!-- ========================================== -->
     <!-- SECTION 3: LOG PENYELESAIAN MODUL MATERI -->
+    <!-- ========================================== -->
     <div class="card p-6 sm:p-8 rounded-3xl border-border/60 bg-card/90 space-y-6 shadow-md">
       <div class="border-b border-border/40 pb-4">
         <h2 class="text-lg font-bold text-foreground flex items-center gap-2">
@@ -483,10 +814,329 @@ const passRate = totalExamsTaken > 0 ? Math.round((passingExams / totalExamsTake
     </div>
 
   </div>
+
+  <!-- ========================================== -->
+  <!-- MODAL REKAPITULASI DATA PER-TOKEN -->
+  <!-- ========================================== -->
+  <div id="report-modal" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-md hidden flex items-center justify-center p-4">
+    <div class="bg-card border border-cyan-500/40 rounded-3xl max-w-4xl w-full max-h-[90vh] flex flex-col shadow-2xl overflow-hidden animate-fadeIn">
+      
+      <!-- Modal Header -->
+      <div class="p-6 border-b border-border/60 flex items-center justify-between bg-cyan-950/20">
+        <div class="space-y-1">
+          <div class="flex items-center gap-2">
+            <span class="px-2.5 py-0.5 rounded-full bg-cyan-500/20 text-cyan-300 border border-cyan-500/40 text-xs font-mono font-bold" id="report-modal-token-code">
+              TOKEN-CODE
+            </span>
+            <span class="text-xs text-muted-foreground" id="report-modal-target-class">10 RPL 1</span>
+          </div>
+          <h3 class="text-lg font-extrabold text-foreground" id="report-modal-title">
+            Rekapitulasi Sesi Belajar
+          </h3>
+        </div>
+
+        <div class="flex items-center gap-2">
+          <button 
+            type="button" 
+            id="print-report-btn"
+            class="px-3.5 py-2 rounded-xl bg-accent hover:bg-accent/80 text-foreground font-semibold text-xs border border-border/60 transition-colors flex items-center gap-1.5"
+          >
+            <span>🖨️ Cetak / Print Rekap</span>
+          </button>
+          <button 
+            type="button" 
+            id="close-report-modal-btn"
+            class="p-2 rounded-xl text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
+          >
+            ✕
+          </button>
+        </div>
+      </div>
+
+      <!-- Modal Body (Printable Area) -->
+      <div class="p-6 overflow-y-auto space-y-6 flex-grow" id="printable-report-area">
+        
+        <!-- Stats Summary Bar -->
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-4" id="report-stats-container">
+          <div class="p-4 rounded-2xl bg-background border border-border space-y-1">
+            <span class="text-[10px] text-muted-foreground uppercase font-mono">Siswa Enroll</span>
+            <div class="text-2xl font-bold font-mono text-foreground" id="stat-enrolled">0</div>
+          </div>
+          <div class="p-4 rounded-2xl bg-background border border-border space-y-1">
+            <span class="text-[10px] text-muted-foreground uppercase font-mono">Ujian Selesai</span>
+            <div class="text-2xl font-bold font-mono text-cyan-400" id="stat-taken">0</div>
+          </div>
+          <div class="p-4 rounded-2xl bg-background border border-border space-y-1">
+            <span class="text-[10px] text-muted-foreground uppercase font-mono">Rata-Rata Nilai</span>
+            <div class="text-2xl font-bold font-mono text-amber-400" id="stat-avg">0</div>
+          </div>
+          <div class="p-4 rounded-2xl bg-background border border-border space-y-1">
+            <span class="text-[10px] text-muted-foreground uppercase font-mono">Kelulusan</span>
+            <div class="text-2xl font-bold font-mono text-emerald-400" id="stat-pass">0%</div>
+          </div>
+        </div>
+
+        <!-- Student Records Table -->
+        <div class="space-y-2">
+          <h4 class="text-xs font-bold text-foreground uppercase tracking-wider font-mono">
+            Daftar Nilai & Pengerjaan Siswa
+          </h4>
+          <div class="overflow-x-auto rounded-2xl border border-border">
+            <table class="w-full text-left text-xs">
+              <thead class="bg-accent/40 text-[10px] text-muted-foreground uppercase font-mono border-b border-border">
+                <tr>
+                  <th class="py-2.5 px-3">No</th>
+                  <th class="py-2.5 px-3">Nama Siswa</th>
+                  <th class="py-2.5 px-3">Kelas</th>
+                  <th class="py-2.5 px-3">Status Ujian</th>
+                  <th class="py-2.5 px-3">Nilai Skor</th>
+                  <th class="py-2.5 px-3">Jawaban Benar</th>
+                  <th class="py-2.5 px-3">Waktu Selesai</th>
+                </tr>
+              </thead>
+              <tbody id="report-students-tbody" class="divide-y divide-border/40 font-medium">
+                <tr>
+                  <td colspan="7" class="text-center py-6 text-muted-foreground">Memuat data...</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+  </div>
+
 </DashboardLayout>
 
 <script>
-  // Search filter for users
+  // 1. Alert Helper
+  const alertBox = document.getElementById('admin-alert');
+  function showAlert(msg: string, isError = false) {
+    if (!alertBox) return;
+    alertBox.className = isError 
+      ? 'p-4 rounded-2xl text-xs font-bold text-center bg-red-500/15 border border-red-500/30 text-red-400 block shadow-lg shadow-red-500/5 animate-fadeIn'
+      : 'p-4 rounded-2xl text-xs font-bold text-center bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 block shadow-lg shadow-emerald-500/5 animate-fadeIn';
+    alertBox.textContent = (isError ? '✕ ' : '✓ ') + msg;
+  }
+
+  // 2. Roll Token (Create Token) Form
+  const toggleCreateTokenBtn = document.getElementById('toggle-create-token-btn');
+  const createTokenCard = document.getElementById('create-token-card');
+  const cancelCreateTokenBtn = document.getElementById('cancel-create-token-btn');
+  const createTokenForm = document.getElementById('create-token-form') as HTMLFormElement | null;
+  const submitTokenBtn = document.getElementById('submit-token-btn') as HTMLButtonElement | null;
+  const tokenBtnText = document.getElementById('token-btn-text');
+
+  toggleCreateTokenBtn?.addEventListener('click', () => {
+    createTokenCard?.classList.toggle('hidden');
+    if (!createTokenCard?.classList.contains('hidden')) {
+      (document.getElementById('token-title') as HTMLInputElement)?.focus();
+    }
+  });
+
+  cancelCreateTokenBtn?.addEventListener('click', () => {
+    createTokenCard?.classList.add('hidden');
+  });
+
+  createTokenForm?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const title = (document.getElementById('token-title') as HTMLInputElement)?.value.trim();
+    const targetClass = (document.getElementById('token-target-class') as HTMLSelectElement)?.value;
+    const targetType = (document.getElementById('token-target-type') as HTMLSelectElement)?.value;
+    const customToken = (document.getElementById('token-custom-code') as HTMLInputElement)?.value.trim();
+    const description = (document.getElementById('token-description') as HTMLInputElement)?.value.trim();
+
+    if (!title) {
+      alert('Judul sesi token wajib diisi.');
+      return;
+    }
+
+    if (submitTokenBtn) submitTokenBtn.disabled = true;
+    if (tokenBtnText) tokenBtnText.textContent = 'Menerbitkan Token...';
+
+    try {
+      const res = await fetch('/api/admin/tokens/create', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          title,
+          targetClass,
+          targetType,
+          customToken,
+          description,
+        })
+      });
+
+      const data = await res.json();
+      if (res.ok && data.success) {
+        showAlert(`Token sesi "${data.token.token}" berhasil diterbitkan!`);
+        setTimeout(() => window.location.reload(), 1000);
+      } else {
+        showAlert(data.error || 'Gagal menerbitkan token.', true);
+        if (submitTokenBtn) submitTokenBtn.disabled = false;
+        if (tokenBtnText) tokenBtnText.textContent = '🎲 Terbitkan Token Sesi';
+      }
+    } catch (err: any) {
+      showAlert(err.message || 'Terjadi kesalahan jaringan.', true);
+      if (submitTokenBtn) submitTokenBtn.disabled = false;
+      if (tokenBtnText) tokenBtnText.textContent = '🎲 Terbitkan Token Sesi';
+    }
+  });
+
+  // 3. Copy Token Clipboard
+  document.querySelectorAll('.copy-token-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const token = btn.getAttribute('data-copy-token');
+      if (token) {
+        navigator.clipboard.writeText(token);
+        showAlert(`Kode token ${token} disalin ke clipboard! Bagikan kode ini ke siswa.`);
+      }
+    });
+  });
+
+  // 4. Toggle Token Status
+  document.querySelectorAll('.toggle-token-status-btn').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const tokenId = btn.getAttribute('data-token-id');
+      const currentActive = btn.getAttribute('data-token-active') === 'true';
+      const newActive = !currentActive;
+
+      try {
+        const res = await fetch('/api/admin/tokens/toggle', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ tokenId: Number(tokenId), isActive: newActive })
+        });
+        const data = await res.json();
+        if (res.ok && data.success) {
+          showAlert(`Status token berhasil diubah menjadi ${newActive ? 'AKTIF' : 'NONAKTIF'}.`);
+          setTimeout(() => window.location.reload(), 800);
+        } else {
+          showAlert(data.error || 'Gagal mengubah status token.', true);
+        }
+      } catch (err) {
+        showAlert('Gangguan jaringan saat mengubah status token.', true);
+      }
+    });
+  });
+
+  // 5. Delete Token
+  document.querySelectorAll('.delete-token-btn').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const tokenId = btn.getAttribute('data-delete-token-id');
+      const tokenTitle = btn.getAttribute('data-token-title');
+      const tokenCode = btn.getAttribute('data-token-code');
+
+      if (!confirm(`Hapus Token Sesi:\n"${tokenTitle}" (${tokenCode})?\n\nPerhatian: Riwayat pendaftaran siswa pada token ini akan ikut terhapus.`)) {
+        return;
+      }
+
+      try {
+        const res = await fetch('/api/admin/tokens/delete', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ tokenId: Number(tokenId) })
+        });
+        const data = await res.json();
+        if (res.ok && data.success) {
+          showAlert('Token sesi berhasil dihapus.');
+          setTimeout(() => window.location.reload(), 800);
+        } else {
+          showAlert(data.error || 'Gagal menghapus token.', true);
+        }
+      } catch (err) {
+        showAlert('Gangguan jaringan saat menghapus token.', true);
+      }
+    });
+  });
+
+  // 6. View Report Modal per Token
+  const reportModal = document.getElementById('report-modal');
+  const closeReportModalBtn = document.getElementById('close-report-modal-btn');
+  const printReportBtn = document.getElementById('print-report-btn');
+  const modalTokenCode = document.getElementById('report-modal-token-code');
+  const modalTargetClass = document.getElementById('report-modal-target-class');
+  const modalTitle = document.getElementById('report-modal-title');
+  const statEnrolled = document.getElementById('stat-enrolled');
+  const statTaken = document.getElementById('stat-taken');
+  const statAvg = document.getElementById('stat-avg');
+  const statPass = document.getElementById('stat-pass');
+  const reportTbody = document.getElementById('report-students-tbody');
+
+  closeReportModalBtn?.addEventListener('click', () => {
+    reportModal?.classList.add('hidden');
+  });
+
+  printReportBtn?.addEventListener('click', () => {
+    window.print();
+  });
+
+  document.querySelectorAll('.view-report-btn').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const tokenId = btn.getAttribute('data-view-report-token-id');
+      const tokenCode = btn.getAttribute('data-token-code') || '';
+      const tokenTitle = btn.getAttribute('data-token-title') || '';
+
+      if (modalTokenCode) modalTokenCode.textContent = tokenCode;
+      if (modalTitle) modalTitle.textContent = tokenTitle;
+      if (reportTbody) reportTbody.innerHTML = '<tr><td colspan="7" class="text-center py-6 text-muted-foreground">Mengambil rekap data peserta...</td></tr>';
+      
+      reportModal?.classList.remove('hidden');
+
+      try {
+        const res = await fetch(`/api/admin/tokens/report?tokenId=${tokenId}`);
+        const data = await res.json();
+
+        if (res.ok && data.success) {
+          if (modalTargetClass) modalTargetClass.textContent = `Kelas: ${data.token.targetClass}`;
+          if (statEnrolled) statEnrolled.textContent = data.stats.totalEnrolled.toString();
+          if (statTaken) statTaken.textContent = data.stats.totalExamTaken.toString();
+          if (statAvg) statAvg.textContent = `${data.stats.avgScore} / 100`;
+          if (statPass) statPass.textContent = `${data.stats.passRate}% (${data.stats.passCount} Siswa)`;
+
+          if (!data.students || data.students.length === 0) {
+            if (reportTbody) reportTbody.innerHTML = '<tr><td colspan="7" class="text-center py-6 text-muted-foreground">Belum ada siswa yang melakukan enroll pada token ini.</td></tr>';
+          } else {
+            let html = '';
+            data.students.forEach((s: any, idx: number) => {
+              const dateStr = s.examSubmittedAt 
+                ? new Date(s.examSubmittedAt).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })
+                : '-';
+
+              const isPass = s.examScore !== null && s.examScore >= 75;
+              const statusBadge = s.hasTakenExam 
+                ? `<span class="px-2 py-0.5 rounded-full text-[10px] font-bold ${isPass ? 'bg-emerald-500/20 text-emerald-300' : 'bg-amber-500/20 text-amber-300'}">${isPass ? 'KOMPETEN' : 'BELUM KOMPETEN'}</span>`
+                : '<span class="text-muted-foreground text-[10px]">Belum Ujian</span>';
+
+              const scoreVal = s.examScore !== null ? `<span class="font-bold text-foreground font-mono text-sm">${s.examScore}</span>` : '<span class="text-muted-foreground">-</span>';
+              const correctVal = s.correctAnswers !== null ? `${s.correctAnswers}/${s.totalQuestions}` : '-';
+
+              html += `
+                <tr class="hover:bg-accent/40 transition-colors">
+                  <td class="py-2.5 px-3 font-mono text-muted-foreground">${idx + 1}</td>
+                  <td class="py-2.5 px-3 font-bold text-foreground">${s.name}</td>
+                  <td class="py-2.5 px-3 font-mono">${s.studentClass}</td>
+                  <td class="py-2.5 px-3">${statusBadge}</td>
+                  <td class="py-2.5 px-3">${scoreVal}</td>
+                  <td class="py-2.5 px-3 font-mono text-muted-foreground">${correctVal}</td>
+                  <td class="py-2.5 px-3 font-mono text-muted-foreground text-[11px]">${dateStr}</td>
+                </tr>
+              `;
+            });
+            if (reportTbody) reportTbody.innerHTML = html;
+          }
+        } else {
+          if (reportTbody) reportTbody.innerHTML = `<tr><td colspan="7" class="text-center py-6 text-red-400">Gagal: ${data.error || 'Terjadi kesalahan'}</td></tr>`;
+        }
+      } catch (err) {
+        if (reportTbody) reportTbody.innerHTML = '<tr><td colspan="7" class="text-center py-6 text-red-400">Gangguan jaringan saat memuat rekap.</td></tr>';
+      }
+    });
+  });
+
+  // 7. Search filter for users
   const searchInput = document.getElementById('user-search-input') as HTMLInputElement | null;
   const userRows = document.querySelectorAll('.user-row');
 
@@ -504,10 +1154,8 @@ const passRate = totalExamsTaken > 0 ? Math.round((passingExams / totalExamsTake
     });
   });
 
-  // Role Toggle Action for Super Admin
+  // 8. Role Toggle Action for Super Admin
   const roleButtons = document.querySelectorAll('.role-toggle-btn');
-  const alertBox = document.getElementById('admin-alert');
-
   roleButtons.forEach(btn => {
     btn.addEventListener('click', async () => {
       const targetUserId = btn.getAttribute('data-user-id');
@@ -530,27 +1178,18 @@ const passRate = totalExamsTaken > 0 ? Math.round((passingExams / totalExamsTake
         const data = await res.json();
 
         if (res.ok && data.success) {
-          if (alertBox) {
-            alertBox.className = 'p-4 rounded-2xl text-xs font-bold text-center bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 block shadow-lg shadow-emerald-500/5 animate-fadeIn';
-            alertBox.textContent = `✓ Berhasil: ${data.message || 'Perubahan role berhasil disimpan.'}`;
-          }
+          showAlert(data.message || 'Perubahan role berhasil disimpan.');
           setTimeout(() => window.location.reload(), 1000);
         } else {
-          if (alertBox) {
-            alertBox.className = 'p-4 rounded-2xl text-xs font-bold text-center bg-red-500/15 border border-red-500/30 text-red-400 block shadow-lg shadow-red-500/5 animate-fadeIn';
-            alertBox.textContent = `✕ Gagal: ${data.error || 'Gagal mengubah role pengguna.'}`;
-          }
+          showAlert(data.error || 'Gagal mengubah role pengguna.', true);
         }
       } catch (e) {
-        if (alertBox) {
-          alertBox.className = 'p-4 rounded-2xl text-xs font-bold text-center bg-red-500/15 border border-red-500/30 text-red-400 block shadow-lg shadow-red-500/5 animate-fadeIn';
-          alertBox.textContent = '✕ Gagal: Terjadi gangguan jaringan/server.';
-        }
+        showAlert('Gagal: Terjadi gangguan jaringan/server.', true);
       }
     });
   });
 
-  // Delete User Action for Admin / Teacher
+  // 9. Delete User Action for Admin / Teacher
   const deleteButtons = document.querySelectorAll('.delete-user-btn');
   deleteButtons.forEach(btn => {
     btn.addEventListener('click', async () => {
@@ -572,22 +1211,13 @@ const passRate = totalExamsTaken > 0 ? Math.round((passingExams / totalExamsTake
         const data = await res.json();
 
         if (res.ok && data.success) {
-          if (alertBox) {
-            alertBox.className = 'p-4 rounded-2xl text-xs font-bold text-center bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 block shadow-lg shadow-emerald-500/5 animate-fadeIn';
-            alertBox.textContent = `✓ Berhasil: ${data.message || 'Akun pengguna berhasil dihapus.'}`;
-          }
+          showAlert(data.message || 'Akun pengguna berhasil dihapus.');
           setTimeout(() => window.location.reload(), 1000);
         } else {
-          if (alertBox) {
-            alertBox.className = 'p-4 rounded-2xl text-xs font-bold text-center bg-red-500/15 border border-red-500/30 text-red-400 block shadow-lg shadow-red-500/5 animate-fadeIn';
-            alertBox.textContent = `✕ Gagal: ${data.error || 'Gagal menghapus akun pengguna.'}`;
-          }
+          showAlert(data.error || 'Gagal menghapus akun pengguna.', true);
         }
       } catch (e) {
-        if (alertBox) {
-          alertBox.className = 'p-4 rounded-2xl text-xs font-bold text-center bg-red-500/15 border border-red-500/30 text-red-400 block shadow-lg shadow-red-500/5 animate-fadeIn';
-          alertBox.textContent = '✕ Gagal: Terjadi gangguan jaringan/server.';
-        }
+        showAlert('Gagal: Terjadi gangguan jaringan/server.', true);
       }
     });
   });

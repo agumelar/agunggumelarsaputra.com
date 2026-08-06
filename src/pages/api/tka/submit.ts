@@ -1,5 +1,5 @@
 import type { APIRoute } from 'astro';
-import { db } from '../../../db';
+import { db, ensureDbInitialized } from '../../../db';
 import { tkaAttempts, userGamification } from '../../../db/schema';
 import { eq } from 'drizzle-orm';
 
@@ -9,13 +9,15 @@ export const POST: APIRoute = async ({ request, locals }) => {
   }
 
   try {
-    const { score, totalQuestions, correctAnswers } = await request.json();
+    await ensureDbInitialized();
+    const { score, totalQuestions, correctAnswers, tokenId } = await request.json();
     const userId = locals.user.userId;
 
     const bonusXp = 10 + Math.round((score / 100) * 50);
 
     await db.insert(tkaAttempts).values({
       userId,
+      tokenId: tokenId ? Number(tokenId) : null,
       score,
       totalQuestions,
       correctAnswers,

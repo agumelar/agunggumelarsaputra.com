@@ -3,10 +3,34 @@ import DashboardLayout from '../../layouts/DashboardLayout.astro';
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import GamificationWidget from '../../components/GamificationWidget.astro';
 import { getCollection } from 'astro:content';
+import { db, ensureDbInitialized } from '../../db';
+import { enrollmentTokens, userEnrollments } from '../../db/schema';
+import { eq, desc } from 'drizzle-orm';
+
+await ensureDbInitialized();
 
 const user = Astro.locals.user;
 const modules = await getCollection('pembelajaran');
 const sortedModules = modules.sort((a, b) => a.data.order - b.data.order);
+
+let studentEnrollments: any[] = [];
+if (user) {
+  studentEnrollments = await db.select({
+    id: userEnrollments.id,
+    enrolledAt: userEnrollments.enrolledAt,
+    tokenId: enrollmentTokens.id,
+    token: enrollmentTokens.token,
+    title: enrollmentTokens.title,
+    description: enrollmentTokens.description,
+    targetType: enrollmentTokens.targetType,
+    targetSlug: enrollmentTokens.targetSlug,
+    targetClass: enrollmentTokens.targetClass,
+    isActive: enrollmentTokens.isActive,
+  }).from(userEnrollments)
+    .innerJoin(enrollmentTokens, eq(userEnrollments.tokenId, enrollmentTokens.id))
+    .where(eq(userEnrollments.userId, user.userId))
+    .orderBy(desc(userEnrollments.enrolledAt));
+}
 ---
 
 {user ? (
@@ -16,6 +40,7 @@ const sortedModules = modules.sort((a, b) => a.data.order - b.data.order);
     activeNav="/pembelajaran"
   >
     <div class="space-y-8 max-w-6xl mx-auto">
+      
       <!-- Header Banner -->
       <div class="p-6 sm:p-8 rounded-3xl bg-gradient-to-r from-blue-950/40 via-indigo-950/30 to-card border border-blue-500/30 flex flex-col md:flex-row md:items-center justify-between gap-6 shadow-xl">
         <div class="space-y-2">
@@ -28,13 +53,96 @@ const sortedModules = modules.sort((a, b) => a.data.order - b.data.order);
             Katalog Modul Pembelajaran PPLG
           </h1>
           <p class="text-xs sm:text-sm text-muted-foreground max-w-xl">
-            Pelajari setiap materi secara mandiri. Tandai modul selesai untuk mendapatkan Experience Points (+10 XP) dan menaikkan level belajarmu!
+            Pelajari setiap materi secara mandiri. Tandai modul selesai untuk mendapatkan Experience Points (+15 XP) dan menaikkan level belajarmu!
           </p>
         </div>
 
         <a href="/pembelajaran/tka-pplg" class="btn btn-primary bg-cyan-600 hover:bg-cyan-500 text-white font-bold whitespace-nowrap px-5 py-3 rounded-xl shadow-lg shadow-cyan-600/20">
           🎯 Drilling TKA Simulator →
         </a>
+      </div>
+
+      <!-- ========================================== -->
+      <!-- ENROLL TOKEN SESI WIDGET -->
+      <!-- ========================================== -->
+      <div class="card p-6 sm:p-8 rounded-3xl border-cyan-500/40 bg-gradient-to-br from-card via-card to-cyan-950/20 shadow-xl space-y-6">
+        <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-border/40 pb-4">
+          <div class="space-y-1">
+            <h2 class="text-base sm:text-lg font-bold text-foreground flex items-center gap-2">
+              <span>🎟️ Gabung Sesi Kelas (Enroll Token)</span>
+              <span class="text-[10px] px-2 py-0.5 rounded-full bg-cyan-500/20 text-cyan-300 border border-cyan-500/30 font-mono font-bold">
+                PRESENSI & REKAP NILAI
+              </span>
+            </h2>
+            <p class="text-xs text-muted-foreground">
+              Masukkan Kode Token dari Guru Pengampu (contoh: <code class="text-cyan-300 font-mono font-bold bg-background px-1.5 py-0.5 rounded border border-border">10RPL1-49XA</code>) untuk menghubungkan nilai tryout dan progres belajar ke rekapitulasi kelas.
+            </p>
+          </div>
+
+          <!-- Alert for Token Feedback -->
+          <div id="enroll-alert" class="hidden text-xs font-bold px-3.5 py-2 rounded-xl text-center"></div>
+        </div>
+
+        <!-- Token Input Form -->
+        <form id="enroll-token-form" class="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+          <div class="relative flex-grow">
+            <input 
+              type="text" 
+              id="token-input" 
+              placeholder="Masukkan Kode Token Sesi..." 
+              required
+              class="w-full px-4 py-3 rounded-xl bg-background border border-border/80 text-foreground font-mono font-bold text-sm tracking-wider uppercase placeholder:normal-case placeholder:font-normal focus:outline-none focus:border-cyan-500"
+            />
+          </div>
+          <button 
+            type="submit" 
+            id="btn-enroll-submit"
+            class="px-6 py-3 rounded-xl bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white font-bold text-xs sm:text-sm shadow-lg shadow-cyan-600/20 whitespace-nowrap transition-all flex items-center justify-center gap-2"
+          >
+            <span id="enroll-btn-text">🚀 Gabung (Enroll) Sesi</span>
+          </button>
+        </form>
+
+        <!-- Active Enrolled Sessions List -->
+        {studentEnrollments.length > 0 && (
+          <div class="pt-2 space-y-3">
+            <h3 class="text-xs font-bold text-muted-foreground uppercase font-mono tracking-wider">
+              Sesi Belajar & Ujian yang Sedang Anda Ikuti ({studentEnrollments.length})
+            </h3>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {studentEnrollments.map((enr) => (
+                <div class="p-4 rounded-2xl bg-background/80 border border-border/70 flex flex-col justify-between space-y-3 hover:border-cyan-500/40 transition-colors">
+                  <div class="space-y-1.5">
+                    <div class="flex items-center justify-between gap-2">
+                      <span class="px-2 py-0.5 rounded-md bg-cyan-500/15 text-cyan-300 font-mono font-extrabold text-xs tracking-wider border border-cyan-500/30">
+                        {enr.token}
+                      </span>
+                      <span class="text-[10px] font-mono font-bold px-2 py-0.5 rounded-full bg-amber-500/15 text-amber-300 border border-amber-500/30">
+                        {enr.targetClass}
+                      </span>
+                    </div>
+                    <h4 class="text-sm font-bold text-foreground line-clamp-1">{enr.title}</h4>
+                    {enr.description && (
+                      <p class="text-xs text-muted-foreground line-clamp-1">{enr.description}</p>
+                    )}
+                  </div>
+
+                  <div class="pt-2 border-t border-border/40 flex items-center justify-between">
+                    <span class="text-[10px] text-muted-foreground font-mono">
+                      Status: {enr.isActive ? <span class="text-emerald-400 font-bold">● Aktif</span> : <span class="text-red-400">○ Selesai</span>}
+                    </span>
+                    <a 
+                      href={`/pembelajaran/tka-pplg?tokenId=${enr.tokenId}&tokenCode=${enr.token}`}
+                      class="btn btn-xs bg-cyan-600 hover:bg-cyan-500 text-white font-bold px-3 py-1 rounded-lg shadow-sm"
+                    >
+                      Mulai Ujian Sesi Ini →
+                    </a>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
 
       <!-- Gamification Summary Widget -->
@@ -69,7 +177,7 @@ const sortedModules = modules.sort((a, b) => a.data.order - b.data.order);
               </div>
 
               <div class="pt-4 border-t border-border/40 flex items-center justify-between text-xs">
-                <span class="text-emerald-400 font-medium font-mono">✨ +10 XP</span>
+                <span class="text-emerald-400 font-medium font-mono">✨ +15 XP</span>
                 <a href={`/pembelajaran/${mod.id || mod.slug}`} class="btn btn-primary btn-sm bg-blue-600 hover:bg-blue-500 text-white font-semibold text-xs">
                   Mulai Belajar →
                 </a>
@@ -82,7 +190,7 @@ const sortedModules = modules.sort((a, b) => a.data.order - b.data.order);
   </DashboardLayout>
 ) : (
   <BaseLayout 
-    title="Learning Hub & Modul PPLG"
+    title="Learning Hub & Modul PPLG" 
     description="Pusat modul pembelajaran interaktif Rekayasa Perangkat Lunak (PPLG) SMKN 1 Rongga oleh Agung Gumelar Saputra."
   >
     <section class="py-12 bg-gradient-to-b from-blue-950/20 to-background border-b border-border/40">
@@ -96,63 +204,100 @@ const sortedModules = modules.sort((a, b) => a.data.order - b.data.order);
           Modul Pembelajaran & Gamification Hub
         </h1>
         <p class="text-base md:text-lg text-muted-foreground max-w-2xl">
-          Pelajari materi Rekayasa Perangkat Lunak secara mandiri dan interaktif. Kumpulkan poin XP, buka Lencana Prestasi, dan uji keahlian Anda!
+          Pelajari materi Rekayasa Perangkat Lunak secara mandiri dan interaktif. Kumpulkan poin XP, buka Lencana Prestasi, dan ikuti simulasi ujian TKA kelas!
         </p>
-      </div>
-    </section>
 
-    <!-- Gamification Status -->
-    <section class="py-8 bg-background border-b border-border/40">
-      <div class="container-main">
-        <GamificationWidget />
-      </div>
-    </section>
-
-    <!-- Modules Catalog -->
-    <section class="py-12">
-      <div class="container-main space-y-8">
-        
-        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-border/40 pb-4">
-          <div>
-            <h2 class="text-2xl font-bold text-foreground">Daftar Modul Pembelajaran</h2>
-            <p class="text-xs text-muted-foreground">Pilih materi yang ingin Anda pelajari hari ini</p>
-          </div>
-
-          <a href="/pembelajaran/tka-pplg" class="btn btn-primary btn-sm bg-cyan-600 hover:bg-cyan-500 text-white font-semibold">
-            🎯 Drilling TKA PPLG Simulator →
+        <div class="pt-4 flex items-center gap-3">
+          <a href="/login" class="btn btn-primary bg-blue-600 hover:bg-blue-500 text-white font-bold">
+            Masuk untuk Mulai Belajar & Enroll Sesi →
           </a>
         </div>
+      </div>
+    </section>
 
+    <!-- Public Preview of Modules -->
+    <section class="py-12">
+      <div class="container-main space-y-8">
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {sortedModules.map((mod) => (
-            <div class="card p-6 border-border/60 hover:border-blue-500/50 transition-all flex flex-col justify-between space-y-4 group">
+            <div class="card p-6 border-border/60 bg-card/80 flex flex-col justify-between space-y-4">
               <div class="space-y-3">
-                <div class="flex items-center justify-between">
-                  <span class="px-2.5 py-0.5 rounded-full bg-blue-500/10 text-blue-400 text-xs font-semibold">
-                    {mod.data.category}
-                  </span>
-                  <span class="text-xs text-emerald-400 font-mono">+{mod.data.duration}</span>
-                </div>
-
-                <h3 class="text-lg font-bold text-foreground group-hover:text-blue-400 transition-colors">
-                  <a href={`/pembelajaran/${mod.id || mod.slug}`}>{mod.data.title}</a>
+                <span class="px-2.5 py-0.5 rounded-full bg-blue-500/10 text-blue-400 text-xs font-mono font-semibold">
+                  {mod.data.category}
+                </span>
+                <h3 class="text-base font-bold text-foreground">
+                  <a href={`/pembelajaran/${mod.id || mod.slug}`} class="hover:text-blue-400">{mod.data.title}</a>
                 </h3>
-                <p class="text-xs text-muted-foreground leading-relaxed line-clamp-2">
-                  {mod.data.description}
-                </p>
+                <p class="text-xs text-muted-foreground line-clamp-2">{mod.data.description}</p>
               </div>
 
               <div class="pt-4 border-t border-border/40 flex items-center justify-between text-xs">
-                <span class="text-emerald-400 font-medium">✨ +10 XP</span>
-                <a href={`/pembelajaran/${mod.id || mod.slug}`} class="btn btn-primary btn-sm bg-blue-600 hover:bg-blue-500 text-white font-semibold text-xs">
-                  Mulai Belajar →
+                <span class="text-emerald-400 font-mono font-medium">✨ +15 XP</span>
+                <a href={`/pembelajaran/${mod.id || mod.slug}`} class="text-blue-400 hover:underline font-semibold">
+                  Baca Modul →
                 </a>
               </div>
             </div>
           ))}
         </div>
-
       </div>
     </section>
   </BaseLayout>
 )}
+
+<script>
+  const enrollForm = document.getElementById('enroll-token-form') as HTMLFormElement | null;
+  const tokenInput = document.getElementById('token-input') as HTMLInputElement | null;
+  const enrollAlert = document.getElementById('enroll-alert');
+  const btnEnrollSubmit = document.getElementById('btn-enroll-submit') as HTMLButtonElement | null;
+  const enrollBtnText = document.getElementById('enroll-btn-text');
+
+  function showEnrollAlert(msg: string, isError = false) {
+    if (!enrollAlert) return;
+    enrollAlert.className = isError 
+      ? 'text-xs font-bold px-4 py-2 rounded-xl text-center bg-red-500/15 border border-red-500/30 text-red-400 block animate-fadeIn'
+      : 'text-xs font-bold px-4 py-2 rounded-xl text-center bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 block animate-fadeIn';
+    enrollAlert.textContent = (isError ? '✕ ' : '✓ ') + msg;
+  }
+
+  enrollForm?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const tokenCode = tokenInput?.value.trim().toUpperCase();
+
+    if (!tokenCode) {
+      showEnrollAlert('Harap masukkan kode token sesi terlebih dahulu.', true);
+      return;
+    }
+
+    if (btnEnrollSubmit) btnEnrollSubmit.disabled = true;
+    if (enrollBtnText) enrollBtnText.textContent = 'Mendaftarkan...';
+
+    try {
+      const res = await fetch('/api/enroll', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ tokenCode })
+      });
+
+      const data = await res.json();
+
+      if (res.ok && data.success) {
+        // Save active token info in localStorage for quiz/module tracking
+        localStorage.setItem('ags_active_token_id', data.token.id.toString());
+        localStorage.setItem('ags_active_token_code', data.token.token);
+        localStorage.setItem('ags_active_token_title', data.token.title);
+
+        showEnrollAlert(data.message || 'Berhasil mendaftar ke sesi!');
+        setTimeout(() => window.location.reload(), 1200);
+      } else {
+        showEnrollAlert(data.error || 'Gagal mendaftar token sesi.', true);
+        if (btnEnrollSubmit) btnEnrollSubmit.disabled = false;
+        if (enrollBtnText) enrollBtnText.textContent = '🚀 Gabung (Enroll) Sesi';
+      }
+    } catch (err: any) {
+      showEnrollAlert(err.message || 'Gangguan jaringan / server.', true);
+      if (btnEnrollSubmit) btnEnrollSubmit.disabled = false;
+      if (enrollBtnText) enrollBtnText.textContent = '🚀 Gabung (Enroll) Sesi';
+    }
+  });
+</script>
