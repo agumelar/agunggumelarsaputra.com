@@ -3,13 +3,14 @@ import { Google } from 'arctic';
 import { db, ensureDbInitialized } from '../../../../db';
 import { users, userGamification } from '../../../../db/schema';
 import { eq } from 'drizzle-orm';
-import { signToken, isTeacherEmail } from '../../../../utils/auth';
+import { signToken, isSuperAdminEmail } from '../../../../utils/auth';
 
-export const GET: APIRoute = async ({ url, cookies, redirect }) => {
+export const GET: APIRoute = async ({ request, url, cookies, redirect }) => {
   await ensureDbInitialized();
   const clientId = process.env.GOOGLE_CLIENT_ID;
   const clientSecret = process.env.GOOGLE_CLIENT_SECRET;
-  const siteUrl = process.env.SITE_URL || 'https://agunggumelarsaputracom.vercel.app';
+  const requestOrigin = new URL(request.url).origin;
+  const siteUrl = requestOrigin || process.env.SITE_URL || 'https://agunggumelarsaputra.com';
 
   if (!clientId || !clientSecret) {
     return new Response('Google OAuth config missing', { status: 400 });
@@ -38,8 +39,8 @@ export const GET: APIRoute = async ({ url, cookies, redirect }) => {
     }
 
     const cleanEmail = googleUser.email.trim().toLowerCase();
-    const isTargetAdmin = isTeacherEmail(cleanEmail);
-    const assignedRole = isTargetAdmin ? 'admin' : 'student';
+    const isTargetSuperAdmin = isSuperAdminEmail(cleanEmail);
+    const assignedRole = isTargetSuperAdmin ? 'superadmin' : 'student';
 
     let [existingUser] = await db.select().from(users).where(eq(users.email, cleanEmail)).limit(1);
 
@@ -53,9 +54,9 @@ export const GET: APIRoute = async ({ url, cookies, redirect }) => {
       }).returning();
 
       await db.insert(userGamification).values({ userId: existingUser.id, xp: 0, level: 1 });
-    } else if (isTargetAdmin && existingUser.role !== 'admin') {
+    } else if (isTargetSuperAdmin && existingUser.role !== 'superadmin') {
       [existingUser] = await db.update(users)
-        .set({ role: 'admin' })
+        .set({ role: 'superadmin' })
         .where(eq(users.id, existingUser.id))
         .returning();
     }

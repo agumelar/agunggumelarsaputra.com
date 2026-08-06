@@ -1,6 +1,9 @@
 ---
+import { canAccessAdminPanel } from '../utils/auth';
+
 const currentPath = Astro.url.pathname;
 const user = Astro.locals.user;
+const isTeacherOrAdmin = user && canAccessAdminPanel(user.role);
 
 const navItems = [
   { href: '/', label: 'Beranda' },
@@ -59,7 +62,7 @@ const navItems = [
     <div class="flex items-center gap-2">
       {user ? (
         <div class="flex items-center gap-2">
-          {user.role === 'admin' && (
+          {isTeacherOrAdmin && (
             <a href="/admin" class="hidden sm:inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-amber-500/10 border border-amber-500/30 text-xs font-bold text-amber-300 hover:bg-amber-500/20 transition-colors">
               <span>👑 Panel Guru</span>
             </a>

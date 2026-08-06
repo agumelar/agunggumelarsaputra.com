@@ -3,7 +3,7 @@ import { db, ensureDbInitialized } from '../../../db';
 import { users, userGamification } from '../../../db/schema';
 import { eq } from 'drizzle-orm';
 import bcrypt from 'bcryptjs';
-import { signToken, isTeacherEmail } from '../../../utils/auth';
+import { signToken, isSuperAdminEmail } from '../../../utils/auth';
 
 export const POST: APIRoute = async ({ request, cookies }) => {
   await ensureDbInitialized();
@@ -20,7 +20,7 @@ export const POST: APIRoute = async ({ request, cookies }) => {
       return new Response(JSON.stringify({ error: 'Email sudah terdaftar.' }), { status: 400 });
     }
 
-    const assignedRole = isTeacherEmail(cleanEmail) ? 'admin' : 'student';
+    const assignedRole = isSuperAdminEmail(cleanEmail) ? 'superadmin' : 'student';
     const passwordHash = await bcrypt.hash(password, 10);
     const [newUser] = await db.insert(users).values({ 
       name, 

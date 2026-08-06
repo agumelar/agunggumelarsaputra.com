@@ -42,6 +42,8 @@ const topUsers = await db.select({
   .orderBy(desc(userGamification.xp))
   .limit(5);
 
+import { canAccessAdminPanel, isSuperAdmin, isSuperAdminEmail } from '../utils/auth';
+
 // Level titles
 function getLevelTitle(level: number) {
   switch (level) {
@@ -56,7 +58,8 @@ function getLevelTitle(level: number) {
 // Next level XP target
 const nextLevelXp = stats.level * 200;
 const xpProgressPercent = Math.min(100, Math.round((stats.xp / nextLevelXp) * 100));
-const isAdmin = user.role === 'admin';
+const isTeacherOrAdmin = canAccessAdminPanel(user.role);
+const isSuperAdminUser = isSuperAdmin(user.role) || isSuperAdminEmail(user.email);
 const isUnauthorizedError = Astro.url.searchParams.get('error') === 'unauthorized_admin';
 ---
 
@@ -77,8 +80,8 @@ const isUnauthorizedError = Astro.url.searchParams.get('error') === 'unauthorize
       </div>
     )}
     
-    <!-- Admin Notice Banner (If user is Admin/Teacher) -->
-    {isAdmin && (
+    <!-- Admin Notice Banner (If user is Admin/Teacher/SuperAdmin) -->
+    {isTeacherOrAdmin && (
       <div class="p-4 sm:p-5 rounded-2xl bg-gradient-to-r from-amber-500/15 via-amber-500/10 to-orange-500/15 border border-amber-500/30 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-lg shadow-amber-500/5">
         <div class="flex items-center gap-3">
           <div class="w-10 h-10 rounded-xl bg-amber-500/20 text-amber-400 flex items-center justify-center text-xl flex-shrink-0">
@@ -86,14 +89,23 @@ const isUnauthorizedError = Astro.url.searchParams.get('error') === 'unauthorize
           </div>
           <div>
             <h2 class="text-sm font-bold text-foreground flex items-center gap-2">
-              <span>Selamat Datang, Bapak/Ibu Guru!</span>
-              <span class="text-[10px] px-2 py-0.5 rounded-full font-mono bg-amber-500/20 text-amber-300 border border-amber-500/40">GURU & ADMIN</span>
+              <span>Selamat Datang, {isSuperAdminUser ? 'Super Admin / Pemilik Sistem' : 'Bapak/Ibu Guru Pengampu'}!</span>
+              <span class:list={[
+                "text-[10px] px-2 py-0.5 rounded-full font-mono font-bold uppercase",
+                isSuperAdminUser ? "bg-purple-500/20 text-purple-300 border border-purple-500/40" : "bg-amber-500/20 text-amber-300 border border-amber-500/40"
+              ]}>
+                {isSuperAdminUser ? 'SUPER ADMIN' : 'GURU & ADMIN'}
+              </span>
             </h2>
-            <p class="text-xs text-muted-foreground">Anda memiliki akses penuh untuk memonitor hasil pengerjaan soal siswa, nilai ujian, serta mengelola data siswa di Panel Guru.</p>
+            <p class="text-xs text-muted-foreground">
+              {isSuperAdminUser 
+                ? "Anda memiliki wewenang penuh menetapkan peran Guru, memonitor nilai ujian, dan mengelola pengguna."
+                : "Anda memiliki akses untuk memonitor hasil pengerjaan soal siswa, nilai ujian, serta aktivitas belajar di Panel Guru."}
+            </p>
           </div>
         </div>
         <a href="/admin" class="btn btn-sm bg-amber-500 hover:bg-amber-400 text-black font-bold whitespace-nowrap shadow-md">
-          Buka Panel Guru & Admin →
+          {isSuperAdminUser ? 'Buka Super Admin Panel →' : 'Buka Panel Guru & Admin →'}
         </a>
       </div>
     )}

@@ -1,0 +1,449 @@
+---
+import DashboardLayout from '../../layouts/DashboardLayout.astro';
+import { db, ensureDbInitialized } from '../../db';
+import { users, userGamification } from '../../db/schema';
+import { eq } from 'drizzle-orm';
+import { isSuperAdmin, isSuperAdminEmail, canAccessAdminPanel } from '../../utils/auth';
+
+await ensureDbInitialized();
+
+const user = Astro.locals.user;
+if (!user) {
+  return Astro.redirect('/login');
+}
+
+// Fetch live user data from DB
+let [dbUser] = await db.select().from(users).where(eq(users.id, user.userId)).limit(1);
+if (!dbUser) {
+  return Astro.redirect('/login');
+}
+
+// Fetch gamification info
+let [stats] = await db.select().from(userGamification).where(eq(userGamification.userId, user.userId)).limit(1);
+if (!stats) {
+  [stats] = await db.insert(userGamification).values({ userId: user.userId, xp: 0, level: 1 }).returning();
+}
+
+const isSuperAdminUser = isSuperAdmin(dbUser.role) || isSuperAdminEmail(dbUser.email);
+const isTeacher = !isSuperAdminUser && (dbUser.role === 'teacher' || dbUser.role === 'admin');
+const isStudent = !isSuperAdminUser && !isTeacher;
+
+const joinDate = new Date(dbUser.createdAt).toLocaleDateString('id-ID', {
+  day: 'numeric',
+  month: 'long',
+  year: 'numeric'
+});
+---
+
+<DashboardLayout title="Pengaturan Profil Akun" activeNav="/dashboard/profil">
+  <div class="space-y-8 max-w-4xl mx-auto">
+    
+    <!-- Header Banner -->
+    <div class="p-6 sm:p-8 rounded-3xl bg-gradient-to-r from-blue-950/40 via-indigo-950/30 to-card border border-blue-500/20 shadow-xl relative overflow-hidden">
+      <div class="absolute -right-10 -bottom-10 w-48 h-48 bg-blue-500/10 rounded-full blur-2xl pointer-events-none"></div>
+      
+      <div class="relative z-10 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6">
+        <div class="space-y-2">
+          <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-500/10 border border-blue-500/30 text-blue-400 text-xs font-mono">
+            <span>⚙️ Manajemen Akun Pengguna</span>
+            <span>•</span>
+            <span>SMKN 1 Rongga</span>
+          </div>
+          <h1 class="text-2xl sm:text-3xl font-extrabold text-foreground tracking-tight">
+            Pengaturan Profil Saya
+          </h1>
+          <p class="text-xs sm:text-sm text-muted-foreground max-w-lg">
+            Kelola data diri, nama tampilan resmi di sertifikat & leaderboard, serta keamanan akun belajar Anda.
+          </p>
+        </div>
+
+        <!-- Quick Role Badge -->
+        <div class="flex items-center gap-3 bg-background/80 backdrop-blur-md p-3.5 rounded-2xl border border-border/60 shadow-md">
+          <div class:list={[
+            "w-11 h-11 rounded-xl flex items-center justify-center text-xl shadow flex-shrink-0",
+            isSuperAdminUser 
+              ? "bg-gradient-to-br from-purple-600 to-amber-500 text-white" 
+              : isTeacher 
+                ? "bg-gradient-to-br from-amber-500 to-orange-500 text-white" 
+                : "bg-gradient-to-br from-blue-600 to-cyan-500 text-white"
+          ]}>
+            {isSuperAdminUser ? '👑' : isTeacher ? '👨‍🏫' : '🎓'}
+          </div>
+          <div class="space-y-0.5">
+            <span class="text-[10px] text-muted-foreground font-mono">Peran Saat Ini</span>
+            <div class="text-xs font-bold text-foreground">
+              {isSuperAdminUser ? 'Super Admin' : isTeacher ? 'Guru Pengampu' : 'Siswa PPLG'}
+            </div>
+            <span class="text-[10px] text-emerald-400 font-medium">Akun Terverifikasi</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Toast Notification Box -->
+    <div id="toast-box" class="hidden p-4 rounded-2xl border transition-all text-xs font-medium flex items-center justify-between gap-3 shadow-lg animate-fadeIn">
+      <div class="flex items-center gap-3">
+        <span id="toast-icon" class="text-lg">✓</span>
+        <span id="toast-msg">Pesan notifikasi</span>
+      </div>
+      <button type="button" id="close-toast" class="text-muted-foreground hover:text-foreground">✕</button>
+    </div>
+
+    <!-- Main Grid: Profile Details Form + Security Card -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+      
+      <!-- LEFT COL: User Summary & Stats -->
+      <div class="space-y-6">
+        
+        <!-- Profile Identity Card -->
+        <div class="card p-6 rounded-3xl border-border/60 bg-card/90 space-y-6 shadow-md text-center">
+          <div class="relative inline-block mx-auto">
+            <div class:list={[
+              "w-24 h-24 rounded-3xl p-1 flex items-center justify-center shadow-xl mx-auto",
+              isSuperAdminUser 
+                ? "bg-gradient-to-br from-purple-600 to-amber-400" 
+                : isTeacher 
+                  ? "bg-gradient-to-br from-amber-500 to-orange-500" 
+                  : "bg-gradient-to-br from-blue-600 to-cyan-400"
+            ]}>
+              <div class="w-full h-full bg-background rounded-[22px] flex items-center justify-center font-extrabold text-2xl text-foreground font-mono">
+                {dbUser.name ? dbUser.name.substring(0, 2).toUpperCase() : 'US'}
+              </div>
+            </div>
+            <span class:list={[
+              "absolute -bottom-2 -right-2 w-8 h-8 rounded-full border-2 border-background flex items-center justify-center text-xs shadow",
+              isSuperAdminUser ? "bg-purple-600 text-white" : isTeacher ? "bg-amber-500 text-black font-bold" : "bg-blue-600 text-white"
+            ]}>
+              {isSuperAdminUser ? '👑' : isTeacher ? '⭐' : '🎓'}
+            </span>
+          </div>
+
+          <div class="space-y-1">
+            <h2 id="summary-user-name" class="text-base font-bold text-foreground">
+              {dbUser.name}
+            </h2>
+            <p class="text-xs text-muted-foreground font-mono">{dbUser.email}</p>
+          </div>
+
+          <div class="pt-4 border-t border-border/40 space-y-3 text-left text-xs">
+            <div class="flex items-center justify-between">
+              <span class="text-muted-foreground">Status Peran:</span>
+              <span class:list={[
+                "font-mono font-bold px-2 py-0.5 rounded-full text-[10px] uppercase",
+                isSuperAdminUser ? "bg-purple-500/20 text-purple-300 border border-purple-500/30" : isTeacher ? "bg-amber-500/20 text-amber-300 border border-amber-500/30" : "bg-blue-500/20 text-blue-400 border border-blue-500/30"
+              ]}>
+                {isSuperAdminUser ? 'Super Admin' : isTeacher ? 'Guru Pengampu' : 'Siswa PPLG'}
+              </span>
+            </div>
+
+            <div class="flex items-center justify-between">
+              <span class="text-muted-foreground">Tingkat Level:</span>
+              <span class="font-mono font-bold text-emerald-400">Level {stats.level}</span>
+            </div>
+
+            <div class="flex items-center justify-between">
+              <span class="text-muted-foreground">Total XP:</span>
+              <span class="font-mono font-bold text-amber-400">{stats.xp} XP</span>
+            </div>
+
+            <div class="flex items-center justify-between">
+              <span class="text-muted-foreground">Bergabung Sejak:</span>
+              <span class="font-mono text-muted-foreground">{joinDate}</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Help / Best Practice Tip -->
+        <div class="p-5 rounded-2xl bg-blue-500/10 border border-blue-500/20 space-y-2 text-xs text-muted-foreground">
+          <div class="flex items-center gap-2 text-blue-400 font-bold">
+            <span>💡 Petunjuk Nama Resmi</span>
+          </div>
+          <p class="leading-relaxed">
+            Gunakan nama lengkap asli Anda sesuai data presensi sekolah agar nilai ujian dan sertifikat kelulusan tercatat dengan valid.
+          </p>
+        </div>
+
+      </div>
+
+      <!-- RIGHT 2 COLS: Profile Edit Form & Security -->
+      <div class="lg:col-span-2 space-y-6">
+        
+        <!-- Form 1: Ubah Nama & Informasi Akun -->
+        <div class="card p-6 sm:p-8 rounded-3xl border-border/60 bg-card/90 space-y-6 shadow-md">
+          <div class="border-b border-border/40 pb-4">
+            <h2 class="text-base sm:text-lg font-bold text-foreground flex items-center gap-2">
+              <span>👤 Informasi Pribadi & Nama Tampilan</span>
+            </h2>
+            <p class="text-xs text-muted-foreground">Perbarui nama yang akan ditampilkan pada dashboard, leaderboard, dan catatan nilai.</p>
+          </div>
+
+          <form id="profile-name-form" class="space-y-5">
+            <!-- Full Name Input -->
+            <div class="space-y-2">
+              <label for="name-input" class="text-xs font-semibold text-foreground flex items-center justify-between">
+                <span>Nama Lengkap <span class="text-red-400">*</span></span>
+                <span class="text-[10px] text-muted-foreground font-mono">Min 2, Maks 100 karakter</span>
+              </label>
+              <div class="relative">
+                <input 
+                  type="text" 
+                  id="name-input" 
+                  name="name" 
+                  value={dbUser.name} 
+                  required 
+                  minlength="2" 
+                  maxlength="100"
+                  placeholder="Contoh: Muhammad Agung Gumelar"
+                  class="w-full px-4 py-3 rounded-xl bg-background border border-border/60 text-foreground text-sm focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all"
+                />
+              </div>
+            </div>
+
+            <!-- Email Address (Readonly) -->
+            <div class="space-y-2">
+              <label class="text-xs font-semibold text-foreground flex items-center justify-between">
+                <span>Alamat Email</span>
+                <span class="text-[10px] px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-400 font-mono">Terkonfirmasi</span>
+              </label>
+              <input 
+                type="email" 
+                value={dbUser.email} 
+                disabled 
+                class="w-full px-4 py-3 rounded-xl bg-accent/30 border border-border/40 text-muted-foreground text-sm cursor-not-allowed font-mono"
+              />
+              <p class="text-[11px] text-muted-foreground">
+                Alamat email terdaftar sebagai identitas akun permanen Anda.
+              </p>
+            </div>
+
+            <!-- Submit Button -->
+            <div class="pt-2 flex items-center justify-end">
+              <button 
+                type="submit" 
+                id="submit-name-btn"
+                class="btn btn-primary bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs px-6 py-3 rounded-xl shadow-lg shadow-blue-600/20 transition-all flex items-center gap-2"
+              >
+                <span id="btn-text">Simpan Perubahan Nama</span>
+                <svg id="btn-spinner" class="animate-spin -mr-1 ml-2 h-4 w-4 text-white hidden" fill="none" viewBox="0 0 24 24">
+                  <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                  <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+              </button>
+            </div>
+          </form>
+        </div>
+
+        <!-- Form 2: Keamanan Akun & Ubah Password -->
+        <div class="card p-6 sm:p-8 rounded-3xl border-border/60 bg-card/90 space-y-6 shadow-md">
+          <div class="border-b border-border/40 pb-4">
+            <h2 class="text-base sm:text-lg font-bold text-foreground flex items-center gap-2">
+              <span>🔒 Keamanan & Kata Sandi</span>
+            </h2>
+            <p class="text-xs text-muted-foreground">Ganti kata sandi akun belajar Anda secara berkala untuk menjaga keamanan.</p>
+          </div>
+
+          {dbUser.googleId && !dbUser.passwordHash ? (
+            <div class="p-5 rounded-2xl bg-accent/40 border border-border/60 flex items-center gap-4">
+              <div class="w-10 h-10 rounded-xl bg-background flex items-center justify-center text-xl flex-shrink-0 shadow-sm">
+                <svg class="w-5 h-5" viewBox="0 0 24 24">
+                  <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+                  <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+                  <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/>
+                  <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/>
+                </svg>
+              </div>
+              <div class="space-y-1">
+                <h3 class="text-xs font-bold text-foreground">Akun Terhubung Akun Google</h3>
+                <p class="text-[11px] text-muted-foreground">Akun Anda diautentikasi secara aman melalui Google Single Sign-On. Anda tidak memerlukan password manual.</p>
+              </div>
+            </div>
+          ) : (
+            <form id="password-form" class="space-y-4">
+              <div class="space-y-2">
+                <label for="current-pwd" class="text-xs font-semibold text-foreground">Kata Sandi Saat Ini</label>
+                <input 
+                  type="password" 
+                  id="current-pwd" 
+                  name="currentPassword" 
+                  placeholder="Masukkan kata sandi lama"
+                  class="w-full px-4 py-3 rounded-xl bg-background border border-border/60 text-foreground text-sm focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all"
+                />
+              </div>
+
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div class="space-y-2">
+                  <label for="new-pwd" class="text-xs font-semibold text-foreground">Kata Sandi Baru</label>
+                  <input 
+                    type="password" 
+                    id="new-pwd" 
+                    name="newPassword" 
+                    placeholder="Min 6 karakter"
+                    minlength="6"
+                    class="w-full px-4 py-3 rounded-xl bg-background border border-border/60 text-foreground text-sm focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all"
+                  />
+                </div>
+                <div class="space-y-2">
+                  <label for="confirm-pwd" class="text-xs font-semibold text-foreground">Konfirmasi Kata Sandi Baru</label>
+                  <input 
+                    type="password" 
+                    id="confirm-pwd" 
+                    name="confirmPassword" 
+                    placeholder="Ulangi kata sandi baru"
+                    minlength="6"
+                    class="w-full px-4 py-3 rounded-xl bg-background border border-border/60 text-foreground text-sm focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all"
+                  />
+                </div>
+              </div>
+
+              <div class="pt-2 flex items-center justify-end">
+                <button 
+                  type="submit" 
+                  id="submit-pwd-btn"
+                  class="btn bg-accent hover:bg-accent/80 text-foreground font-bold text-xs px-6 py-3 rounded-xl border border-border/60 transition-all flex items-center gap-2"
+                >
+                  <span id="pwd-btn-text">Perbarui Kata Sandi</span>
+                  <svg id="pwd-spinner" class="animate-spin -mr-1 ml-2 h-4 w-4 text-foreground hidden" fill="none" viewBox="0 0 24 24">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                  </svg>
+                </button>
+              </div>
+            </form>
+          )}
+
+        </div>
+
+      </div>
+
+    </div>
+
+  </div>
+</DashboardLayout>
+
+<script>
+  // Toast Helper
+  const toastBox = document.getElementById('toast-box');
+  const toastMsg = document.getElementById('toast-msg');
+  const toastIcon = document.getElementById('toast-icon');
+  const closeToast = document.getElementById('close-toast');
+
+  function showToast(message: string, isError = false) {
+    if (!toastBox || !toastMsg || !toastIcon) return;
+    toastMsg.textContent = message;
+    if (isError) {
+      toastBox.className = 'p-4 rounded-2xl border transition-all text-xs font-medium flex items-center justify-between gap-3 shadow-lg bg-red-500/10 border-red-500/30 text-red-300';
+      toastIcon.textContent = '⛔';
+    } else {
+      toastBox.className = 'p-4 rounded-2xl border transition-all text-xs font-medium flex items-center justify-between gap-3 shadow-lg bg-emerald-500/10 border-emerald-500/30 text-emerald-300';
+      toastIcon.textContent = '✓';
+    }
+    toastBox.classList.remove('hidden');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  closeToast?.addEventListener('click', () => {
+    toastBox?.classList.add('hidden');
+  });
+
+  // 1. Profile Name Form Submission
+  const nameForm = document.getElementById('profile-name-form') as HTMLFormElement;
+  const nameInput = document.getElementById('name-input') as HTMLInputElement;
+  const submitNameBtn = document.getElementById('submit-name-btn') as HTMLButtonElement;
+  const btnText = document.getElementById('btn-text');
+  const btnSpinner = document.getElementById('btn-spinner');
+  const summaryName = document.getElementById('summary-user-name');
+
+  nameForm?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const newName = nameInput.value.trim();
+    if (!newName || newName.length < 2) {
+      showToast('Nama lengkap harus diisi minimal 2 karakter.', true);
+      return;
+    }
+
+    submitNameBtn.disabled = true;
+    btnSpinner?.classList.remove('hidden');
+    if (btnText) btnText.textContent = 'Menyimpan...';
+
+    try {
+      const res = await fetch('/api/user/profile', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: newName }),
+      });
+
+      const data = await res.json();
+      if (!res.ok || data.error) {
+        showToast(data.error || 'Gagal memperbarui profil.', true);
+      } else {
+        showToast('Nama profil berhasil diperbarui! Halaman akan menyinkronkan data.');
+        if (summaryName) summaryName.textContent = newName;
+        setTimeout(() => {
+          window.location.reload();
+        }, 1200);
+      }
+    } catch (err: any) {
+      showToast(err.message || 'Terjadi kesalahan jaringan.', true);
+    } finally {
+      submitNameBtn.disabled = false;
+      btnSpinner?.classList.add('hidden');
+      if (btnText) btnText.textContent = 'Simpan Perubahan Nama';
+    }
+  });
+
+  // 2. Password Form Submission
+  const pwdForm = document.getElementById('password-form') as HTMLFormElement;
+  const currentPwd = document.getElementById('current-pwd') as HTMLInputElement;
+  const newPwd = document.getElementById('new-pwd') as HTMLInputElement;
+  const confirmPwd = document.getElementById('confirm-pwd') as HTMLInputElement;
+  const submitPwdBtn = document.getElementById('submit-pwd-btn') as HTMLButtonElement;
+  const pwdBtnText = document.getElementById('pwd-btn-text');
+  const pwdSpinner = document.getElementById('pwd-spinner');
+
+  pwdForm?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const currentVal = currentPwd?.value;
+    const newVal = newPwd?.value;
+    const confirmVal = confirmPwd?.value;
+
+    if (!newVal || newVal.length < 6) {
+      showToast('Kata sandi baru harus minimal 6 karakter.', true);
+      return;
+    }
+
+    if (newVal !== confirmVal) {
+      showToast('Konfirmasi kata sandi baru tidak cocok.', true);
+      return;
+    }
+
+    submitPwdBtn.disabled = true;
+    pwdSpinner?.classList.remove('hidden');
+    if (pwdBtnText) pwdBtnText.textContent = 'Menyimpan...';
+
+    try {
+      const res = await fetch('/api/user/profile', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          name: nameInput?.value || 'User',
+          currentPassword: currentVal,
+          newPassword: newVal 
+        }),
+      });
+
+      const data = await res.json();
+      if (!res.ok || data.error) {
+        showToast(data.error || 'Gagal mengubah kata sandi.', true);
+      } else {
+        showToast('Kata sandi berhasil diperbarui.');
+        pwdForm.reset();
+      }
+    } catch (err: any) {
+      showToast(err.message || 'Terjadi kesalahan jaringan.', true);
+    } finally {
+      submitPwdBtn.disabled = false;
+      pwdSpinner?.classList.add('hidden');
+      if (pwdBtnText) pwdBtnText.textContent = 'Perbarui Kata Sandi';
+    }
+  });
+</script>

@@ -1,7 +1,7 @@
 import type { APIRoute } from 'astro';
 import { Google, generateState, generateCodeVerifier } from 'arctic';
 
-export const GET: APIRoute = async ({ cookies, redirect }) => {
+export const GET: APIRoute = async ({ request, cookies, redirect }) => {
   const clientId = process.env.GOOGLE_CLIENT_ID;
   const clientSecret = process.env.GOOGLE_CLIENT_SECRET;
 
@@ -18,7 +18,8 @@ export const GET: APIRoute = async ({ cookies, redirect }) => {
     );
   }
 
-  const siteUrl = process.env.SITE_URL || 'https://agunggumelarsaputracom.vercel.app';
+  const requestOrigin = new URL(request.url).origin;
+  const siteUrl = requestOrigin || process.env.SITE_URL || 'https://agunggumelarsaputra.com';
   const google = new Google(clientId, clientSecret, `${siteUrl}/api/auth/callback/google`);
 
   const state = generateState();

@@ -2,17 +2,14 @@
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import { getCollection, render } from 'astro:content';
 
-export const prerender = true;
+const { slug } = Astro.params;
+const allModules = await getCollection('pembelajaran');
+const entry = allModules.find((m) => (m.id || m.slug) === slug);
 
-export async function getStaticPaths() {
-  const modules = await getCollection('pembelajaran');
-  return modules.map((entry) => ({
-    params: { slug: entry.id || entry.slug },
-    props: { entry, allModules: modules },
-  }));
+if (!entry) {
+  return Astro.redirect('/pembelajaran');
 }
 
-const { entry, allModules } = Astro.props;
 const { Content } = await render(entry);
 const sortedSidebarModules = allModules.sort((a, b) => a.data.order - b.data.order);
 ---

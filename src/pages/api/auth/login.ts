@@ -3,7 +3,7 @@ import { db, ensureDbInitialized } from '../../../db';
 import { users } from '../../../db/schema';
 import { eq } from 'drizzle-orm';
 import bcrypt from 'bcryptjs';
-import { signToken, isTeacherEmail } from '../../../utils/auth';
+import { signToken, isSuperAdminEmail } from '../../../utils/auth';
 
 export const POST: APIRoute = async ({ request, cookies }) => {
   await ensureDbInitialized();
@@ -22,9 +22,9 @@ export const POST: APIRoute = async ({ request, cookies }) => {
     }
 
     let userRole = user.role;
-    if (isTeacherEmail(user.email) && user.role !== 'admin') {
-      await db.update(users).set({ role: 'admin' }).where(eq(users.id, user.id));
-      userRole = 'admin';
+    if (isSuperAdminEmail(user.email) && user.role !== 'superadmin') {
+      await db.update(users).set({ role: 'superadmin' }).where(eq(users.id, user.id));
+      userRole = 'superadmin';
     }
 
     const token = signToken({ userId: user.id, email: user.email, name: user.name, role: userRole });

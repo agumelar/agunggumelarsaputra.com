@@ -1,12 +1,23 @@
 ---
 import DashboardLayout from '../../layouts/DashboardLayout.astro';
-import { db } from '../../db';
+import { db, ensureDbInitialized } from '../../db';
 import { users, userGamification, tkaAttempts, userProgress } from '../../db/schema';
 import { eq, desc } from 'drizzle-orm';
 
+import { canAccessAdminPanel, isSuperAdmin, isSuperAdminEmail } from '../../utils/auth';
+
+await ensureDbInitialized();
+
 const user = Astro.locals.user;
-if (!user || user.role !== 'admin') {
+if (!user || !canAccessAdminPanel(user.role)) {
   return Astro.redirect('/dashboard?error=unauthorized_admin');
+}
+
+const isCurrentSuperAdmin = isSuperAdmin(user.role) || isSuperAdminEmail(user.email);
+
+// Ensure Super Admin email has superadmin role in DB
+if (isCurrentSuperAdmin && user.email && isSuperAdminEmail(user.email)) {
+  await db.update(users).set({ role: 'superadmin' }).where(eq(users.email, user.email.trim().toLowerCase()));
 }
 
 // 1. Fetch All Users + Gamification Info
@@ -51,8 +62,9 @@ const allLessonLogs = await db.select({
   .orderBy(desc(userProgress.completedAt));
 
 // 4. Metrics Calculations
-const totalStudents = allUsers.filter(u => u.role === 'student').length;
-const totalAdmins = allUsers.filter(u => u.role === 'admin').length;
+const totalStudents = allUsers.filter(u => u.role === 'student' && !isSuperAdminEmail(u.email)).length;
+const totalTeachers = allUsers.filter(u => (u.role === 'teacher' || u.role === 'admin') && !isSuperAdminEmail(u.email)).length;
+const totalSuperAdmins = allUsers.filter(u => u.role === 'superadmin' || isSuperAdminEmail(u.email)).length;
 const totalExamsTaken = allExamLogs.length;
 const avgScoreAll = totalExamsTaken > 0
   ? Math.round(allExamLogs.reduce((acc, curr) => acc + curr.score, 0) / totalExamsTaken)
@@ -93,16 +105,20 @@ const passRate = totalExamsTaken > 0 ? Math.round((passingExams / totalExamsTake
     <!-- 4 KPI Metrics -->
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
       
-      <!-- Metric 1: Siswa Terdaftar -->
+      <!-- Metric 1: Siswa & Guru -->
       <div class="card p-6 rounded-2xl border-border/60 bg-card/80 space-y-2">
         <div class="flex items-center justify-between">
-          <span class="text-xs font-medium text-muted-foreground">Total Siswa Terdaftar</span>
-          <span class="text-lg">👨‍🎓</span>
+          <span class="text-xs font-medium text-muted-foreground">Total Pengguna</span>
+          <span class="text-lg">👥</span>
         </div>
         <div class="text-3xl font-extrabold text-foreground font-mono">
-          {totalStudents} <span class="text-xs text-muted-foreground font-sans font-normal">Siswa ({totalAdmins} Guru)</span>
+          {totalStudents} <span class="text-xs text-muted-foreground font-sans font-normal">Siswa</span>
         </div>
-        <p class="text-[11px] text-muted-foreground">Basis Data Pengguna Aktif</p>
+        <div class="flex items-center gap-2 text-[11px] font-mono text-muted-foreground pt-1">
+          <span class="text-amber-400 font-bold">{totalTeachers} Guru</span>
+          <span>•</span>
+          <span class="text-purple-400 font-bold">{totalSuperAdmins} Super Admin</span>
+        </div>
       </div>
 
       <!-- Metric 2: Ujian Dikerjakan -->
@@ -151,9 +167,22 @@ const passRate = totalExamsTaken > 0 ? Math.round((passingExams / totalExamsTake
       <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-border/40 pb-4">
         <div>
           <h2 class="text-lg font-bold text-foreground flex items-center gap-2">
-            <span>👥 Data Siswa & Manajemen Role Pengguna</span>
+            <span>👥 Data Pengguna & Otoritas Hak Akses</span>
+            {isCurrentSuperAdmin ? (
+              <span class="text-[10px] px-2.5 py-0.5 rounded-full font-mono bg-purple-500/20 text-purple-300 border border-purple-500/40">
+                👑 KONTROL SUPER ADMIN AKTIF
+              </span>
+            ) : (
+              <span class="text-[10px] px-2.5 py-0.5 rounded-full font-mono bg-amber-500/20 text-amber-300 border border-amber-500/40">
+                👨‍🏫 MODE PANTAU GURU
+              </span>
+            )}
           </h2>
-          <p class="text-xs text-muted-foreground">Kelola akun, pantau level/XP, serta tetapkan peran (Role: Siswa / Guru Admin).</p>
+          <p class="text-xs text-muted-foreground">
+            {isCurrentSuperAdmin 
+              ? "Sebagai Super Admin, Anda memiliki hak penuh untuk menetapkan pengguna menjadi Guru Pengampu atau mengembalikannya menjadi Siswa."
+              : "Daftar seluruh siswa dan pengampu. Hak penambahan Guru dikelola terpusat oleh Super Admin."}
+          </p>
         </div>
         
         <!-- Search filter input -->
@@ -173,10 +202,10 @@ const passRate = totalExamsTaken > 0 ? Math.round((passingExams / totalExamsTake
             <tr>
               <th class="py-3 px-4">Pengguna</th>
               <th class="py-3 px-4">Email</th>
-              <th class="py-3 px-4">Role Saat Ini</th>
+              <th class="py-3 px-4">Role Hak Akses</th>
               <th class="py-3 px-4">Level & XP</th>
               <th class="py-3 px-4">Tgl Registrasi</th>
-              <th class="py-3 px-4 text-right">Aksi Manajemen Role</th>
+              <th class="py-3 px-4 text-right">Otoritas Peran</th>
             </tr>
           </thead>
           <tbody class="divide-y divide-border/40 font-medium">
@@ -187,12 +216,21 @@ const passRate = totalExamsTaken > 0 ? Math.round((passingExams / totalExamsTake
                 year: 'numeric'
               });
               const isSelf = u.id === user.userId;
+              const isUserSuperAdmin = u.role === 'superadmin' || isSuperAdminEmail(u.email);
+              const isUserTeacher = !isUserSuperAdmin && (u.role === 'teacher' || u.role === 'admin');
 
               return (
                 <tr class="hover:bg-accent/40 transition-colors user-row">
                   <td class="py-3.5 px-4">
                     <div class="flex items-center gap-2.5">
-                      <div class="w-8 h-8 rounded-full bg-gradient-to-br from-blue-600 to-indigo-600 flex items-center justify-center text-white font-bold text-xs flex-shrink-0">
+                      <div class:list={[
+                        "w-8 h-8 rounded-full flex items-center justify-center text-white font-bold text-xs flex-shrink-0",
+                        isUserSuperAdmin 
+                          ? "bg-gradient-to-br from-purple-600 to-amber-500 shadow-md shadow-purple-500/20" 
+                          : isUserTeacher 
+                            ? "bg-gradient-to-br from-amber-500 to-orange-500"
+                            : "bg-gradient-to-br from-blue-600 to-indigo-600"
+                      ]}>
                         {u.name.substring(0, 2).toUpperCase()}
                       </div>
                       <div>
@@ -209,14 +247,19 @@ const passRate = totalExamsTaken > 0 ? Math.round((passingExams / totalExamsTake
                     {u.email}
                   </td>
                   <td class="py-3.5 px-4">
-                    <span class:list={[
-                      "px-2.5 py-0.5 rounded-full text-[10px] font-mono font-bold uppercase",
-                      u.role === 'admin' 
-                        ? "bg-amber-500/20 text-amber-300 border border-amber-500/40" 
-                        : "bg-blue-500/20 text-blue-300 border border-blue-500/40"
-                    ]}>
-                      {u.role === 'admin' ? '👑 Guru / Admin' : '👨‍🎓 Siswa'}
-                    </span>
+                    {isUserSuperAdmin ? (
+                      <span class="px-2.5 py-0.5 rounded-full text-[10px] font-mono font-bold uppercase bg-purple-500/20 text-purple-300 border border-purple-500/40">
+                        👑 Super Admin
+                      </span>
+                    ) : isUserTeacher ? (
+                      <span class="px-2.5 py-0.5 rounded-full text-[10px] font-mono font-bold uppercase bg-amber-500/20 text-amber-300 border border-amber-500/40">
+                        👨‍🏫 Guru Pengampu
+                      </span>
+                    ) : (
+                      <span class="px-2.5 py-0.5 rounded-full text-[10px] font-mono font-bold uppercase bg-blue-500/20 text-blue-300 border border-blue-500/40">
+                        👨‍🎓 Siswa
+                      </span>
+                    )}
                   </td>
                   <td class="py-3.5 px-4 font-mono">
                     <span class="text-emerald-400 font-semibold">Lvl {u.level || 1}</span>
@@ -227,22 +270,30 @@ const passRate = totalExamsTaken > 0 ? Math.round((passingExams / totalExamsTake
                     {regDate}
                   </td>
                   <td class="py-3.5 px-4 text-right">
-                    {isSelf ? (
-                      <span class="text-[10px] text-muted-foreground italic font-mono">-</span>
-                    ) : (
+                    {isUserSuperAdmin ? (
+                      <span class="text-[10px] font-mono text-purple-400 font-bold px-2 py-0.5 rounded bg-purple-500/10 border border-purple-500/20">
+                        Root Owner
+                      </span>
+                    ) : isCurrentSuperAdmin ? (
                       <button 
                         type="button"
                         data-user-id={u.id}
-                        data-current-role={u.role}
-                        class="role-toggle-btn px-3 py-1 rounded-lg text-xs font-semibold border transition-all hover:scale-105"
+                        data-user-name={u.name}
+                        data-current-role={isUserTeacher ? 'teacher' : 'student'}
+                        data-target-role={isUserTeacher ? 'student' : 'teacher'}
+                        class="role-toggle-btn px-3 py-1.5 rounded-xl text-xs font-bold border transition-all hover:scale-105 shadow-sm"
                         class:list={[
-                          u.role === 'admin'
+                          isUserTeacher
                             ? "border-red-500/40 text-red-400 hover:bg-red-500/10"
-                            : "border-amber-500/40 text-amber-300 hover:bg-amber-500/10"
+                            : "border-amber-500/50 text-amber-300 bg-amber-500/10 hover:bg-amber-500/20"
                         ]}
                       >
-                        {u.role === 'admin' ? 'Ubah ke Siswa' : 'Jadikan Guru/Admin'}
+                        {isUserTeacher ? 'Cabut Guru (Set Siswa)' : '⭐ Jadikan Guru'}
                       </button>
+                    ) : (
+                      <span class="text-[10px] text-muted-foreground font-mono">
+                        Hanya Super Admin
+                      </span>
                     )}
                   </td>
                 </tr>
@@ -401,18 +452,19 @@ const passRate = totalExamsTaken > 0 ? Math.round((passingExams / totalExamsTake
     });
   });
 
-  // Role Toggle Action
+  // Role Toggle Action for Super Admin
   const roleButtons = document.querySelectorAll('.role-toggle-btn');
   const alertBox = document.getElementById('admin-alert');
 
   roleButtons.forEach(btn => {
     btn.addEventListener('click', async () => {
       const targetUserId = btn.getAttribute('data-user-id');
-      const currentRole = btn.getAttribute('data-current-role');
-      const newRole = currentRole === 'admin' ? 'student' : 'admin';
-      const confirmMsg = currentRole === 'admin' 
-        ? 'Apakah Anda yakin ingin mencabut role Guru/Admin menjadi Siswa?' 
-        : 'Apakah Anda yakin ingin menaikkan role pengguna ini menjadi Guru/Admin?';
+      const userName = btn.getAttribute('data-user-name') || 'Pengguna';
+      const targetRole = btn.getAttribute('data-target-role') || 'student';
+      
+      const confirmMsg = targetRole === 'teacher'
+        ? `Apakah Anda yakin ingin menetapkan ${userName} sebagai GURU PENGAMPU?\n\nPengguna ini akan memiliki akses ke Panel Guru untuk memonitor hasil belajar dan ujian siswa.`
+        : `Apakah Anda yakin ingin mencabut akses Guru dari ${userName} dan mengembalikannya sebagai SISWA?`;
 
       if (!confirm(confirmMsg)) return;
 
@@ -420,27 +472,27 @@ const passRate = totalExamsTaken > 0 ? Math.round((passingExams / totalExamsTake
         const res = await fetch('/api/admin/users/role', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ targetUserId, newRole })
+          body: JSON.stringify({ targetUserId, newRole: targetRole })
         });
 
         const data = await res.json();
 
         if (res.ok && data.success) {
           if (alertBox) {
-            alertBox.className = 'p-4 rounded-xl text-xs font-bold text-center bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 block';
-            alertBox.textContent = data.message;
+            alertBox.className = 'p-4 rounded-2xl text-xs font-bold text-center bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 block shadow-lg shadow-emerald-500/5 animate-fadeIn';
+            alertBox.textContent = `✓ Berhasil: ${data.message || 'Perubahan role berhasil disimpan.'}`;
           }
           setTimeout(() => window.location.reload(), 1000);
         } else {
           if (alertBox) {
-            alertBox.className = 'p-4 rounded-xl text-xs font-bold text-center bg-red-500/10 border border-red-500/30 text-red-400 block';
-            alertBox.textContent = data.error || 'Gagal mengubah role.';
+            alertBox.className = 'p-4 rounded-2xl text-xs font-bold text-center bg-red-500/15 border border-red-500/30 text-red-400 block shadow-lg shadow-red-500/5 animate-fadeIn';
+            alertBox.textContent = `✕ Gagal: ${data.error || 'Gagal mengubah role pengguna.'}`;
           }
         }
       } catch (e) {
         if (alertBox) {
-          alertBox.className = 'p-4 rounded-xl text-xs font-bold text-center bg-red-500/10 border border-red-500/30 text-red-400 block';
-          alertBox.textContent = 'Terjadi kesalahan koneksi server.';
+          alertBox.className = 'p-4 rounded-2xl text-xs font-bold text-center bg-red-500/15 border border-red-500/30 text-red-400 block shadow-lg shadow-red-500/5 animate-fadeIn';
+          alertBox.textContent = '✕ Gagal: Terjadi gangguan jaringan/server.';
         }
       }
     });

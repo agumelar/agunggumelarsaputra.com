@@ -1,5 +1,5 @@
 import { defineMiddleware } from 'astro:middleware';
-import { verifyToken } from './utils/auth';
+import { verifyToken, canAccessAdminPanel, isSuperAdminEmail } from './utils/auth';
 
 const PROTECTED_ROUTES = ['/dashboard', '/pembelajaran', '/admin'];
 
@@ -8,6 +8,11 @@ export const onRequest = defineMiddleware(async (context, next) => {
   try {
     const token = context.cookies.get('ags_session')?.value;
     user = token ? verifyToken(token) : null;
+    if (user) {
+      if (isSuperAdminEmail(user.email)) {
+        user.role = 'superadmin';
+      }
+    }
   } catch {
     user = null;
   }
@@ -22,8 +27,8 @@ export const onRequest = defineMiddleware(async (context, next) => {
     return context.redirect(`/login?redirect=${encodeURIComponent(pathname)}`);
   }
 
-  // Admin route protection
-  if (pathname.startsWith('/admin') && user?.role !== 'admin') {
+  // Admin and Teacher route protection
+  if (pathname.startsWith('/admin') && !canAccessAdminPanel(user?.role)) {
     return context.redirect('/dashboard?error=unauthorized_admin');
   }
 

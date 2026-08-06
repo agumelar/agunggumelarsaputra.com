@@ -164,11 +164,15 @@ const otherRanked = allRankedUsers.slice(3);
                         Anda
                       </span>
                     )}
-                    {ranked.role === 'admin' && (
+                    {ranked.role === 'superadmin' ? (
+                      <span class="text-[9px] px-2 py-0.5 rounded-full bg-purple-500/20 text-purple-300 font-mono">
+                        Super Admin
+                      </span>
+                    ) : (ranked.role === 'teacher' || ranked.role === 'admin') ? (
                       <span class="text-[9px] px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300 font-mono">
                         Guru
                       </span>
-                    )}
+                    ) : null}
                   </div>
                 </td>
                 <td class="py-3.5 px-4 font-mono text-emerald-400">

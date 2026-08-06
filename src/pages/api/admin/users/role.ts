@@ -1,15 +1,19 @@
 import type { APIRoute } from 'astro';
-import { db } from '../../../../db';
+import { db, ensureDbInitialized } from '../../../../db';
 import { users } from '../../../../db/schema';
 import { eq } from 'drizzle-orm';
 
-import { isTeacherEmail } from '../../../../utils/auth';
+import { isSuperAdminEmail, isSuperAdmin } from '../../../../utils/auth';
 
 export const POST: APIRoute = async ({ request, locals }) => {
+  await ensureDbInitialized();
   const currentUser = locals.user;
 
-  if (!currentUser || currentUser.role !== 'admin') {
-    return new Response(JSON.stringify({ error: 'Akses ditolak. Anda bukan Administrator/Guru.' }), { 
+  // STRICT CHECK: Only Super Admin can change user roles
+  if (!currentUser || (!isSuperAdmin(currentUser.role) && !isSuperAdminEmail(currentUser.email))) {
+    return new Response(JSON.stringify({ 
+      error: 'Akses ditolak. Hanya Super Admin (Pemilik Sistem) yang memiliki wewenang untuk menetapkan atau mengubah role pengguna.' 
+    }), { 
       status: 403, 
       headers: { 'Content-Type': 'application/json' } 
     });
@@ -18,8 +22,8 @@ export const POST: APIRoute = async ({ request, locals }) => {
   try {
     const { targetUserId, newRole } = await request.json();
 
-    if (!targetUserId || !['student', 'admin'].includes(newRole)) {
-      return new Response(JSON.stringify({ error: 'Data tidak valid.' }), { 
+    if (!targetUserId || !['student', 'teacher', 'admin'].includes(newRole)) {
+      return new Response(JSON.stringify({ error: 'Data tidak valid. Role harus student, teacher, atau admin.' }), { 
         status: 400, 
         headers: { 'Content-Type': 'application/json' } 
       });
@@ -33,8 +37,8 @@ export const POST: APIRoute = async ({ request, locals }) => {
       });
     }
 
-    if (isTeacherEmail(targetUser.email) && newRole === 'student') {
-      return new Response(JSON.stringify({ error: 'Akun Guru Utama / Administrator Inti tidak dapat diturunkan menjadi Siswa demi keamanan sistem.' }), { 
+    if (isSuperAdminEmail(targetUser.email) && newRole !== 'superadmin') {
+      return new Response(JSON.stringify({ error: 'Akun Super Admin Utama tidak dapat diturunkan rolenya demi keamanan sistem.' }), { 
         status: 400, 
         headers: { 'Content-Type': 'application/json' } 
       });
