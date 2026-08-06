@@ -28,6 +28,14 @@ const isSuperAdminUser = isSuperAdmin(dbUser.role) || isSuperAdminEmail(dbUser.e
 const isTeacher = !isSuperAdminUser && (dbUser.role === 'teacher' || dbUser.role === 'admin');
 const isStudent = !isSuperAdminUser && !isTeacher;
 
+const standardClasses = [
+  '10 RPL 1', '10 RPL 2', '10 RPL 3', '10 RPL 4',
+  '11 RPL 1', '11 RPL 2', '11 RPL 3', '11 RPL 4',
+  '12 RPL 1', '12 RPL 2', '12 RPL 3', '12 RPL 4',
+  'Guru / Staf Pengampu'
+];
+const isCustomClass = Boolean(dbUser.studentClass && !standardClasses.includes(dbUser.studentClass));
+
 const joinDate = new Date(dbUser.createdAt).toLocaleDateString('id-ID', {
   day: 'numeric',
   month: 'long',
@@ -169,7 +177,7 @@ const joinDate = new Date(dbUser.createdAt).toLocaleDateString('id-ID', {
             <span>💡 Petunjuk Identitas Siswa</span>
           </div>
           <p class="leading-relaxed">
-            Gunakan nama lengkap asli dan pilih kelas Anda sesuai daftar presensi SMKN 1 Rongga agar rekapitulasi nilai modul & hasil ujian TKA tercatat akurat.
+            Gunakan nama lengkap asli dan pilih rombel kelas Anda (10 RPL 1-4, 11 RPL 1-4, 12 RPL 1-4) sesuai daftar presensi SMKN 1 Rongga agar rekapitulasi nilai modul & hasil ujian TKA tercatat akurat.
           </p>
         </div>
 
@@ -212,7 +220,7 @@ const joinDate = new Date(dbUser.createdAt).toLocaleDateString('id-ID', {
             <!-- Kelas / Rombel Input -->
             <div class="space-y-2">
               <label for="class-select" class="text-xs font-semibold text-foreground flex items-center justify-between">
-                <span>Kelas / Rombel Belajar <span class="text-cyan-400 font-normal text-[11px]">(PPLG SMKN 1 Rongga)</span></span>
+                <span>Kelas / Rombel Belajar <span class="text-cyan-400 font-normal text-[11px]">(SMKN 1 Rongga)</span></span>
                 <span class="text-[10px] text-muted-foreground font-mono">Wajib untuk Siswa</span>
               </label>
               <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -221,31 +229,52 @@ const joinDate = new Date(dbUser.createdAt).toLocaleDateString('id-ID', {
                   name="studentClassSelect"
                   class="w-full px-4 py-3 rounded-xl bg-background border border-border/60 text-foreground text-sm focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all font-mono"
                 >
-                  <option value="">-- Pilih Kelas --</option>
-                  <option value="X PPLG 1" selected={dbUser.studentClass === 'X PPLG 1'}>X PPLG 1</option>
-                  <option value="X PPLG 2" selected={dbUser.studentClass === 'X PPLG 2'}>X PPLG 2</option>
-                  <option value="XI PPLG 1" selected={dbUser.studentClass === 'XI PPLG 1'}>XI PPLG 1</option>
-                  <option value="XI PPLG 2" selected={dbUser.studentClass === 'XI PPLG 2'}>XI PPLG 2</option>
-                  <option value="XII RPL 1" selected={dbUser.studentClass === 'XII RPL 1'}>XII RPL 1</option>
-                  <option value="XII RPL 2" selected={dbUser.studentClass === 'XII RPL 2'}>XII RPL 2</option>
-                  <option value="Guru / Staf Pengampu" selected={dbUser.studentClass === 'Guru / Staf Pengampu'}>Guru / Staf Pengampu</option>
-                  <option value="Lainnya" selected={Boolean(dbUser.studentClass && !['X PPLG 1', 'X PPLG 2', 'XI PPLG 1', 'XI PPLG 2', 'XII RPL 1', 'XII RPL 2', 'Guru / Staf Pengampu'].includes(dbUser.studentClass))}>Lainnya (Tulis Manual)</option>
+                  <option value="">-- Pilih Kelas / Rombel --</option>
+                  
+                  <optgroup label="Kelas 10">
+                    <option value="10 RPL 1" selected={dbUser.studentClass === '10 RPL 1'}>10 RPL 1</option>
+                    <option value="10 RPL 2" selected={dbUser.studentClass === '10 RPL 2'}>10 RPL 2</option>
+                    <option value="10 RPL 3" selected={dbUser.studentClass === '10 RPL 3'}>10 RPL 3</option>
+                    <option value="10 RPL 4" selected={dbUser.studentClass === '10 RPL 4'}>10 RPL 4</option>
+                  </optgroup>
+
+                  <optgroup label="Kelas 11">
+                    <option value="11 RPL 1" selected={dbUser.studentClass === '11 RPL 1'}>11 RPL 1</option>
+                    <option value="11 RPL 2" selected={dbUser.studentClass === '11 RPL 2'}>11 RPL 2</option>
+                    <option value="11 RPL 3" selected={dbUser.studentClass === '11 RPL 3'}>11 RPL 3</option>
+                    <option value="11 RPL 4" selected={dbUser.studentClass === '11 RPL 4'}>11 RPL 4</option>
+                  </optgroup>
+
+                  <optgroup label="Kelas 12">
+                    <option value="12 RPL 1" selected={dbUser.studentClass === '12 RPL 1'}>12 RPL 1</option>
+                    <option value="12 RPL 2" selected={dbUser.studentClass === '12 RPL 2'}>12 RPL 2</option>
+                    <option value="12 RPL 3" selected={dbUser.studentClass === '12 RPL 3'}>12 RPL 3</option>
+                    <option value="12 RPL 4" selected={dbUser.studentClass === '12 RPL 4'}>12 RPL 4</option>
+                  </optgroup>
+
+                  <optgroup label="Tenaga Pendidik">
+                    <option value="Guru / Staf Pengampu" selected={dbUser.studentClass === 'Guru / Staf Pengampu'}>Guru / Staf Pengampu</option>
+                  </optgroup>
+
+                  <optgroup label="Opsi Khusus">
+                    <option value="Lainnya" selected={isCustomClass}>Lainnya (Tulis Manual...)</option>
+                  </optgroup>
                 </select>
 
                 <input 
                   type="text" 
                   id="custom-class-input" 
                   name="customClass" 
-                  value={dbUser.studentClass || ''} 
-                  placeholder="Ketik nama kelas/instansi..."
+                  value={isCustomClass ? (dbUser.studentClass || '') : ''} 
+                  placeholder="Ketik nama kelas / rombel..."
                   class:list={[
                     "w-full px-4 py-3 rounded-xl bg-background border border-border/60 text-foreground text-sm focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all",
-                    (!dbUser.studentClass || ['X PPLG 1', 'X PPLG 2', 'XI PPLG 1', 'XI PPLG 2', 'XII RPL 1', 'XII RPL 2', 'Guru / Staf Pengampu'].includes(dbUser.studentClass)) ? "hidden" : ""
+                    !isCustomClass ? "hidden" : ""
                   ]}
                 />
               </div>
               <p class="text-[11px] text-muted-foreground">
-                Pilih kelas Anda agar Bapak Guru dapat merekap nilai ujian TKA & tugas modul dengan mudah.
+                Pilih rombel kelas Anda (10 RPL 1-4, 11 RPL 1-4, atau 12 RPL 1-4) atau ketik manual jika dari kelas/jurusan lain.
               </p>
             </div>
 
