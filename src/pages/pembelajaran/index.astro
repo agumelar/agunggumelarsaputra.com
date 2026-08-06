@@ -158,67 +158,119 @@ if (user && isDbConfigured()) {
         <GamificationWidget />
       </div>
 
-      <!-- Modules Catalog Cards -->
-      <div class="space-y-8">
-        
-        <!-- SECTION 1: ORIENTASI PPLG (FASE E) -->
-        <div class="space-y-4">
-          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-border pb-3">
-            <div>
-              <div class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded bg-primary/10 text-primary border border-primary/20 text-[11px] font-mono font-bold mb-1">
-                ⭐ MATA PELAJARAN DASAR-DASAR PPLG • KELAS 10
+      <!-- Course Cards (Mata Pelajaran Level) -->
+      <div class="space-y-6">
+        <div class="border-b border-border pb-3 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+          <div>
+            <h2 class="text-lg font-bold text-foreground">Daftar Mata Pelajaran & Program Belajar</h2>
+            <p class="text-xs text-muted-foreground">Pilih mata pelajaran untuk melihat rencana pembelajaran dan modul pertemuan lengkap.</p>
+          </div>
+          <span class="text-xs font-mono font-semibold px-2.5 py-1 rounded bg-secondary text-foreground border border-border self-start sm:self-auto">
+            Kurikulum Merdeka 2026/2027
+          </span>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          
+          <!-- CARD 1: ORIENTASI PPLG (FEATURED COURSE CARD) -->
+          <div class="lg:col-span-2 card p-6 md:p-7 rounded-2xl border-border bg-card shadow-sm hover:border-primary/50 transition-all flex flex-col justify-between space-y-6">
+            <div class="space-y-4">
+              <div class="flex flex-wrap items-center gap-2">
+                <span class="px-2.5 py-0.5 rounded bg-primary/10 text-primary border border-primary/20 text-[11px] font-mono font-bold uppercase">
+                  ⭐ MATA PELAJARAN UTAMA
+                </span>
+                <span class="px-2.5 py-0.5 rounded bg-secondary text-foreground border border-border text-[11px] font-mono font-semibold">
+                  FASE E • KELAS 10 RPL
+                </span>
+                <span class="px-2.5 py-0.5 rounded bg-secondary text-muted-foreground border border-border text-[11px] font-mono">
+                  SEMESTER GANJIL
+                </span>
               </div>
-              <h2 class="text-lg sm:text-xl font-bold text-foreground">
-                Modul Orientasi PPLG & Skill Passport (Fase E)
-              </h2>
-              <p class="text-xs text-muted-foreground">
-                Materi semester ganjil TA 2026/2027 mencakup Wawasan Profesi (OR-01) dan Analisis Produk Digital (OR-02).
-              </p>
+
+              <div>
+                <h3 class="text-xl sm:text-2xl font-bold text-foreground hover:text-primary transition-colors">
+                  <a href="/pembelajaran/orientasi-pplg">Orientasi PPLG & Skill Passport</a>
+                </h3>
+                <p class="text-xs sm:text-sm text-muted-foreground mt-2 leading-relaxed">
+                  Fondasi wawasan industri perangkat lunak, 8 profesi kunci PPLG, ekosistem software house vs startup, matriks skill, serta audit & review produk digital 6 komponen berdasarkan regulasi BSKAP 046/H/KR/2025.
+                </p>
+              </div>
+
+              <!-- Highlights / Metrics -->
+              <div class="grid grid-cols-2 sm:grid-cols-3 gap-3 pt-2">
+                <div class="p-3 rounded-lg bg-secondary/50 border border-border">
+                  <span class="text-[10px] font-mono text-muted-foreground block">JUMLAH PERTEMUAN</span>
+                  <span class="text-xs font-bold text-foreground">16 Pertemuan (8 Modul)</span>
+                </div>
+                <div class="p-3 rounded-lg bg-secondary/50 border border-border">
+                  <span class="text-[10px] font-mono text-muted-foreground block">TARGET EVIDENCE</span>
+                  <span class="text-xs font-bold text-foreground">OR-01 & OR-02 (Lv 0-4)</span>
+                </div>
+                <div class="p-3 rounded-lg bg-secondary/50 border border-border col-span-2 sm:col-span-1">
+                  <span class="text-[10px] font-mono text-muted-foreground block">TOTAL XP BELAJAR</span>
+                  <span class="text-xs font-bold text-amber-600 dark:text-amber-400 font-mono">✨ +120 XP Total</span>
+                </div>
+              </div>
             </div>
-            <span class="text-xs font-mono font-semibold px-2.5 py-1 rounded bg-secondary text-foreground border border-border self-start sm:self-auto">
-              8 Modul Lengkap + LKPD
-            </span>
+
+            <div class="pt-4 border-t border-border flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <span class="text-xs text-muted-foreground font-mono">
+                Guru Pengampu: Agung Gumelar S., S.Tr.T, Gr
+              </span>
+              <a href="/pembelajaran/orientasi-pplg" class="btn btn-primary text-xs sm:text-sm font-semibold px-5 py-2.5 rounded-lg shadow-sm text-center">
+                Buka Mata Pelajaran & Modul (16 Pertemuan) →
+              </a>
+            </div>
           </div>
 
-          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {sortedModules.filter((m) => m.data.category.startsWith('Orientasi PPLG')).map((mod) => (
-              <div class="card p-5 border-border bg-card transition-all duration-200 flex flex-col justify-between space-y-4 rounded-xl shadow-sm hover:border-primary/50 hover:shadow-md">
-                <div class="space-y-2.5">
-                  <div class="flex items-center justify-between">
-                    <span class="px-2 py-0.5 rounded text-[10px] bg-secondary text-foreground font-mono font-semibold border border-border">
-                      {mod.data.category}
-                    </span>
-                    <span class="text-xs text-muted-foreground font-mono">{mod.data.duration}</span>
-                  </div>
-
-                  <h3 class="text-sm font-bold text-foreground hover:text-primary transition-colors">
-                    <a href={`/pembelajaran/${mod.id || mod.slug}`}>{mod.data.title}</a>
-                  </h3>
-                  <p class="text-xs text-muted-foreground leading-relaxed line-clamp-2">
-                    {mod.data.description}
-                  </p>
-                </div>
-
-                <div class="pt-3 border-t border-border flex items-center justify-between text-xs">
-                  <span class="text-amber-600 dark:text-amber-400 font-medium font-mono">✨ +15 XP</span>
-                  <a href={`/pembelajaran/${mod.id || mod.slug}`} class="btn btn-sm btn-primary text-xs font-semibold px-3 py-1.5 rounded-lg">
-                    Buka Modul & LKPD →
-                  </a>
-                </div>
+          <!-- CARD 2: DRILLING TKA PPLG SIMULATOR -->
+          <div class="card p-6 rounded-2xl border-border bg-card shadow-sm hover:border-cyan-500/50 transition-all flex flex-col justify-between space-y-6">
+            <div class="space-y-4">
+              <div class="flex items-center justify-between">
+                <span class="px-2.5 py-0.5 rounded bg-cyan-500/10 text-cyan-600 dark:text-cyan-400 border border-cyan-500/20 text-[11px] font-mono font-bold uppercase">
+                  SIMULASI & UJIAN CBT
+                </span>
+                <span class="text-xs text-muted-foreground font-mono">40 Menit</span>
               </div>
-            ))}
+
+              <div>
+                <h3 class="text-lg sm:text-xl font-bold text-foreground hover:text-cyan-500 transition-colors">
+                  <a href="/pembelajaran/tka-pplg">Drilling TKA PPLG Simulator</a>
+                </h3>
+                <p class="text-xs text-muted-foreground mt-2 leading-relaxed">
+                  Latihan soal Tes Kemampuan Akademik & Kejuruan Software Engineering berbasis waktu dengan analisis skor instan.
+                </p>
+              </div>
+
+              <div class="p-3 rounded-lg bg-secondary/50 border border-border text-xs space-y-1">
+                <div class="flex items-center justify-between font-mono text-muted-foreground">
+                  <span>Sistem Penilaian</span>
+                  <span class="text-foreground font-bold">Standardized CBT</span>
+                </div>
+                <span class="text-[11px] text-muted-foreground block">
+                  Hasil pengerjaan otomatis terhubung ke rekapitulasi token guru.
+                </span>
+              </div>
+            </div>
+
+            <div class="pt-4 border-t border-border">
+              <a href="/pembelajaran/tka-pplg" class="btn bg-cyan-600 hover:bg-cyan-500 text-white w-full text-xs sm:text-sm font-semibold py-2.5 rounded-lg text-center block shadow-sm">
+                Mulai Ujian TKA →
+              </a>
+            </div>
           </div>
+
         </div>
 
         <!-- SECTION 2: MATERI PENGAYAAN & KEAHLIAN TEKNIS -->
         {sortedModules.filter((m) => !m.data.category.startsWith('Orientasi PPLG')).length > 0 && (
-          <div class="space-y-4 pt-4">
+          <div class="space-y-4 pt-6">
             <div class="border-b border-border pb-2.5">
               <h2 class="text-base font-bold text-foreground">Modul Kejuruan & Pengayaan Praktis</h2>
-              <p class="text-xs text-muted-foreground">Materi tambahan untuk mengasah kemampuan teknis Web, Database, dan Pemrograman.</p>
+              <p class="text-xs text-muted-foreground">Materi mandiri tambahan untuk mengasah kemampuan teknis Web, Database, dan Algoritma.</p>
             </div>
 
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
               {sortedModules.filter((m) => !m.data.category.startsWith('Orientasi PPLG')).map((mod) => (
                 <div class="card p-5 border-border bg-card transition-colors flex flex-col justify-between space-y-4 rounded-xl shadow-sm hover:border-primary/50">
                   <div class="space-y-2.5">
@@ -268,7 +320,7 @@ if (user && isDbConfigured()) {
           Modul Pembelajaran & Gamification Hub
         </h1>
         <p class="text-sm md:text-base text-muted-foreground max-w-2xl leading-relaxed">
-          Pelajari materi Rekayasa Perangkat Lunak secara mandiri dan interaktif. Kumpulkan poin XP, buka Lencana Prestasi, dan ikuti simulasi ujian TKA kelas!
+          Pelajari materi Rekayasa Perangkat Lunak secara mandiri dan terstruktur. Kumpulkan poin XP, buka Lencana Prestasi, dan ikuti simulasi ujian TKA kelas!
         </p>
 
         <div class="pt-2 flex items-center gap-3">
@@ -279,72 +331,56 @@ if (user && isDbConfigured()) {
       </div>
     </section>
 
-    <!-- Public Preview of Modules -->
+    <!-- Public Preview of Courses -->
     <section class="py-10">
       <div class="container-main space-y-8">
-        <!-- Public Orientasi Section -->
-        <div class="space-y-4">
-          <div class="border-b border-border pb-2.5">
-            <h2 class="text-lg font-bold text-foreground">⭐ Modul Orientasi PPLG (Kelas 10 RPL / Fase E)</h2>
-            <p class="text-xs text-muted-foreground">Wawasan Dunia Kerja & Skill Passport Semester Ganjil 2026/2027.</p>
+        
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <!-- Public Orientasi Card -->
+          <div class="lg:col-span-2 card p-6 md:p-8 rounded-2xl bg-card border border-border space-y-5 shadow-sm">
+            <div class="flex flex-wrap items-center gap-2">
+              <span class="px-2.5 py-0.5 rounded bg-primary/10 text-primary border border-primary/20 text-[11px] font-mono font-bold uppercase">
+                ⭐ MATA PELAJARAN UTAMA
+              </span>
+              <span class="px-2.5 py-0.5 rounded bg-secondary text-foreground border border-border text-[11px] font-mono font-semibold">
+                FASE E • KELAS 10 RPL
+              </span>
+            </div>
+
+            <div>
+              <h2 class="text-xl sm:text-3xl font-extrabold text-foreground tracking-tight">
+                Orientasi PPLG & Skill Passport
+              </h2>
+              <p class="text-sm text-muted-foreground mt-2 leading-relaxed">
+                Rencana pembelajaran 16 pertemuan mencakup wawasan 8 profesi kunci industri, ekosistem software house, jenjang karier, dan review produk digital berdasarkan BSKAP No. 046/H/KR/2025.
+              </p>
+            </div>
+
+            <div class="pt-2">
+              <a href="/pembelajaran/orientasi-pplg" class="btn btn-primary text-white font-semibold text-xs sm:text-sm px-5 py-2.5 rounded-lg inline-block">
+                Lihat Silabus & 8 Modul Lengkap →
+              </a>
+            </div>
           </div>
 
-          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {sortedModules.filter((m) => m.data.category.startsWith('Orientasi PPLG')).map((mod) => (
-              <div class="card p-5 border-border bg-card flex flex-col justify-between space-y-3 rounded-xl shadow-sm">
-                <div class="space-y-2">
-                  <span class="px-2 py-0.5 rounded text-[10px] bg-secondary text-foreground font-mono font-semibold border border-border">
-                    {mod.data.category}
-                  </span>
-                  <h3 class="text-sm font-bold text-foreground">
-                    <a href={`/pembelajaran/${mod.id || mod.slug}`} class="hover:text-primary transition-colors">{mod.data.title}</a>
-                  </h3>
-                  <p class="text-xs text-muted-foreground line-clamp-2">{mod.data.description}</p>
-                </div>
+          <!-- Public TKA Card -->
+          <div class="card p-6 md:p-8 rounded-2xl bg-card border border-border space-y-5 shadow-sm flex flex-col justify-between">
+            <div class="space-y-3">
+              <span class="px-2.5 py-0.5 rounded bg-cyan-500/10 text-cyan-600 dark:text-cyan-400 border border-cyan-500/20 text-[11px] font-mono font-bold uppercase">
+                SIMULASI CBT
+              </span>
+              <h3 class="text-xl font-bold text-foreground">Drilling TKA PPLG Simulator</h3>
+              <p class="text-xs text-muted-foreground leading-relaxed">
+                Simulasi ujian kejuruan interaktif untuk mengukur pemahaman teori dan logika pemrograman.
+              </p>
+            </div>
 
-                <div class="pt-3 border-t border-border flex items-center justify-between text-xs">
-                  <span class="text-amber-600 dark:text-amber-400 font-mono font-medium">✨ +15 XP</span>
-                  <a href={`/pembelajaran/${mod.id || mod.slug}`} class="text-primary hover:underline font-semibold">
-                    Baca Modul & LKPD →
-                  </a>
-                </div>
-              </div>
-            ))}
+            <a href="/pembelajaran/tka-pplg" class="btn bg-cyan-600 hover:bg-cyan-500 text-white text-xs sm:text-sm font-semibold py-2.5 rounded-lg text-center block">
+              Mulai Ujian TKA →
+            </a>
           </div>
         </div>
 
-        <!-- Public Other Modules -->
-        {sortedModules.filter((m) => !m.data.category.startsWith('Orientasi PPLG')).length > 0 && (
-          <div class="space-y-4 pt-4">
-            <div class="border-b border-border pb-2.5">
-              <h2 class="text-base font-bold text-foreground">Modul Kejuruan & Pengayaan</h2>
-              <p class="text-xs text-muted-foreground">Materi pengembangan web, basis data, dan algoritma.</p>
-            </div>
-
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {sortedModules.filter((m) => !m.data.category.startsWith('Orientasi PPLG')).map((mod) => (
-                <div class="card p-5 border-border bg-card flex flex-col justify-between space-y-3 rounded-xl shadow-sm">
-                  <div class="space-y-2">
-                    <span class="px-2 py-0.5 rounded text-[10px] bg-secondary text-foreground font-mono font-semibold border border-border">
-                      {mod.data.category}
-                    </span>
-                    <h3 class="text-sm font-bold text-foreground">
-                      <a href={`/pembelajaran/${mod.id || mod.slug}`} class="hover:text-primary transition-colors">{mod.data.title}</a>
-                    </h3>
-                    <p class="text-xs text-muted-foreground line-clamp-2">{mod.data.description}</p>
-                  </div>
-
-                  <div class="pt-3 border-t border-border flex items-center justify-between text-xs">
-                    <span class="text-amber-600 dark:text-amber-400 font-mono font-medium">✨ +15 XP</span>
-                    <a href={`/pembelajaran/${mod.id || mod.slug}`} class="text-primary hover:underline font-semibold">
-                      Baca Modul →
-                    </a>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
       </div>
     </section>
   </BaseLayout>

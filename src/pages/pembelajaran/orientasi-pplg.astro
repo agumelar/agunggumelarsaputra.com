@@ -1,0 +1,446 @@
+---
+import DashboardLayout from '../../layouts/DashboardLayout.astro';
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import { getCollection } from 'astro:content';
+import { db, isDbConfigured, ensureDbInitialized } from '../../db';
+import { enrollmentTokens, userEnrollments, userProgress } from '../../db/schema';
+import { eq, and, desc } from 'drizzle-orm';
+
+const user = Astro.locals.user;
+
+// Ambil semua modul pembelajaran Orientasi PPLG
+const allModules = await getCollection('pembelajaran');
+const orientasiModules = allModules
+  .filter((m) => m.data.category.startsWith('Orientasi PPLG'))
+  .sort((a, b) => a.data.order - b.data.order);
+
+// Ambil data enrollment siswa khusus orientasi-pplg jika user login
+let isEnrolled = false;
+let userEnrollmentData: any = null;
+let completedSlugs: string[] = [];
+
+if (user && isDbConfigured()) {
+  try {
+    await ensureDbInitialized();
+    
+    // Cek enrollment
+    const enrollments = await db.select({
+      id: userEnrollments.id,
+      token: enrollmentTokens.token,
+      title: enrollmentTokens.title,
+      targetClass: enrollmentTokens.targetClass,
+      targetSlug: enrollmentTokens.targetSlug,
+      enrolledAt: userEnrollments.enrolledAt,
+    }).from(userEnrollments)
+      .innerJoin(enrollmentTokens, eq(userEnrollments.tokenId, enrollmentTokens.id))
+      .where(eq(userEnrollments.userId, user.userId));
+
+    userEnrollmentData = enrollments.find(e => 
+      e.targetSlug === 'orientasi-pplg' || e.targetSlug === 'all' || e.title.toLowerCase().includes('orientasi')
+    );
+    if (userEnrollmentData) {
+      isEnrolled = true;
+    }
+
+    // Cek modul yang sudah selesai
+    const progressList = await db.select({
+      lessonSlug: userProgress.lessonSlug,
+    }).from(userProgress)
+      .where(eq(userProgress.userId, user.userId));
+    
+    completedSlugs = progressList.map(p => p.lessonSlug);
+  } catch (err) {
+    console.error('Error fetching orientasi progress:', err);
+  }
+}
+
+// Pisahkan modul per Sprint
+const sprint1Modules = orientasiModules.filter(m => m.data.order <= 5);
+const sprint2Modules = orientasiModules.filter(m => m.data.order >= 6);
+
+const totalCompleted = orientasiModules.filter(m => completedSlugs.includes(m.id || m.slug)).length;
+const progressPercentage = orientasiModules.length > 0 ? Math.round((totalCompleted / orientasiModules.length) * 100) : 0;
+---
+
+{user ? (
+  <DashboardLayout
+    title="Orientasi PPLG (Fase E / Kelas 10 RPL)"
+    description="Silabus & Rencana Pembelajaran Mata Pelajaran Orientasi PPLG SMKN 1 Rongga"
+    activeNav="/pembelajaran"
+  >
+    <div class="space-y-6 max-w-6xl mx-auto">
+      
+      <!-- Back Link & Breadcrumb -->
+      <div class="flex items-center justify-between">
+        <a href="/pembelajaran" class="inline-flex items-center gap-1.5 text-xs font-semibold text-muted-foreground hover:text-foreground transition-colors">
+          <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+          </svg>
+          Kembali ke Katalog Pembelajaran
+        </a>
+
+        {isEnrolled && userEnrollmentData && (
+          <div class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 text-xs font-mono font-semibold">
+            <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+            Terenroll di: {userEnrollmentData.targetClass || 'Kelas Siswa'} ({userEnrollmentData.token})
+          </div>
+        )}
+      </div>
+
+      <!-- Course Hero Card -->
+      <div class="card p-6 md:p-8 rounded-2xl border-border bg-card shadow-sm space-y-6">
+        <div class="flex flex-col lg:flex-row lg:items-start justify-between gap-6">
+          <div class="space-y-3 max-w-3xl">
+            <div class="flex flex-wrap items-center gap-2">
+              <span class="px-2.5 py-0.5 rounded bg-primary/10 text-primary border border-primary/20 text-[11px] font-mono font-bold uppercase">
+                MATA PELAJARAN DASAR-DASAR PPLG
+              </span>
+              <span class="px-2.5 py-0.5 rounded bg-secondary text-foreground border border-border text-[11px] font-mono font-semibold">
+                FASE E • KELAS 10 RPL
+              </span>
+              <span class="px-2.5 py-0.5 rounded bg-secondary text-muted-foreground border border-border text-[11px] font-mono">
+                SEMESTER GANJIL (2026/2027)
+              </span>
+            </div>
+
+            <h1 class="text-2xl sm:text-4xl font-extrabold text-foreground tracking-tight">
+              Orientasi PPLG & Skill Passport
+            </h1>
+
+            <p class="text-sm sm:text-base text-muted-foreground leading-relaxed">
+              Mata pelajaran fondasi kejuruan Rekayasa Perangkat Lunak yang dirancang berdasarkan regulasi 
+              <strong class="text-foreground"> BSKAP No. 046/H/KR/2025</strong>. Membekali siswa dengan pemahaman komprehensif 
+              mengenai 8 profesi industri IT, ekosistem perangkat lunak, jenjang karier, hingga audit dan review produk digital nyata.
+            </p>
+
+            <!-- Meta details -->
+            <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-2">
+              <div class="p-3 rounded-lg bg-secondary/50 border border-border">
+                <span class="text-[10px] font-mono text-muted-foreground block">GURU PENGAMPU</span>
+                <span class="text-xs font-bold text-foreground">Agung Gumelar S., S.Tr.T, Gr</span>
+              </div>
+              <div class="p-3 rounded-lg bg-secondary/50 border border-border">
+                <span class="text-[10px] font-mono text-muted-foreground block">TOTAL PERTEMUAN</span>
+                <span class="text-xs font-bold text-foreground">16 Pertemuan (8 Modul)</span>
+              </div>
+              <div class="p-3 rounded-lg bg-secondary/50 border border-border">
+                <span class="text-[10px] font-mono text-muted-foreground block">TARGET EVIDENCE</span>
+                <span class="text-xs font-bold text-foreground">OR-01 & OR-02 (Lv 0-4)</span>
+              </div>
+              <div class="p-3 rounded-lg bg-secondary/50 border border-border">
+                <span class="text-[10px] font-mono text-muted-foreground block">TOTAL XP BELAJAR</span>
+                <span class="text-xs font-bold text-amber-600 dark:text-amber-400 font-mono">✨ +120 XP</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Progress Widget / Enroll CTA -->
+          <div class="w-full lg:w-72 p-5 rounded-xl bg-secondary/40 border border-border flex flex-col justify-between space-y-4">
+            <div>
+              <div class="flex items-center justify-between text-xs font-semibold mb-2">
+                <span class="text-foreground">Progres Belajar</span>
+                <span class="font-mono text-primary">{progressPercentage}%</span>
+              </div>
+              <div class="w-full bg-border rounded-full h-2 overflow-hidden">
+                <div class="bg-primary h-2 rounded-full transition-all duration-300" style={`width: ${progressPercentage}%`}></div>
+              </div>
+              <span class="text-[11px] text-muted-foreground mt-2 block font-mono">
+                {totalCompleted} dari {orientasiModules.length} Modul Selesai
+              </span>
+            </div>
+
+            {isEnrolled ? (
+              <div class="p-3 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-xs text-emerald-700 dark:text-emerald-400 font-medium">
+                ✅ Anda sudah terdaftar di kelas sesi ini. Semua pengerjaan modul tercatat otomatis.
+              </div>
+            ) : (
+              <div class="space-y-2">
+                <a href="#enroll-section" class="btn btn-primary w-full text-xs font-semibold py-2 rounded-lg text-center block">
+                  🎟️ Masukkan Token Kelas
+                </a>
+                <span class="text-[10px] text-muted-foreground text-center block">
+                  Dapatkan token dari Guru untuk rekap nilai kelas.
+                </span>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+
+      <!-- Syllabus Breakdown: Sprint 1 & Sprint 2 -->
+      <div class="space-y-8">
+        
+        <!-- SPRINT 1 -->
+        <div class="space-y-4">
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-border pb-3">
+            <div>
+              <div class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20 text-[11px] font-mono font-bold mb-1">
+                🚀 SPRINT 1: PERTEMUAN 1 S.D 8 (KODE SKILL: OR-01)
+              </div>
+              <h2 class="text-lg sm:text-xl font-bold text-foreground">
+                Wawasan Dunia Kerja & Profesi PPLG
+              </h2>
+              <p class="text-xs text-muted-foreground">
+                Evidence Akhir: Mind Map Profesi PPLG + Dokumen Rencana Minat Diri 3 Tahun (Format PDF).
+              </p>
+            </div>
+            <span class="text-xs font-mono font-semibold px-2.5 py-1 rounded bg-secondary text-foreground border border-border self-start sm:self-auto">
+              5 Modul • 4 LKPD
+            </span>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {sprint1Modules.map((mod) => {
+              const isDone = completedSlugs.includes(mod.id || mod.slug);
+              return (
+                <div class="card p-5 border-border bg-card flex flex-col justify-between space-y-4 rounded-xl shadow-sm hover:border-primary/50 transition-all">
+                  <div class="space-y-2.5">
+                    <div class="flex items-center justify-between">
+                      <span class="px-2 py-0.5 rounded text-[10px] bg-secondary text-foreground font-mono font-semibold border border-border">
+                        {mod.data.order === 5 ? '🏆 SUMATIF OR-01' : `Pertemuan ${mod.data.order * 2 - 1} & ${mod.data.order * 2}`}
+                      </span>
+                      <span class="text-xs text-muted-foreground font-mono">{mod.data.duration}</span>
+                    </div>
+
+                    <h3 class="text-sm sm:text-base font-bold text-foreground hover:text-primary transition-colors">
+                      <a href={`/pembelajaran/${mod.id || mod.slug}`}>{mod.data.title}</a>
+                    </h3>
+
+                    <p class="text-xs text-muted-foreground line-clamp-2 leading-relaxed">
+                      {mod.data.description}
+                    </p>
+                  </div>
+
+                  <div class="pt-3 border-t border-border flex items-center justify-between text-xs">
+                    <div class="flex items-center gap-2">
+                      <span class="text-amber-600 dark:text-amber-400 font-mono font-medium">✨ +15 XP</span>
+                      {isDone && (
+                        <span class="px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-[10px] font-mono font-bold">
+                          ✓ SELESAI
+                        </span>
+                      )}
+                    </div>
+
+                    <a href={`/pembelajaran/${mod.id || mod.slug}`} class="btn btn-sm btn-primary text-xs font-semibold px-3 py-1.5 rounded-lg">
+                      Buka Modul & LKPD →
+                    </a>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+
+        <!-- SPRINT 2 -->
+        <div class="space-y-4 pt-4">
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-border pb-3">
+            <div>
+              <div class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded bg-purple-500/10 text-purple-600 dark:text-purple-400 border border-purple-500/20 text-[11px] font-mono font-bold mb-1">
+                🔍 SPRINT 2: PERTEMUAN 9 S.D 16 (KODE SKILL: OR-02)
+              </div>
+              <h2 class="text-lg sm:text-xl font-bold text-foreground">
+                Analisis & Review Produk Digital PPLG
+              </h2>
+              <p class="text-xs text-muted-foreground">
+                Evidence Akhir: Dokumen Review Produk Digital Berbasis 6 Komponen + Tangkapan Layar Anotasi (Format PDF).
+              </p>
+            </div>
+            <span class="text-xs font-mono font-semibold px-2.5 py-1 rounded bg-secondary text-foreground border border-border self-start sm:self-auto">
+              3 Modul • Rekapitulasi Semester
+            </span>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {sprint2Modules.map((mod) => {
+              const isDone = completedSlugs.includes(mod.id || mod.slug);
+              return (
+                <div class="card p-5 border-border bg-card flex flex-col justify-between space-y-4 rounded-xl shadow-sm hover:border-primary/50 transition-all">
+                  <div class="space-y-2.5">
+                    <div class="flex items-center justify-between">
+                      <span class="px-2 py-0.5 rounded text-[10px] bg-secondary text-foreground font-mono font-semibold border border-border">
+                        {mod.data.order === 8 ? '🏆 SUMATIF OR-02 & REKAP' : `Pertemuan ${(mod.data.order - 5) * 2 + 7} & ${(mod.data.order - 5) * 2 + 8}`}
+                      </span>
+                      <span class="text-xs text-muted-foreground font-mono">{mod.data.duration}</span>
+                    </div>
+
+                    <h3 class="text-sm font-bold text-foreground hover:text-primary transition-colors">
+                      <a href={`/pembelajaran/${mod.id || mod.slug}`}>{mod.data.title}</a>
+                    </h3>
+
+                    <p class="text-xs text-muted-foreground line-clamp-2 leading-relaxed">
+                      {mod.data.description}
+                    </p>
+                  </div>
+
+                  <div class="pt-3 border-t border-border flex items-center justify-between text-xs">
+                    <div class="flex items-center gap-2">
+                      <span class="text-amber-600 dark:text-amber-400 font-mono font-medium">✨ +15 XP</span>
+                      {isDone && (
+                        <span class="px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-[10px] font-mono font-bold">
+                          ✓ SELESAI
+                        </span>
+                      )}
+                    </div>
+
+                    <a href={`/pembelajaran/${mod.id || mod.slug}`} class="btn btn-sm btn-primary text-xs font-semibold px-3 py-1.5 rounded-lg">
+                      Buka Modul & LKPD →
+                    </a>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+
+      </div>
+
+      <!-- ENROLL SECTION (IF NOT YET ENROLLED) -->
+      <div id="enroll-section" class="card p-6 rounded-2xl border-border bg-card shadow-sm space-y-4">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-border pb-4">
+          <div>
+            <h3 class="text-base font-bold text-foreground">🎟️ Hubungkan ke Kelas Belajar (Enroll Token)</h3>
+            <p class="text-xs text-muted-foreground">
+              Masukkan token kelas yang diberikan oleh Pak Agung Gumelar Saputra untuk menghubungkan presensi dan rekapitulasi nilai LKPD.
+            </p>
+          </div>
+          <div id="enroll-alert-course" class="hidden text-xs font-medium px-3 py-1.5 rounded-lg text-center"></div>
+        </div>
+
+        <form id="course-enroll-form" class="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+          <input 
+            type="text" 
+            id="course-token-input" 
+            placeholder="Contoh: OPPLG-10RPL1-2026..." 
+            class="input flex-grow text-xs sm:text-sm font-mono tracking-wider uppercase px-4 py-2.5 rounded-lg bg-background border border-border focus:border-primary focus:ring-1 focus:ring-primary"
+            required
+          />
+          <button 
+            type="submit" 
+            id="btn-course-enroll"
+            class="btn btn-primary text-white font-semibold text-xs sm:text-sm px-6 py-2.5 rounded-lg shadow-sm whitespace-nowrap"
+          >
+            Gabung Kelas Sekarang →
+          </button>
+        </form>
+      </div>
+
+    </div>
+  </DashboardLayout>
+) : (
+  <BaseLayout 
+    title="Orientasi PPLG (Fase E / Kelas 10 RPL)" 
+    description="Silabus & Rencana Pembelajaran Mata Pelajaran Orientasi PPLG SMKN 1 Rongga"
+  >
+    <div class="container-main py-10 space-y-8">
+      
+      <!-- Back Link -->
+      <a href="/pembelajaran" class="inline-flex items-center gap-1.5 text-xs font-semibold text-muted-foreground hover:text-foreground transition-colors">
+        ← Kembali ke Learning Hub
+      </a>
+
+      <!-- Hero Public Card -->
+      <div class="p-6 md:p-8 rounded-2xl bg-card border border-border space-y-4 shadow-sm">
+        <div class="flex flex-wrap items-center gap-2">
+          <span class="px-2.5 py-0.5 rounded bg-primary/10 text-primary border border-primary/20 text-[11px] font-mono font-bold uppercase">
+            MATA PELAJARAN DASAR-DASAR PPLG
+          </span>
+          <span class="px-2.5 py-0.5 rounded bg-secondary text-foreground border border-border text-[11px] font-mono font-semibold">
+            FASE E • KELAS 10 RPL
+          </span>
+        </div>
+
+        <h1 class="text-2xl sm:text-4xl font-extrabold text-foreground tracking-tight">
+          Orientasi PPLG & Skill Passport
+        </h1>
+
+        <p class="text-sm sm:text-base text-muted-foreground leading-relaxed max-w-3xl">
+          Silabus pembelajaran 16 pertemuan untuk siswa Kelas 10 RPL Semester Ganjil 2026/2027. Menguasai 8 profesi kunci PPLG, ekosistem industri, jenjang karier, dan review produk digital berbasis bukti.
+        </p>
+
+        <div class="pt-2">
+          <a href="/login?redirect=/pembelajaran/orientasi-pplg" class="btn btn-primary text-white font-semibold text-xs sm:text-sm px-5 py-2.5 rounded-lg inline-block">
+            Masuk untuk Mulai Belajar & Rekap LKPD →
+          </a>
+        </div>
+      </div>
+
+      <!-- Public Module List -->
+      <div class="space-y-6">
+        <h2 class="text-lg sm:text-xl font-bold text-foreground border-b border-border pb-2.5">
+          Daftar 8 Modul & LKPD Orientasi PPLG
+        </h2>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {orientasiModules.map((mod) => (
+            <div class="card p-5 border-border bg-card flex flex-col justify-between space-y-3 rounded-xl shadow-sm">
+              <div class="space-y-2">
+                <span class="px-2 py-0.5 rounded text-[10px] bg-secondary text-foreground font-mono font-semibold border border-border">
+                  Modul {mod.data.order} • {mod.data.duration}
+                </span>
+                <h3 class="text-sm font-bold text-foreground">
+                  <a href={`/pembelajaran/${mod.id || mod.slug}`} class="hover:text-primary transition-colors">{mod.data.title}</a>
+                </h3>
+                <p class="text-xs text-muted-foreground line-clamp-2">{mod.data.description}</p>
+              </div>
+
+              <div class="pt-3 border-t border-border flex items-center justify-between text-xs">
+                <span class="text-amber-600 dark:text-amber-400 font-mono font-medium">✨ +15 XP</span>
+                <a href={`/pembelajaran/${mod.id || mod.slug}`} class="text-primary hover:underline font-semibold">
+                  Baca Modul →
+                </a>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+    </div>
+  </BaseLayout>
+)}
+
+<script>
+  const courseEnrollForm = document.getElementById('course-enroll-form') as HTMLFormElement | null;
+  const courseTokenInput = document.getElementById('course-token-input') as HTMLInputElement | null;
+  const courseEnrollAlert = document.getElementById('enroll-alert-course');
+  const btnCourseEnroll = document.getElementById('btn-course-enroll') as HTMLButtonElement | null;
+
+  if (courseEnrollForm && courseTokenInput && courseEnrollAlert && btnCourseEnroll) {
+    courseEnrollForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const token = courseTokenInput.value.trim().toUpperCase();
+      if (!token) return;
+
+      btnCourseEnroll.disabled = true;
+      btnCourseEnroll.textContent = 'Memverifikasi...';
+      courseEnrollAlert.className = 'hidden';
+
+      try {
+        const res = await fetch('/api/enroll', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ token })
+        });
+
+        const data = await res.json();
+
+        if (res.ok && data.success) {
+          courseEnrollAlert.textContent = `🎉 Berhasil! Anda terdaftar di sesi ${data.session.title} (${data.session.targetClass}).`;
+          courseEnrollAlert.className = 'text-xs font-medium px-3 py-2 rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 block';
+          setTimeout(() => {
+            window.location.reload();
+          }, 1200);
+        } else {
+          courseEnrollAlert.textContent = `❌ ${data.error || 'Token tidak valid atau tidak aktif.'}`;
+          courseEnrollAlert.className = 'text-xs font-medium px-3 py-2 rounded-lg bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-500/20 block';
+          btnCourseEnroll.disabled = false;
+          btnCourseEnroll.textContent = 'Gabung Kelas Sekarang →';
+        }
+      } catch (err: any) {
+        courseEnrollAlert.textContent = '❌ Gagal menghubungi server.';
+        courseEnrollAlert.className = 'text-xs font-medium px-3 py-2 rounded-lg bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-500/20 block';
+        btnCourseEnroll.disabled = false;
+        btnCourseEnroll.textContent = 'Gabung Kelas Sekarang →';
+      }
+    });
+  }
+</script>

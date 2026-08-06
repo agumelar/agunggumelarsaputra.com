@@ -34,15 +34,22 @@ export const POST: APIRoute = async ({ request, locals }) => {
       ? customToken.trim().toUpperCase().replace(/\s+/g, '-')
       : generateRandomToken(targetClass && targetClass !== 'Semua Kelas' ? targetClass.replace(/\s+/g, '') : 'AGS');
 
-    // Make sure token is alphanumeric with dashes
-    tokenCode = tokenCode.replace(/[^A-Z0-9-]/g, '');
+    let finalTargetType = targetType || 'all';
+    let finalTargetSlug = targetSlug || null;
+    if (targetType === 'orientasi-pplg') {
+      finalTargetType = 'module';
+      finalTargetSlug = 'orientasi-pplg';
+    } else if (targetType === 'tka') {
+      finalTargetType = 'tka';
+      finalTargetSlug = 'tka-pplg';
+    }
 
     const [newToken] = await db.insert(enrollmentTokens).values({
       token: tokenCode,
       title: title.trim(),
       description: description ? description.trim() : null,
-      targetType: targetType || 'all',
-      targetSlug: targetSlug || null,
+      targetType: finalTargetType,
+      targetSlug: finalTargetSlug,
       targetClass: targetClass || 'Semua Kelas',
       isActive: true,
       createdBy: locals.user.userId,
