@@ -104,7 +104,7 @@ if (isDbConfigured()) {
 
     // 6. Fetch All Submissions (LKPD & Reflection) + User Info
     try {
-      allSubmissions = await db.select({
+      const rawSubmissions = await db.select({
         id: userSubmissions.id,
         userId: userSubmissions.userId,
         tokenId: userSubmissions.tokenId,
@@ -127,6 +127,8 @@ if (isDbConfigured()) {
       }).from(userSubmissions)
         .innerJoin(users, eq(userSubmissions.userId, users.id))
         .orderBy(desc(userSubmissions.submittedAt));
+
+      allSubmissions = rawSubmissions;
     } catch (subErr) {
       console.warn('Submissions query error in admin:', subErr);
       allSubmissions = [];
@@ -1153,37 +1155,42 @@ const passRate = totalExamsTaken > 0 ? Math.round((passingExams / totalExamsTake
   <!-- ========================================== -->
   <!-- MODAL PENILAIAN LKPD SISWA -->
   <!-- ========================================== -->
-  <div id="grade-modal" class="fixed inset-0 z-50 bg-background/80 backdrop-blur-sm hidden flex items-center justify-center p-4">
-    <div class="bg-card border border-border rounded-xl max-w-4xl w-full max-h-[90vh] flex flex-col shadow-xl overflow-hidden animate-fadeIn">
+  <div id="grade-modal" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-md hidden flex items-center justify-center p-3 sm:p-5 transition-all">
+    <div class="bg-card border border-border/80 rounded-2xl max-w-4xl w-full max-h-[92vh] flex flex-col shadow-2xl overflow-hidden animate-fadeIn">
       
       <!-- Modal Header -->
-      <div class="p-4 sm:p-5 border-b border-border flex items-center justify-between bg-secondary/40">
+      <div class="p-4 sm:p-5 border-b border-border flex items-start sm:items-center justify-between bg-secondary/40 gap-3">
         <div class="space-y-1">
-          <div class="flex items-center gap-2">
-            <span class="px-2 py-0.5 rounded bg-purple-500/10 text-purple-600 dark:text-purple-400 border border-purple-500/25 text-xs font-mono font-bold" id="grade-modal-type">
+          <div class="flex items-center gap-2 flex-wrap">
+            <span class="px-2.5 py-0.5 rounded font-mono font-bold text-xs bg-purple-500/15 text-purple-600 dark:text-purple-400 border border-purple-500/30" id="grade-modal-type">
               LKPD
             </span>
-            <span class="text-xs text-muted-foreground font-mono" id="grade-modal-class">10 RPL 1</span>
+            <span class="px-2.5 py-0.5 rounded font-mono text-xs bg-secondary text-foreground border border-border" id="grade-modal-class">
+              10 RPL 1
+            </span>
+            <span class="text-xs text-muted-foreground font-mono hidden sm:inline" id="grade-modal-slug">
+              orientasi-pplg-01
+            </span>
           </div>
-          <h3 class="text-base font-bold text-foreground" id="grade-modal-student">
+          <h3 class="text-base sm:text-lg font-extrabold text-foreground tracking-tight" id="grade-modal-student">
             Penilaian Siswa
           </h3>
-          <p class="text-xs text-muted-foreground font-mono" id="grade-modal-slug">
-            orientasi-pplg-01
-          </p>
         </div>
 
         <button 
           type="button" 
           id="close-grade-modal-btn"
-          class="p-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
+          class="p-2 rounded-xl text-muted-foreground hover:text-foreground hover:bg-accent transition-colors shrink-0"
+          title="Tutup Modal (Esc)"
         >
-          ✕
+          <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+          </svg>
         </button>
       </div>
 
-      <!-- Modal Body (Two Column Layout) -->
-      <div class="p-5 overflow-y-auto space-y-6 flex-grow">
+      <!-- Modal Body (Two Column / Stacked Layout) -->
+      <div class="p-4 sm:p-6 overflow-y-auto space-y-6 flex-grow">
         
         <!-- Section A: Student Answer Viewer -->
         <div class="space-y-3">
@@ -1196,34 +1203,45 @@ const passRate = totalExamsTaken > 0 ? Math.round((passingExams / totalExamsTake
                 id="grade-modal-drive-link" 
                 href="#" 
                 target="_blank" 
-                rel="noopener noreferrer"
-                class="px-2.5 py-1 rounded bg-cyan-600/10 text-cyan-600 dark:text-cyan-400 border border-cyan-500/25 text-xs font-semibold hover:bg-cyan-600/20 transition-all flex items-center gap-1.5"
+                rel="noopener noreferrer" 
+                class="px-3 py-1 rounded-lg bg-cyan-500/10 text-cyan-600 dark:text-cyan-400 border border-cyan-500/25 text-xs font-semibold hover:bg-cyan-500/20 transition-all flex items-center gap-1.5"
               >
                 <span>📂 Buka Bukti Drive</span> ↗
               </a>
             </div>
           </div>
 
-          <div id="grade-modal-answers-area" class="p-4 rounded-xl bg-background border border-border space-y-3 text-xs">
+          <div id="grade-modal-answers-area" class="p-4 rounded-xl bg-background border border-border/80 space-y-3 text-xs">
             <!-- Dynamically populated formatted student inputs/answers -->
           </div>
         </div>
 
         <!-- Section B: Teacher Evaluation Form -->
-        <div class="p-4 sm:p-5 rounded-xl bg-secondary/30 border border-border space-y-4">
-          <h4 class="text-xs font-bold text-foreground uppercase tracking-wider font-mono flex items-center gap-2">
-            <span>⭐ Form Input Nilai Guru</span>
-          </h4>
+        <div class="p-4 sm:p-5 rounded-2xl bg-secondary/30 border border-border/90 space-y-4">
+          <div class="flex items-center justify-between border-b border-border/60 pb-3">
+            <h4 class="text-xs font-bold text-foreground uppercase tracking-wider font-mono flex items-center gap-2">
+              <span>⭐ Form Penilaian Guru & Penetapan KKTP</span>
+            </h4>
+            <span class="text-[11px] font-mono text-muted-foreground">
+              Pengampu: Agung Gumelar Saputra, S.Tr.T.
+            </span>
+          </div>
 
           <form id="teacher-grade-form" class="space-y-4">
             <input type="hidden" id="grade-submission-id" />
 
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <!-- Score Input -->
               <div class="space-y-1.5">
-                <label for="grade-score-input" class="text-xs font-semibold text-foreground flex items-center gap-1.5">
-                  <span>Skor Angka (0 - 100)</span>
-                  <span class="text-destructive">*</span>
-                </label>
+                <div class="flex items-center justify-between">
+                  <label for="grade-score-input" class="text-xs font-semibold text-foreground flex items-center gap-1.5">
+                    <span>Skor Angka (0 - 100)</span>
+                    <span class="text-destructive">*</span>
+                  </label>
+                  <span id="score-status-indicator" class="text-[10px] font-mono font-semibold px-2 py-0.2 rounded bg-amber-500/10 text-amber-600 dark:text-amber-400">
+                    KKM: 75
+                  </span>
+                </div>
                 <input 
                   type="number" 
                   id="grade-score-input" 
@@ -1232,18 +1250,18 @@ const passRate = totalExamsTaken > 0 ? Math.round((passingExams / totalExamsTake
                   step="1"
                   required
                   placeholder="Contoh: 88" 
-                  class="w-full px-3 py-2 bg-background border border-border rounded-lg text-sm font-mono font-bold text-foreground focus:outline-none focus:border-primary"
+                  class="w-full px-3.5 py-2.5 bg-background border border-border rounded-xl text-sm font-mono font-bold text-foreground focus:outline-none focus:border-primary shadow-sm"
                 />
-                <p class="text-[10px] text-muted-foreground">Kriteria Ketuntasan Minimal: 75 (Kompeten).</p>
               </div>
 
+              <!-- KKTP Level Select -->
               <div class="space-y-1.5">
                 <label for="grade-level-select" class="text-xs font-semibold text-foreground">
                   <span>Kategori Capaian KKTP</span>
                 </label>
                 <select 
                   id="grade-level-select" 
-                  class="w-full px-3 py-2 bg-background border border-border rounded-lg text-xs focus:outline-none focus:border-primary"
+                  class="w-full px-3.5 py-2.5 bg-background border border-border rounded-xl text-xs text-foreground focus:outline-none focus:border-primary shadow-sm"
                 >
                   <option value="Level 4 (Mahir & Mandiri ★★★)">Level 4 (Mahir & Mandiri ★★★) - Sangat Baik</option>
                   <option value="Level 3 (Mampu Membimbing ★★)">Level 3 (Mampu Membimbing ★★) - Baik</option>
@@ -1251,34 +1269,55 @@ const passRate = totalExamsTaken > 0 ? Math.round((passingExams / totalExamsTake
                   <option value="Level 1 (Mulai Berkembang)">Level 1 (Mulai Berkembang) - Perlu Bimbingan</option>
                   <option value="Level 0 (Belum Berkembang)">Level 0 (Belum Berkembang) - Belum Tuntas</option>
                 </select>
-                <p class="text-[10px] text-muted-foreground">Tingkat penguasaan kompetensi tujuan pembelajaran.</p>
               </div>
             </div>
 
-            <div class="space-y-1.5">
-              <label for="grade-feedback-input" class="text-xs font-semibold text-foreground">
-                <span>Catatan & Evaluasi Konstruktif Guru</span>
-              </label>
+            <!-- Feedback & Presets -->
+            <div class="space-y-2">
+              <div class="flex items-center justify-between">
+                <label for="grade-feedback-input" class="text-xs font-semibold text-foreground">
+                  <span>Catatan & Evaluasi Konstruktif Guru</span>
+                </label>
+                <span class="text-[10px] text-muted-foreground">Klik preset cepat di bawah:</span>
+              </div>
+
+              <!-- Quick Feedback Preset Chips -->
+              <div class="flex flex-wrap gap-1.5">
+                <button type="button" class="quick-feedback-chip px-2.5 py-1 rounded-md bg-card hover:bg-accent text-foreground text-[11px] border border-border transition-colors" data-preset="Kerja luar biasa! Analisis peran profesi dan pemahaman materi sudah sangat komprehensif dan mandiri. Pertahankan! 🌟">
+                  ✨ Kerja Luar Biasa
+                </button>
+                <button type="button" class="quick-feedback-chip px-2.5 py-1 rounded-md bg-card hover:bg-accent text-foreground text-[11px] border border-border transition-colors" data-preset="Analisis aplikasi dan identifikasi peran sudah tepat. Terus eksplorasi teknologi terkini! 🚀">
+                  🚀 Analisis Tepat
+                </button>
+                <button type="button" class="quick-feedback-chip px-2.5 py-1 rounded-md bg-card hover:bg-accent text-foreground text-[11px] border border-border transition-colors" data-preset="Cukup baik, namun beberapa bagian analisis dan refleksi perlu diperdalam lagi pada pertemuan berikutnya. ✍️">
+                  ✍️ Perlu Pendalaman
+                </button>
+                <button type="button" class="quick-feedback-chip px-2.5 py-1 rounded-md bg-card hover:bg-accent text-foreground text-[11px] border border-border transition-colors" data-preset="Jawaban telah diverifikasi dan memenuhi standar ketuntasan minimal (KKM).">
+                  ✓ Tuntas KKM
+                </button>
+              </div>
+
               <textarea 
                 id="grade-feedback-input" 
                 rows="3" 
                 placeholder="Tuliskan catatan apresiasi, saran perbaikan teknis kode/analisis, atau masukan untuk siswa..."
-                class="w-full px-3 py-2 bg-background border border-border rounded-lg text-xs text-foreground focus:outline-none focus:border-primary placeholder:text-muted-foreground"
+                class="w-full px-3.5 py-2.5 bg-background border border-border rounded-xl text-xs text-foreground focus:outline-none focus:border-primary placeholder:text-muted-foreground leading-relaxed"
               ></textarea>
             </div>
 
-            <div class="flex items-center justify-end gap-2 pt-2">
+            <!-- Modal Action Buttons -->
+            <div class="flex items-center justify-end gap-2.5 pt-2 border-t border-border/60">
               <button 
                 type="button" 
                 id="cancel-grade-btn"
-                class="px-4 py-2 rounded-lg text-xs font-medium bg-secondary hover:bg-accent text-foreground border border-border transition-colors"
+                class="px-4 py-2.5 rounded-xl text-xs font-medium bg-secondary hover:bg-accent text-foreground border border-border transition-colors"
               >
                 Batal
               </button>
               <button 
                 type="submit" 
                 id="submit-grade-btn"
-                class="px-5 py-2 rounded-lg text-xs font-bold bg-primary hover:bg-primary/90 text-primary-foreground transition-all shadow-sm flex items-center gap-1.5"
+                class="px-6 py-2.5 rounded-xl text-xs font-bold bg-primary hover:bg-primary/90 text-primary-foreground transition-all shadow-md hover:shadow-primary/20 flex items-center gap-1.5"
               >
                 <span id="grade-btn-text">💾 Simpan & Rilis Nilai ke Siswa</span>
               </button>
@@ -1553,7 +1592,7 @@ const passRate = totalExamsTaken > 0 ? Math.round((passingExams / totalExamsTake
   subClassFilter?.addEventListener('change', applySubmissionFilters);
   subStatusFilter?.addEventListener('change', applySubmissionFilters);
 
-  // 8. LKPD Teacher Grading Modal
+  // 8. LKPD Teacher Grading Modal & Rich Answer Renderer
   const gradeModal = document.getElementById('grade-modal');
   const closeGradeModalBtn = document.getElementById('close-grade-modal-btn');
   const cancelGradeBtn = document.getElementById('cancel-grade-btn');
@@ -1571,6 +1610,7 @@ const passRate = totalExamsTaken > 0 ? Math.round((passingExams / totalExamsTake
 
   const inputSubmissionId = document.getElementById('grade-submission-id') as HTMLInputElement | null;
   const inputScore = document.getElementById('grade-score-input') as HTMLInputElement | null;
+  const scoreStatusIndicator = document.getElementById('score-status-indicator');
   const selectLevel = document.getElementById('grade-level-select') as HTMLSelectElement | null;
   const textareaFeedback = document.getElementById('grade-feedback-input') as HTMLTextAreaElement | null;
 
@@ -1580,6 +1620,273 @@ const passRate = totalExamsTaken > 0 ? Math.round((passingExams / totalExamsTake
 
   closeGradeModalBtn?.addEventListener('click', closeGradeModal);
   cancelGradeBtn?.addEventListener('click', closeGradeModal);
+
+  // Close on Escape or click outside
+  window.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && gradeModal && !gradeModal.classList.contains('hidden')) {
+      closeGradeModal();
+    }
+  });
+
+  gradeModal?.addEventListener('click', (e) => {
+    if (e.target === gradeModal) {
+      closeGradeModal();
+    }
+  });
+
+  // Quick feedback presets
+  document.querySelectorAll('.quick-feedback-chip').forEach(chip => {
+    chip.addEventListener('click', () => {
+      const preset = chip.getAttribute('data-preset');
+      if (textareaFeedback && preset) {
+        textareaFeedback.value = preset;
+        textareaFeedback.focus();
+      }
+    });
+  });
+
+  // Score live status indicator
+  function updateScoreIndicator(scoreVal: number) {
+    if (!scoreStatusIndicator) return;
+    if (isNaN(scoreVal) || inputScore?.value === '') {
+      scoreStatusIndicator.textContent = 'KKM: 75';
+      scoreStatusIndicator.className = 'text-[10px] font-mono font-semibold px-2 py-0.5 rounded bg-secondary text-muted-foreground border border-border';
+    } else if (scoreVal >= 90) {
+      scoreStatusIndicator.textContent = '🌟 Sangat Kompeten (A)';
+      scoreStatusIndicator.className = 'text-[10px] font-mono font-semibold px-2 py-0.5 rounded bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30';
+    } else if (scoreVal >= 75) {
+      scoreStatusIndicator.textContent = '✓ Kompeten (KKM Tercapai)';
+      scoreStatusIndicator.className = 'text-[10px] font-mono font-semibold px-2 py-0.5 rounded bg-cyan-500/15 text-cyan-600 dark:text-cyan-400 border border-cyan-500/30';
+    } else {
+      scoreStatusIndicator.textContent = '⚠️ Belum Tuntas (< 75)';
+      scoreStatusIndicator.className = 'text-[10px] font-mono font-semibold px-2 py-0.5 rounded bg-amber-500/15 text-amber-600 dark:text-amber-400 border border-amber-500/30';
+    }
+  }
+
+  inputScore?.addEventListener('input', () => {
+    const val = Number(inputScore.value);
+    updateScoreIndicator(val);
+  });
+
+  function escapeHtml(str: any): string {
+    if (str === null || str === undefined) return '';
+    return String(str)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#039;');
+  }
+
+  function parseFormDataSafe(raw: any): any {
+    if (!raw) return {};
+    let data = raw;
+    while (typeof data === 'string') {
+      try {
+        const parsed = JSON.parse(data);
+        data = parsed;
+      } catch (e) {
+        break;
+      }
+    }
+    return typeof data === 'object' && data !== null ? data : { 'Isi Jawaban': String(data) };
+  }
+
+  function renderFormattedAnswers(rawFormData: any, submissionType: string): string {
+    const fd = parseFormDataSafe(rawFormData);
+    const keys = Object.keys(fd);
+
+    if (keys.length === 0) {
+      return '<div class="p-6 text-center text-muted-foreground italic bg-secondary/20 rounded-xl border border-border/50">Tidak ada rincian formulir yang tersimpan.</div>';
+    }
+
+    let html = '<div class="space-y-4">';
+
+    // 1. Identitas Siswa dari Form
+    const hasStudentMeta = fd.studentName || fd.studentNis || fd.studentClass || fd.submissionDate;
+    if (hasStudentMeta) {
+      html += `
+        <div class="p-3.5 rounded-xl bg-secondary/40 border border-border grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
+          <div>
+            <span class="text-[10px] font-mono text-muted-foreground uppercase block mb-0.5">Nama Peserta Didik</span>
+            <span class="font-bold text-foreground block">${escapeHtml(fd.studentName || '-')}</span>
+          </div>
+          <div>
+            <span class="text-[10px] font-mono text-muted-foreground uppercase block mb-0.5">NIS / NISN</span>
+            <span class="font-mono font-medium text-foreground block">${escapeHtml(fd.studentNis || '-')}</span>
+          </div>
+          <div>
+            <span class="text-[10px] font-mono text-muted-foreground uppercase block mb-0.5">Rombel / Kelas</span>
+            <span class="font-semibold text-primary block">${escapeHtml(fd.studentClass || '-')}</span>
+          </div>
+          <div>
+            <span class="text-[10px] font-mono text-muted-foreground uppercase block mb-0.5">Waktu Pengumpulan</span>
+            <span class="font-mono text-muted-foreground text-[11px] block">${escapeHtml(fd.submissionDate || '-')}</span>
+          </div>
+        </div>
+      `;
+    }
+
+    // 2. Audit Apps Table (Khusus LKPD Analisis Aplikasi & Peran IT)
+    if (Array.isArray(fd.auditApps) && fd.auditApps.length > 0) {
+      html += `
+        <div class="space-y-2 pt-1">
+          <div class="flex items-center justify-between">
+            <h5 class="text-xs font-bold text-foreground font-mono flex items-center gap-2 uppercase tracking-wider text-purple-600 dark:text-purple-400">
+              <span>📊 Tabel Hasil Audit Aplikasi & Analisis Profesi RPL</span>
+            </h5>
+            <span class="text-[10px] font-mono text-muted-foreground">${fd.auditApps.length} Aplikasi Diaudit</span>
+          </div>
+
+          <div class="overflow-x-auto border border-border rounded-xl">
+            <table class="w-full text-left text-xs">
+              <thead class="bg-secondary/60 text-muted-foreground font-mono text-[10px] uppercase border-b border-border">
+                <tr>
+                  <th class="py-2.5 px-3 w-10 text-center">No</th>
+                  <th class="py-2.5 px-3 min-w-[150px]">Nama Aplikasi & Platform</th>
+                  <th class="py-2.5 px-3 min-w-[220px]">Fitur Utama yang Sering Digunakan</th>
+                  <th class="py-2.5 px-3 min-w-[200px]">Peran Pengembang Terkait (Roles)</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-border bg-card">
+                ${fd.auditApps.map((app: any, idx: number) => `
+                  <tr class="hover:bg-accent/30 transition-colors">
+                    <td class="py-3 px-3 font-mono text-muted-foreground text-center font-bold">${idx + 1}</td>
+                    <td class="py-3 px-3 font-bold text-foreground">
+                      <span class="px-2 py-0.5 rounded bg-primary/10 text-primary border border-primary/20 inline-block">
+                        ${escapeHtml(app.name || '-')}
+                      </span>
+                    </td>
+                    <td class="py-3 px-3 text-foreground leading-relaxed">
+                      ${escapeHtml(app.feature || '-')}
+                    </td>
+                    <td class="py-3 px-3">
+                      <span class="font-mono text-[11px] text-foreground bg-secondary/60 px-2 py-1 rounded border border-border inline-block">
+                        ${escapeHtml(app.roles || '-')}
+                      </span>
+                    </td>
+                  </tr>
+                `).join('')}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      `;
+    }
+
+    // 3. Jurnal Refleksi Mandiri (q1, q2, q3, q4)
+    const reflectionPrompts: Record<string, string> = {
+      q1: '1. Hal Baru yang Dipelajari tentang Rekayasa Perangkat Lunak & PPLG',
+      q2: '2. Urgensi Bukti Portofolio (Evidence) vs Ijazah Formal di Industri IT',
+      q3: '3. Kendala & Solusi Teknis saat Menyiapkan Evidence Google Drive',
+      q4: '4. Komitmen Belajar untuk Pertemuan / Modul Berikutnya',
+    };
+
+    const reflKeys = ['q1', 'q2', 'q3', 'q4'].filter(k => fd[k] !== undefined && fd[k] !== '');
+    if (reflKeys.length > 0) {
+      html += `
+        <div class="space-y-3 pt-1">
+          <h5 class="text-xs font-bold text-foreground font-mono flex items-center gap-2 uppercase tracking-wider text-cyan-600 dark:text-cyan-400">
+            <span>💡 Jurnal Refleksi Mandiri Peserta Didik</span>
+          </h5>
+          <div class="space-y-3">
+            ${reflKeys.map(k => `
+              <div class="p-3.5 rounded-xl bg-secondary/30 border border-border space-y-1.5">
+                <span class="font-bold text-foreground block text-xs flex items-center gap-1.5">
+                  <span class="text-primary font-mono">•</span>
+                  <span>${reflectionPrompts[k] || k}:</span>
+                </span>
+                <div class="p-3 rounded-lg bg-card border border-border text-foreground text-xs leading-relaxed font-normal whitespace-pre-wrap">
+                  ${escapeHtml(fd[k])}
+                </div>
+              </div>
+            `).join('')}
+          </div>
+        </div>
+      `;
+    }
+
+    // 4. General LKPD Fields (activityTitle, notes, checklist, dsb.)
+    const excludedFields = new Set([
+      'studentName', 'studentNis', 'studentClass', 'submissionDate', 
+      'auditApps', 'q1', 'q2', 'q3', 'q4', 'driveUrl'
+    ]);
+    const extraFields = Object.keys(fd).filter(k => !excludedFields.has(k));
+
+    if (extraFields.length > 0) {
+      html += `
+        <div class="space-y-3 pt-1">
+          <h5 class="text-xs font-bold text-foreground font-mono flex items-center gap-2 uppercase tracking-wider text-foreground">
+            <span>📝 Isian Formulir Tambahan Siswa</span>
+          </h5>
+          <div class="space-y-2.5">
+            ${extraFields.map(k => {
+              const val = fd[k];
+              const title = k
+                .replace(/([A-Z])/g, ' $1')
+                .replace(/^./, str => str.toUpperCase())
+                .replace(/_/g, ' ');
+
+              if (Array.isArray(val)) {
+                return `
+                  <div class="p-3.5 rounded-xl bg-secondary/30 border border-border space-y-1.5">
+                    <span class="font-bold text-foreground block text-xs">${escapeHtml(title)}:</span>
+                    <div class="p-2.5 rounded-lg bg-card border border-border overflow-x-auto">
+                      <pre class="text-[11px] font-mono whitespace-pre-wrap text-foreground">${escapeHtml(JSON.stringify(val, null, 2))}</pre>
+                    </div>
+                  </div>
+                `;
+              } else if (typeof val === 'object' && val !== null) {
+                return `
+                  <div class="p-3.5 rounded-xl bg-secondary/30 border border-border space-y-1.5">
+                    <span class="font-bold text-foreground block text-xs">${escapeHtml(title)}:</span>
+                    <div class="p-2.5 rounded-lg bg-card border border-border overflow-x-auto">
+                      <pre class="text-[11px] font-mono whitespace-pre-wrap text-foreground">${escapeHtml(JSON.stringify(val, null, 2))}</pre>
+                    </div>
+                  </div>
+                `;
+              } else {
+                return `
+                  <div class="p-3.5 rounded-xl bg-secondary/30 border border-border space-y-1">
+                    <span class="font-semibold text-muted-foreground font-mono text-[11px] block">${escapeHtml(title)}:</span>
+                    <div class="p-2.5 rounded-lg bg-card border border-border text-foreground text-xs leading-relaxed">
+                      ${escapeHtml(String(val || '-'))}
+                    </div>
+                  </div>
+                `;
+              }
+            }).join('')}
+          </div>
+        </div>
+      `;
+    }
+
+    // 5. Bukti Google Drive Link Preview jika ada di form data
+    if (fd.driveUrl) {
+      html += `
+        <div class="p-3.5 rounded-xl bg-cyan-500/10 border border-cyan-500/30 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div class="flex items-center gap-2.5">
+            <span class="text-xl">📁</span>
+            <div>
+              <span class="font-bold text-cyan-600 dark:text-cyan-400 text-xs block">Tautan Bukti Google Drive Portofolio Siswa</span>
+              <span class="text-[11px] text-muted-foreground truncate max-w-sm block font-mono">${escapeHtml(fd.driveUrl)}</span>
+            </div>
+          </div>
+          <a 
+            href="${escapeHtml(fd.driveUrl)}" 
+            target="_blank" 
+            rel="noopener noreferrer" 
+            class="px-3.5 py-1.5 rounded-lg bg-cyan-600 hover:bg-cyan-500 text-white text-xs font-bold flex items-center gap-1.5 shrink-0 transition-colors shadow-sm"
+          >
+            <span>Buka Folder Drive</span> ↗
+          </a>
+        </div>
+      `;
+    }
+
+    html += '</div>';
+    return html;
+  }
 
   document.querySelectorAll('.grade-submission-btn').forEach(btn => {
     btn.addEventListener('click', () => {
@@ -1596,61 +1903,27 @@ const passRate = totalExamsTaken > 0 ? Math.round((passingExams / totalExamsTake
         if (gradeModalSlug) gradeModalSlug.textContent = `Materi: /pembelajaran/${sub.lessonSlug}`;
 
         // Populate Score, Level, Feedback
-        if (inputScore) inputScore.value = sub.teacherScore !== null && sub.teacherScore !== undefined ? sub.teacherScore.toString() : (sub.score !== null ? sub.score.toString() : '');
+        const existingTeacherScore = sub.teacherScore !== null && sub.teacherScore !== undefined ? sub.teacherScore : (sub.score !== null && sub.score !== undefined ? sub.score : '');
+        if (inputScore) {
+          inputScore.value = existingTeacherScore.toString();
+          updateScoreIndicator(Number(existingTeacherScore));
+        }
+
         if (selectLevel && sub.teacherLevel) selectLevel.value = sub.teacherLevel;
         if (textareaFeedback) textareaFeedback.value = sub.teacherFeedback || '';
 
         // Google Drive link
-        if (sub.driveUrl && gradeModalDriveContainer && gradeModalDriveLink) {
+        const driveUrl = sub.driveUrl || (parseFormDataSafe(sub.formData)?.driveUrl);
+        if (driveUrl && gradeModalDriveContainer && gradeModalDriveLink) {
           gradeModalDriveContainer.classList.remove('hidden');
-          gradeModalDriveLink.href = sub.driveUrl;
+          gradeModalDriveLink.href = driveUrl;
         } else if (gradeModalDriveContainer) {
           gradeModalDriveContainer.classList.add('hidden');
         }
 
-        // Render Answers JSON nicely
+        // Render Answers cleanly
         if (gradeModalAnswersArea) {
-          const fd = sub.formData;
-          if (!fd || (typeof fd === 'object' && Object.keys(fd).length === 0)) {
-            gradeModalAnswersArea.innerHTML = '<p class="text-muted-foreground italic">Tidak ada data formulir tersimpan.</p>';
-          } else {
-            let html = '<div class="space-y-3">';
-            for (const [key, val] of Object.entries(fd)) {
-              const formattedKey = key
-                .replace(/([A-Z])/g, ' $1')
-                .replace(/^./, str => str.toUpperCase())
-                .replace(/_/g, ' ');
-
-              if (Array.isArray(val)) {
-                html += `
-                  <div class="space-y-1.5 pt-1">
-                    <span class="font-bold text-foreground block text-[11px] uppercase tracking-wider font-mono">${formattedKey}:</span>
-                    <div class="p-2.5 rounded-lg bg-secondary/40 border border-border overflow-x-auto">
-                      <pre class="text-[11px] font-mono whitespace-pre-wrap text-foreground">${JSON.stringify(val, null, 2)}</pre>
-                    </div>
-                  </div>
-                `;
-              } else if (typeof val === 'object' && val !== null) {
-                html += `
-                  <div class="space-y-1.5 pt-1">
-                    <span class="font-bold text-foreground block text-[11px] uppercase tracking-wider font-mono">${formattedKey}:</span>
-                    <div class="p-2.5 rounded-lg bg-secondary/40 border border-border overflow-x-auto">
-                      <pre class="text-[11px] font-mono whitespace-pre-wrap text-foreground">${JSON.stringify(val, null, 2)}</pre>
-                    </div>
-                  </div>
-                `;
-              } else {
-                html += `
-                  <div class="p-2.5 rounded-lg bg-secondary/30 border border-border flex flex-col sm:flex-row sm:items-start justify-between gap-2">
-                    <span class="font-semibold text-muted-foreground font-mono text-[11px] min-w-[140px]">${formattedKey}:</span>
-                    <span class="text-foreground font-medium flex-grow break-words">${val || '-'}</span>
-                  </div>
-                `;
-              }
-            }
-            html += '</div>';
-            gradeModalAnswersArea.innerHTML = html;
-          }
+          gradeModalAnswersArea.innerHTML = renderFormattedAnswers(sub.formData, sub.submissionType);
         }
 
         gradeModal?.classList.remove('hidden');

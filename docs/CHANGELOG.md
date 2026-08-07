@@ -12,6 +12,21 @@ Format penulisan mengacu pada [Keep a Changelog](https://keepachangelog.com/id/1
 
 ---
 
+## [2.4.1] - 2026-08-07
+### Enhanced
+- **Penyempurnaan Modal Periksa Nilai Guru (`/admin#submissions`):**
+  - **Parsing Aman & Multi-Format:** Mengatasi issue serialisasi/stringification form data siswa dengan parser berlapis `parseFormDataSafe`.
+  - **Visualisasi Terstruktur Jawaban Siswa:**
+    - Tabel interaktif khusus untuk hasil audit aplikasi LKPD (No, Nama Aplikasi & Platform, Fitur Utama, Peran Pengembang RPL).
+    - Kartu terpisah untuk butir-butir jurnal refleksi mandiri siswa (`q1` s/d `q4`).
+    - Kartu identitas pengumpulan (Nama, NISN, Rombel/Kelas, Waktu Submit).
+    - Callout khusus tautan Google Drive portofolio siswa.
+  - **Preset Catatan Feedback Cepat:** Menambahkan tombol chip preset respons guru (*Kerja Luar Biasa*, *Analisis Tepat*, *Perlu Pendalaman*, *Tuntas KKM*) untuk mempercepat alur kerja koreksi.
+  - **Indikator Status Skor Real-Time:** Penanda status ketercapaian KKM (75) yang berubah dinamis saat guru mengetikkan nilai angka.
+  - **Keyboard & UX Shortcuts:** Dukungan penutupan modal via tombol `Esc` dan klik backdrop luar.
+
+---
+
 ## [2.4.0] - 2026-08-07
 ### Added
 - **Sistem Evaluasi & Penilaian LKPD oleh Guru:**
