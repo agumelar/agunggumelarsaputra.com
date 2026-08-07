@@ -93,6 +93,25 @@ Mencatat hasil tes uji kemampuan akademik (TKA PPLG).
 - `xpEarned` (Integer, Default 0)
 - `createdAt` (Timestamp, Default `NOW()`)
 
+### 2.7 Tabel `user_submissions`
+Mencatat pengumpulan lembar kerja (LKPD & Refleksi) siswa beserta nilai dan catatan evaluasi guru.
+- `id` (Serial, PK)
+- `userId` (Integer, FK -> `users.id`, Cascade Delete)
+- `tokenId` (Integer, FK -> `enrollment_tokens.id`, Nullable)
+- `lessonSlug` (Text, Not Null, e.g., `'orientasi-pplg-01-pengantar-skill-passport'`)
+- `submissionType` (Text, Default `'lkpd'`, Nilai: `'lkpd'` | `'reflection'` | `'project'`)
+- `formData` (JSON, Not Null)
+- `driveUrl` (Text, Nullable)
+- `score` (Integer, Nullable)
+- `teacherScore` (Integer, Nullable)
+- `teacherLevel` (Text, Nullable)
+- `teacherFeedback` (Text, Nullable)
+- `gradedBy` (Integer, FK -> `users.id`, Nullable)
+- `gradedAt` (Timestamp, Nullable)
+- `status` (Text, Default `'submitted'`, Nilai: `'submitted'` | `'graded'` | `'needs_revision'`)
+- `submittedAt` (Timestamp, Default `NOW()`)
+- `updatedAt` (Timestamp, Default `NOW()`)
+
 ---
 
 ## 3. Spesifikasi API Endpoint
@@ -106,6 +125,9 @@ Mencatat hasil tes uji kemampuan akademik (TKA PPLG).
 | `GET` | `/api/auth/callback/google` | Publik | Callback Google OAuth -> Set cookie `ags_session` |
 | `POST` | `/api/enroll` | Siswa | Klaim token enrollment untuk membuka akses materi |
 | `POST` | `/api/progress/complete` | Siswa | Tandai modul selesai & tambahkan XP |
+| `POST` | `/api/submissions/save` | Siswa | Simpan/update jawaban form LKPD & Refleksi siswa (+ XP) |
+| `GET` | `/api/submissions/get` | Terautentikasi | Ambil riwayat & status penilaian LKPD siswa |
+| `POST` | `/api/admin/submissions/grade` | Admin | Simpan skor angka, level KKTP, & feedback guru |
 | `POST` | `/api/tka/submit` | Siswa | Kirim skor tryout TKA & simpan attempt |
 | `GET` | `/api/leaderboard` | Publik | Mengambil data peringkat XP teratas |
 | `POST` | `/api/admin/tokens/create` | Admin | Membuat token enrollment baru |
