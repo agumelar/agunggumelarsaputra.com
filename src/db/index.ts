@@ -112,6 +112,31 @@ export async function ensureDbInitialized(): Promise<{ success: boolean; message
         );
 
         ALTER TABLE tka_attempts ADD COLUMN IF NOT EXISTS token_id INTEGER REFERENCES enrollment_tokens(id) ON DELETE SET NULL;
+
+        CREATE TABLE IF NOT EXISTS user_submissions (
+          id SERIAL PRIMARY KEY,
+          user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+          token_id INTEGER REFERENCES enrollment_tokens(id) ON DELETE SET NULL,
+          lesson_slug TEXT NOT NULL,
+          submission_type TEXT NOT NULL,
+          form_data TEXT NOT NULL,
+          drive_url TEXT,
+          score INTEGER,
+          teacher_score INTEGER,
+          teacher_level TEXT,
+          teacher_feedback TEXT,
+          graded_by INTEGER REFERENCES users(id) ON DELETE SET NULL,
+          graded_at TIMESTAMP,
+          status TEXT NOT NULL DEFAULT 'submitted',
+          submitted_at TIMESTAMP NOT NULL DEFAULT NOW(),
+          updated_at TIMESTAMP NOT NULL DEFAULT NOW()
+        );
+
+        ALTER TABLE user_submissions ADD COLUMN IF NOT EXISTS teacher_score INTEGER;
+        ALTER TABLE user_submissions ADD COLUMN IF NOT EXISTS teacher_level TEXT;
+        ALTER TABLE user_submissions ADD COLUMN IF NOT EXISTS teacher_feedback TEXT;
+        ALTER TABLE user_submissions ADD COLUMN IF NOT EXISTS graded_by INTEGER REFERENCES users(id) ON DELETE SET NULL;
+        ALTER TABLE user_submissions ADD COLUMN IF NOT EXISTS graded_at TIMESTAMP;
       `;
 
       isInitialized = true;

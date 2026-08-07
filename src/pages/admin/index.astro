@@ -1,7 +1,7 @@
 ---
 import DashboardLayout from '../../layouts/DashboardLayout.astro';
 import { db, isDbConfigured, ensureDbInitialized } from '../../db';
-import { users, userGamification, tkaAttempts, userProgress, enrollmentTokens, userEnrollments } from '../../db/schema';
+import { users, userGamification, tkaAttempts, userProgress, enrollmentTokens, userEnrollments, userSubmissions } from '../../db/schema';
 import { eq, desc } from 'drizzle-orm';
 
 import { canAccessAdminPanel, isSuperAdmin, isSuperAdminEmail } from '../../utils/auth';
@@ -18,6 +18,7 @@ let allExamLogs: any[] = [];
 let allLessonLogs: any[] = [];
 let allTokens: any[] = [];
 let allEnrollments: any[] = [];
+let allSubmissions: any[] = [];
 
 if (isDbConfigured()) {
   try {
@@ -100,6 +101,36 @@ if (isDbConfigured()) {
       tokenId: userEnrollments.tokenId,
       userId: userEnrollments.userId,
     }).from(userEnrollments);
+
+    // 6. Fetch All Submissions (LKPD & Reflection) + User Info
+    try {
+      allSubmissions = await db.select({
+        id: userSubmissions.id,
+        userId: userSubmissions.userId,
+        tokenId: userSubmissions.tokenId,
+        userName: users.name,
+        userEmail: users.email,
+        studentClass: users.studentClass,
+        lessonSlug: userSubmissions.lessonSlug,
+        submissionType: userSubmissions.submissionType,
+        formData: userSubmissions.formData,
+        driveUrl: userSubmissions.driveUrl,
+        score: userSubmissions.score,
+        teacherScore: userSubmissions.teacherScore,
+        teacherLevel: userSubmissions.teacherLevel,
+        teacherFeedback: userSubmissions.teacherFeedback,
+        gradedBy: userSubmissions.gradedBy,
+        gradedAt: userSubmissions.gradedAt,
+        status: userSubmissions.status,
+        submittedAt: userSubmissions.submittedAt,
+        updatedAt: userSubmissions.updatedAt,
+      }).from(userSubmissions)
+        .innerJoin(users, eq(userSubmissions.userId, users.id))
+        .orderBy(desc(userSubmissions.submittedAt));
+    } catch (subErr) {
+      console.warn('Submissions query error in admin:', subErr);
+      allSubmissions = [];
+    }
   } catch (err) {
     console.error('Admin DB Error:', err);
   }
@@ -152,6 +183,9 @@ const passRate = totalExamsTaken > 0 ? Math.round((passingExams / totalExamsTake
         <a href="#tokens" class="btn btn-sm bg-cyan-600 hover:bg-cyan-500 text-white font-semibold rounded-lg">
           🎟️ Token Sesi ({allTokens.length})
         </a>
+        <a href="#submissions" class="btn btn-sm bg-purple-600 hover:bg-purple-500 text-white font-semibold rounded-lg">
+          📝 Penilaian LKPD ({allSubmissions.length})
+        </a>
         <a href="#students" class="btn btn-sm bg-amber-500 hover:bg-amber-400 text-black font-semibold rounded-lg">
           👥 Data Siswa ({allUsers.length})
         </a>
@@ -161,8 +195,8 @@ const passRate = totalExamsTaken > 0 ? Math.round((passingExams / totalExamsTake
       </div>
     </div>
 
-    <!-- 4 KPI Metrics -->
-    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+    <!-- 5 KPI Metrics -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
       
       <!-- Metric 1: Siswa & Guru -->
       <div class="card p-5 rounded-xl border-border bg-card space-y-1.5 shadow-sm">
@@ -192,7 +226,21 @@ const passRate = totalExamsTaken > 0 ? Math.round((passingExams / totalExamsTake
         <p class="text-[11px] text-muted-foreground">Total {allTokens.length} sesi terdaftar</p>
       </div>
 
-      <!-- Metric 3: Rata-Rata Nilai -->
+      <!-- Metric 3: Penilaian LKPD -->
+      <div class="card p-5 rounded-xl border-border bg-card space-y-1.5 shadow-sm">
+        <div class="flex items-center justify-between">
+          <span class="text-xs font-medium text-muted-foreground">LKPD Masuk</span>
+          <span class="text-base">📝</span>
+        </div>
+        <div class="text-2xl font-bold text-purple-600 dark:text-purple-400 font-mono">
+          {allSubmissions.length} <span class="text-xs text-muted-foreground font-sans font-normal">Set</span>
+        </div>
+        <p class="text-[11px] text-muted-foreground">
+          <span class="text-amber-600 dark:text-amber-400 font-bold">{allSubmissions.filter(s => s.teacherScore === null || s.teacherScore === undefined).length} Menunggu</span> • <span class="text-emerald-600 dark:text-emerald-400 font-bold">{allSubmissions.filter(s => s.teacherScore !== null && s.teacherScore !== undefined).length} Dinilai</span>
+        </p>
+      </div>
+
+      <!-- Metric 4: Rata-Rata Nilai -->
       <div class="card p-5 rounded-xl border-border bg-card space-y-1.5 shadow-sm">
         <div class="flex items-center justify-between">
           <span class="text-xs font-medium text-muted-foreground">Rata-Rata Nilai TKA</span>
@@ -204,7 +252,7 @@ const passRate = totalExamsTaken > 0 ? Math.round((passingExams / totalExamsTake
         <p class="text-[11px] text-muted-foreground">Tingkat Kelulusan: <span class="text-emerald-600 dark:text-emerald-400 font-bold">{passRate}%</span></p>
       </div>
 
-      <!-- Metric 4: Modul Diselesaikan -->
+      <!-- Metric 5: Modul Diselesaikan -->
       <div class="card p-5 rounded-xl border-border bg-card space-y-1.5 shadow-sm">
         <div class="flex items-center justify-between">
           <span class="text-xs font-medium text-muted-foreground">Modul Diselesaikan</span>
@@ -502,6 +550,193 @@ const passRate = totalExamsTaken > 0 ? Math.round((passingExams / totalExamsTake
         )}
 
       </div>
+    </div>
+
+    <!-- ========================================== -->
+    <!-- SECTION: PENILAIAN & EVALUASI LKPD SISWA -->
+    <!-- ========================================== -->
+    <div id="submissions" class="card p-5 sm:p-6 rounded-xl border-border bg-card space-y-6 shadow-sm">
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-border pb-4">
+        <div class="space-y-1">
+          <div class="inline-flex items-center gap-2">
+            <h2 class="text-base font-bold text-foreground flex items-center gap-2">
+              <span>📝 Penilaian & Evaluasi LKPD Siswa</span>
+            </h2>
+            <span class="px-2 py-0.5 rounded font-mono text-[10px] font-bold bg-purple-500/10 text-purple-600 dark:text-purple-400 border border-purple-500/25">
+              EVALUASI GURU
+            </span>
+          </div>
+          <p class="text-xs text-muted-foreground">
+            Periksa lembar kerja dan refleksi siswa, berikan skor angka (0-100), capaian KKTP (Level 0-4), serta catatan evaluasi guru.
+          </p>
+        </div>
+
+        <div class="flex items-center gap-3">
+          <div class="flex items-center gap-1.5 text-xs font-mono">
+            <span class="px-2.5 py-1 rounded bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20 font-semibold">
+              ⏳ {allSubmissions.filter(s => s.teacherScore === null || s.teacherScore === undefined).length} Menunggu
+            </span>
+            <span class="px-2.5 py-1 rounded bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 font-semibold">
+              ✓ {allSubmissions.filter(s => s.teacherScore !== null && s.teacherScore !== undefined).length} Dinilai
+            </span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Filter Controls -->
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+        <div class="relative">
+          <input 
+            type="text" 
+            id="submission-search-input" 
+            placeholder="Cari nama siswa / email / modul..." 
+            class="w-full px-3 py-2 bg-background border border-border rounded-lg text-xs focus:outline-none focus:border-primary placeholder:text-muted-foreground"
+          />
+        </div>
+
+        <div>
+          <select 
+            id="submission-class-filter" 
+            class="w-full px-3 py-2 bg-background border border-border rounded-lg text-xs focus:outline-none focus:border-primary"
+          >
+            <option value="">Semua Kelas</option>
+            <option value="10 RPL 1">10 RPL 1</option>
+            <option value="10 RPL 2">10 RPL 2</option>
+            <option value="10 RPL 3">10 RPL 3</option>
+            <option value="11 RPL 1">11 RPL 1</option>
+            <option value="11 RPL 2">11 RPL 2</option>
+            <option value="12 RPL 1">12 RPL 1</option>
+            <option value="12 RPL 2">12 RPL 2</option>
+          </select>
+        </div>
+
+        <div>
+          <select 
+            id="submission-status-filter" 
+            class="w-full px-3 py-2 bg-background border border-border rounded-lg text-xs focus:outline-none focus:border-primary"
+          >
+            <option value="">Semua Status</option>
+            <option value="pending">Menunggu Penilaian</option>
+            <option value="graded">Sudah Dinilai</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Submissions Table -->
+      {allSubmissions.length === 0 ? (
+        <div class="p-8 text-center bg-background rounded-lg border border-border/50 text-xs text-muted-foreground space-y-2">
+          <div class="text-2xl">📥</div>
+          <p class="font-medium text-foreground">Belum ada LKPD atau refleksi yang dikumpulkan oleh siswa.</p>
+          <p class="text-[11px]">Ketika siswa mengisi formulir LKPD di modul materi dan menekan tombol simpan, data akan muncul di sini.</p>
+        </div>
+      ) : (
+        <div class="overflow-x-auto border border-border rounded-lg">
+          <table class="w-full text-left text-xs" id="submissions-table">
+            <thead class="text-[11px] text-muted-foreground uppercase font-mono bg-secondary/40 border-b border-border">
+              <tr>
+                <th class="py-3 px-3">Siswa & Kelas</th>
+                <th class="py-3 px-3">Modul & Tipe</th>
+                <th class="py-3 px-3">Waktu Kirim</th>
+                <th class="py-3 px-3">Status / Nilai Guru</th>
+                <th class="py-3 px-3 text-right">Aksi</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-border font-medium bg-card">
+              {allSubmissions.map((sub: any) => {
+                const isGraded = sub.teacherScore !== null && sub.teacherScore !== undefined;
+                const dateFormatted = new Date(sub.submittedAt).toLocaleDateString('id-ID', {
+                  day: 'numeric',
+                  month: 'short',
+                  year: 'numeric',
+                  hour: '2-digit',
+                  minute: '2-digit'
+                });
+
+                return (
+                  <tr 
+                    class="submission-row hover:bg-accent/40 transition-colors"
+                    data-name={sub.userName.toLowerCase()}
+                    data-email={sub.userEmail.toLowerCase()}
+                    data-class={sub.studentClass || ''}
+                    data-slug={sub.lessonSlug.toLowerCase()}
+                    data-status={isGraded ? 'graded' : 'pending'}
+                  >
+                    <td class="py-3 px-3">
+                      <div class="space-y-0.5">
+                        <div class="font-bold text-foreground">{sub.userName}</div>
+                        <div class="text-[10px] text-muted-foreground font-mono flex items-center gap-1.5">
+                          <span>{sub.userEmail}</span>
+                          {sub.studentClass && (
+                            <>
+                              <span>•</span>
+                              <span class="px-1.5 py-0.2 rounded bg-secondary text-foreground border border-border font-semibold">
+                                {sub.studentClass}
+                              </span>
+                            </>
+                          )}
+                        </div>
+                      </div>
+                    </td>
+
+                    <td class="py-3 px-3">
+                      <div class="space-y-1">
+                        <div class="flex items-center gap-1.5">
+                          <span class="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-primary/10 text-primary border border-primary/20 uppercase">
+                            {sub.submissionType}
+                          </span>
+                        </div>
+                        <div class="text-[11px] font-mono text-muted-foreground truncate max-w-[220px]" title={sub.lessonSlug}>
+                          {sub.lessonSlug}
+                        </div>
+                      </div>
+                    </td>
+
+                    <td class="py-3 px-3 font-mono text-muted-foreground text-[11px] whitespace-nowrap">
+                      {dateFormatted}
+                    </td>
+
+                    <td class="py-3 px-3">
+                      {isGraded ? (
+                        <div class="space-y-1">
+                          <div class="flex items-center gap-2">
+                            <span class="px-2.5 py-0.5 rounded bg-amber-500/15 text-amber-600 dark:text-amber-400 font-mono text-xs font-bold border border-amber-500/30">
+                              ⭐ {sub.teacherScore} / 100
+                            </span>
+                            {sub.teacherLevel && (
+                              <span class="text-[10px] font-mono text-primary px-1.5 py-0.5 bg-primary/10 rounded border border-primary/20">
+                                {sub.teacherLevel}
+                              </span>
+                            )}
+                          </div>
+                          {sub.teacherFeedback && (
+                            <div class="text-[10px] text-muted-foreground italic truncate max-w-[200px]" title={sub.teacherFeedback}>
+                              "{sub.teacherFeedback}"
+                            </div>
+                          )}
+                        </div>
+                      ) : (
+                        <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded text-[10px] font-mono font-semibold bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/25">
+                          <span>⏳</span> Menunggu Penilaian
+                        </span>
+                      )}
+                    </td>
+
+                    <td class="py-3 px-3 text-right whitespace-nowrap">
+                      <button 
+                        type="button"
+                        class="grade-submission-btn px-3 py-1.5 rounded-lg text-xs font-semibold bg-purple-600 hover:bg-purple-500 text-white transition-all shadow-sm flex items-center gap-1.5 ml-auto"
+                        data-submission={JSON.stringify(sub)}
+                      >
+                        <span>{isGraded ? '✏️ Edit Nilai' : '🔍 Periksa & Nilai'}</span>
+                      </button>
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+      )}
     </div>
 
     <!-- ========================================== -->
@@ -915,6 +1150,147 @@ const passRate = totalExamsTaken > 0 ? Math.round((passingExams / totalExamsTake
     </div>
   </div>
 
+  <!-- ========================================== -->
+  <!-- MODAL PENILAIAN LKPD SISWA -->
+  <!-- ========================================== -->
+  <div id="grade-modal" class="fixed inset-0 z-50 bg-background/80 backdrop-blur-sm hidden flex items-center justify-center p-4">
+    <div class="bg-card border border-border rounded-xl max-w-4xl w-full max-h-[90vh] flex flex-col shadow-xl overflow-hidden animate-fadeIn">
+      
+      <!-- Modal Header -->
+      <div class="p-4 sm:p-5 border-b border-border flex items-center justify-between bg-secondary/40">
+        <div class="space-y-1">
+          <div class="flex items-center gap-2">
+            <span class="px-2 py-0.5 rounded bg-purple-500/10 text-purple-600 dark:text-purple-400 border border-purple-500/25 text-xs font-mono font-bold" id="grade-modal-type">
+              LKPD
+            </span>
+            <span class="text-xs text-muted-foreground font-mono" id="grade-modal-class">10 RPL 1</span>
+          </div>
+          <h3 class="text-base font-bold text-foreground" id="grade-modal-student">
+            Penilaian Siswa
+          </h3>
+          <p class="text-xs text-muted-foreground font-mono" id="grade-modal-slug">
+            orientasi-pplg-01
+          </p>
+        </div>
+
+        <button 
+          type="button" 
+          id="close-grade-modal-btn"
+          class="p-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
+        >
+          ✕
+        </button>
+      </div>
+
+      <!-- Modal Body (Two Column Layout) -->
+      <div class="p-5 overflow-y-auto space-y-6 flex-grow">
+        
+        <!-- Section A: Student Answer Viewer -->
+        <div class="space-y-3">
+          <div class="flex items-center justify-between">
+            <h4 class="text-xs font-bold text-foreground uppercase tracking-wider font-mono flex items-center gap-2">
+              <span>📋 Jawaban & Formulir Siswa</span>
+            </h4>
+            <div id="grade-modal-drive-link-container" class="hidden">
+              <a 
+                id="grade-modal-drive-link" 
+                href="#" 
+                target="_blank" 
+                rel="noopener noreferrer"
+                class="px-2.5 py-1 rounded bg-cyan-600/10 text-cyan-600 dark:text-cyan-400 border border-cyan-500/25 text-xs font-semibold hover:bg-cyan-600/20 transition-all flex items-center gap-1.5"
+              >
+                <span>📂 Buka Bukti Drive</span> ↗
+              </a>
+            </div>
+          </div>
+
+          <div id="grade-modal-answers-area" class="p-4 rounded-xl bg-background border border-border space-y-3 text-xs">
+            <!-- Dynamically populated formatted student inputs/answers -->
+          </div>
+        </div>
+
+        <!-- Section B: Teacher Evaluation Form -->
+        <div class="p-4 sm:p-5 rounded-xl bg-secondary/30 border border-border space-y-4">
+          <h4 class="text-xs font-bold text-foreground uppercase tracking-wider font-mono flex items-center gap-2">
+            <span>⭐ Form Input Nilai Guru</span>
+          </h4>
+
+          <form id="teacher-grade-form" class="space-y-4">
+            <input type="hidden" id="grade-submission-id" />
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div class="space-y-1.5">
+                <label for="grade-score-input" class="text-xs font-semibold text-foreground flex items-center gap-1.5">
+                  <span>Skor Angka (0 - 100)</span>
+                  <span class="text-destructive">*</span>
+                </label>
+                <input 
+                  type="number" 
+                  id="grade-score-input" 
+                  min="0" 
+                  max="100" 
+                  step="1"
+                  required
+                  placeholder="Contoh: 88" 
+                  class="w-full px-3 py-2 bg-background border border-border rounded-lg text-sm font-mono font-bold text-foreground focus:outline-none focus:border-primary"
+                />
+                <p class="text-[10px] text-muted-foreground">Kriteria Ketuntasan Minimal: 75 (Kompeten).</p>
+              </div>
+
+              <div class="space-y-1.5">
+                <label for="grade-level-select" class="text-xs font-semibold text-foreground">
+                  <span>Kategori Capaian KKTP</span>
+                </label>
+                <select 
+                  id="grade-level-select" 
+                  class="w-full px-3 py-2 bg-background border border-border rounded-lg text-xs focus:outline-none focus:border-primary"
+                >
+                  <option value="Level 4 (Mahir & Mandiri ★★★)">Level 4 (Mahir & Mandiri ★★★) - Sangat Baik</option>
+                  <option value="Level 3 (Mampu Membimbing ★★)">Level 3 (Mampu Membimbing ★★) - Baik</option>
+                  <option value="Level 2 (Mencoba ★)">Level 2 (Mencoba ★) - Cukup</option>
+                  <option value="Level 1 (Mulai Berkembang)">Level 1 (Mulai Berkembang) - Perlu Bimbingan</option>
+                  <option value="Level 0 (Belum Berkembang)">Level 0 (Belum Berkembang) - Belum Tuntas</option>
+                </select>
+                <p class="text-[10px] text-muted-foreground">Tingkat penguasaan kompetensi tujuan pembelajaran.</p>
+              </div>
+            </div>
+
+            <div class="space-y-1.5">
+              <label for="grade-feedback-input" class="text-xs font-semibold text-foreground">
+                <span>Catatan & Evaluasi Konstruktif Guru</span>
+              </label>
+              <textarea 
+                id="grade-feedback-input" 
+                rows="3" 
+                placeholder="Tuliskan catatan apresiasi, saran perbaikan teknis kode/analisis, atau masukan untuk siswa..."
+                class="w-full px-3 py-2 bg-background border border-border rounded-lg text-xs text-foreground focus:outline-none focus:border-primary placeholder:text-muted-foreground"
+              ></textarea>
+            </div>
+
+            <div class="flex items-center justify-end gap-2 pt-2">
+              <button 
+                type="button" 
+                id="cancel-grade-btn"
+                class="px-4 py-2 rounded-lg text-xs font-medium bg-secondary hover:bg-accent text-foreground border border-border transition-colors"
+              >
+                Batal
+              </button>
+              <button 
+                type="submit" 
+                id="submit-grade-btn"
+                class="px-5 py-2 rounded-lg text-xs font-bold bg-primary hover:bg-primary/90 text-primary-foreground transition-all shadow-sm flex items-center gap-1.5"
+              >
+                <span id="grade-btn-text">💾 Simpan & Rilis Nilai ke Siswa</span>
+              </button>
+            </div>
+          </form>
+        </div>
+
+      </div>
+
+    </div>
+  </div>
+
 </DashboardLayout>
 
 <script>
@@ -1143,7 +1519,193 @@ const passRate = totalExamsTaken > 0 ? Math.round((passingExams / totalExamsTake
     });
   });
 
-  // 7. Search filter for users
+  // 7. Submissions Filter & Search Logic
+  const subSearchInput = document.getElementById('submission-search-input') as HTMLInputElement | null;
+  const subClassFilter = document.getElementById('submission-class-filter') as HTMLSelectElement | null;
+  const subStatusFilter = document.getElementById('submission-status-filter') as HTMLSelectElement | null;
+  const subRows = document.querySelectorAll('.submission-row');
+
+  function applySubmissionFilters() {
+    const q = subSearchInput?.value.toLowerCase().trim() || '';
+    const selectedClass = subClassFilter?.value || '';
+    const selectedStatus = subStatusFilter?.value || '';
+
+    subRows.forEach(row => {
+      const name = row.getAttribute('data-name') || '';
+      const email = row.getAttribute('data-email') || '';
+      const rowClass = row.getAttribute('data-class') || '';
+      const slug = row.getAttribute('data-slug') || '';
+      const status = row.getAttribute('data-status') || '';
+
+      const matchesSearch = !q || name.includes(q) || email.includes(q) || slug.includes(q);
+      const matchesClass = !selectedClass || rowClass === selectedClass;
+      const matchesStatus = !selectedStatus || status === selectedStatus;
+
+      if (matchesSearch && matchesClass && matchesStatus) {
+        (row as HTMLElement).style.display = '';
+      } else {
+        (row as HTMLElement).style.display = 'none';
+      }
+    });
+  }
+
+  subSearchInput?.addEventListener('input', applySubmissionFilters);
+  subClassFilter?.addEventListener('change', applySubmissionFilters);
+  subStatusFilter?.addEventListener('change', applySubmissionFilters);
+
+  // 8. LKPD Teacher Grading Modal
+  const gradeModal = document.getElementById('grade-modal');
+  const closeGradeModalBtn = document.getElementById('close-grade-modal-btn');
+  const cancelGradeBtn = document.getElementById('cancel-grade-btn');
+  const teacherGradeForm = document.getElementById('teacher-grade-form') as HTMLFormElement | null;
+  const submitGradeBtn = document.getElementById('submit-grade-btn') as HTMLButtonElement | null;
+  const gradeBtnText = document.getElementById('grade-btn-text');
+
+  const gradeModalStudent = document.getElementById('grade-modal-student');
+  const gradeModalClass = document.getElementById('grade-modal-class');
+  const gradeModalType = document.getElementById('grade-modal-type');
+  const gradeModalSlug = document.getElementById('grade-modal-slug');
+  const gradeModalAnswersArea = document.getElementById('grade-modal-answers-area');
+  const gradeModalDriveContainer = document.getElementById('grade-modal-drive-link-container');
+  const gradeModalDriveLink = document.getElementById('grade-modal-drive-link') as HTMLAnchorElement | null;
+
+  const inputSubmissionId = document.getElementById('grade-submission-id') as HTMLInputElement | null;
+  const inputScore = document.getElementById('grade-score-input') as HTMLInputElement | null;
+  const selectLevel = document.getElementById('grade-level-select') as HTMLSelectElement | null;
+  const textareaFeedback = document.getElementById('grade-feedback-input') as HTMLTextAreaElement | null;
+
+  function closeGradeModal() {
+    gradeModal?.classList.add('hidden');
+  }
+
+  closeGradeModalBtn?.addEventListener('click', closeGradeModal);
+  cancelGradeBtn?.addEventListener('click', closeGradeModal);
+
+  document.querySelectorAll('.grade-submission-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const rawData = btn.getAttribute('data-submission');
+      if (!rawData) return;
+
+      try {
+        const sub = JSON.parse(rawData);
+
+        if (inputSubmissionId) inputSubmissionId.value = sub.id.toString();
+        if (gradeModalStudent) gradeModalStudent.textContent = `${sub.userName} (${sub.userEmail})`;
+        if (gradeModalClass) gradeModalClass.textContent = sub.studentClass ? `Kelas: ${sub.studentClass}` : 'Kelas Tidak Disetel';
+        if (gradeModalType) gradeModalType.textContent = (sub.submissionType || 'LKPD').toUpperCase();
+        if (gradeModalSlug) gradeModalSlug.textContent = `Materi: /pembelajaran/${sub.lessonSlug}`;
+
+        // Populate Score, Level, Feedback
+        if (inputScore) inputScore.value = sub.teacherScore !== null && sub.teacherScore !== undefined ? sub.teacherScore.toString() : (sub.score !== null ? sub.score.toString() : '');
+        if (selectLevel && sub.teacherLevel) selectLevel.value = sub.teacherLevel;
+        if (textareaFeedback) textareaFeedback.value = sub.teacherFeedback || '';
+
+        // Google Drive link
+        if (sub.driveUrl && gradeModalDriveContainer && gradeModalDriveLink) {
+          gradeModalDriveContainer.classList.remove('hidden');
+          gradeModalDriveLink.href = sub.driveUrl;
+        } else if (gradeModalDriveContainer) {
+          gradeModalDriveContainer.classList.add('hidden');
+        }
+
+        // Render Answers JSON nicely
+        if (gradeModalAnswersArea) {
+          const fd = sub.formData;
+          if (!fd || (typeof fd === 'object' && Object.keys(fd).length === 0)) {
+            gradeModalAnswersArea.innerHTML = '<p class="text-muted-foreground italic">Tidak ada data formulir tersimpan.</p>';
+          } else {
+            let html = '<div class="space-y-3">';
+            for (const [key, val] of Object.entries(fd)) {
+              const formattedKey = key
+                .replace(/([A-Z])/g, ' $1')
+                .replace(/^./, str => str.toUpperCase())
+                .replace(/_/g, ' ');
+
+              if (Array.isArray(val)) {
+                html += `
+                  <div class="space-y-1.5 pt-1">
+                    <span class="font-bold text-foreground block text-[11px] uppercase tracking-wider font-mono">${formattedKey}:</span>
+                    <div class="p-2.5 rounded-lg bg-secondary/40 border border-border overflow-x-auto">
+                      <pre class="text-[11px] font-mono whitespace-pre-wrap text-foreground">${JSON.stringify(val, null, 2)}</pre>
+                    </div>
+                  </div>
+                `;
+              } else if (typeof val === 'object' && val !== null) {
+                html += `
+                  <div class="space-y-1.5 pt-1">
+                    <span class="font-bold text-foreground block text-[11px] uppercase tracking-wider font-mono">${formattedKey}:</span>
+                    <div class="p-2.5 rounded-lg bg-secondary/40 border border-border overflow-x-auto">
+                      <pre class="text-[11px] font-mono whitespace-pre-wrap text-foreground">${JSON.stringify(val, null, 2)}</pre>
+                    </div>
+                  </div>
+                `;
+              } else {
+                html += `
+                  <div class="p-2.5 rounded-lg bg-secondary/30 border border-border flex flex-col sm:flex-row sm:items-start justify-between gap-2">
+                    <span class="font-semibold text-muted-foreground font-mono text-[11px] min-w-[140px]">${formattedKey}:</span>
+                    <span class="text-foreground font-medium flex-grow break-words">${val || '-'}</span>
+                  </div>
+                `;
+              }
+            }
+            html += '</div>';
+            gradeModalAnswersArea.innerHTML = html;
+          }
+        }
+
+        gradeModal?.classList.remove('hidden');
+      } catch (err) {
+        console.error('Parse submission error:', err);
+        showAlert('Gagal membuka data submisi siswa.', true);
+      }
+    });
+  });
+
+  teacherGradeForm?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const submissionId = Number(inputSubmissionId?.value);
+    const teacherScore = Number(inputScore?.value);
+    const teacherLevel = selectLevel?.value;
+    const teacherFeedback = textareaFeedback?.value.trim();
+
+    if (isNaN(teacherScore) || teacherScore < 0 || teacherScore > 100) {
+      alert('Skor harus berada di antara angka 0 dan 100.');
+      return;
+    }
+
+    if (submitGradeBtn) submitGradeBtn.disabled = true;
+    if (gradeBtnText) gradeBtnText.textContent = 'Menyimpan Nilai...';
+
+    try {
+      const res = await fetch('/api/admin/submissions/grade', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          submissionId,
+          teacherScore,
+          teacherLevel,
+          teacherFeedback,
+        })
+      });
+
+      const data = await res.json();
+      if (res.ok && data.success) {
+        showAlert('Nilai & evaluasi LKPD berhasil disimpan dan dirilis ke dashboard siswa!');
+        closeGradeModal();
+        setTimeout(() => window.location.reload(), 1000);
+      } else {
+        showAlert(data.error || 'Gagal menyimpan penilaian.', true);
+        if (submitGradeBtn) submitGradeBtn.disabled = false;
+        if (gradeBtnText) gradeBtnText.textContent = '💾 Simpan & Rilis Nilai ke Siswa';
+      }
+    } catch (err: any) {
+      showAlert(err.message || 'Terjadi kesalahan jaringan.', true);
+      if (submitGradeBtn) submitGradeBtn.disabled = false;
+      if (gradeBtnText) gradeBtnText.textContent = '💾 Simpan & Rilis Nilai ke Siswa';
+    }
+  });
+
+  // 9. Search filter for users
   const searchInput = document.getElementById('user-search-input') as HTMLInputElement | null;
   const userRows = document.querySelectorAll('.user-row');
 
@@ -1161,7 +1723,7 @@ const passRate = totalExamsTaken > 0 ? Math.round((passingExams / totalExamsTake
     });
   });
 
-  // 8. Role Toggle Action for Super Admin
+  // 10. Role Toggle Action for Super Admin
   const roleButtons = document.querySelectorAll('.role-toggle-btn');
   roleButtons.forEach(btn => {
     btn.addEventListener('click', async () => {
@@ -1196,7 +1758,7 @@ const passRate = totalExamsTaken > 0 ? Math.round((passingExams / totalExamsTake
     });
   });
 
-  // 9. Delete User Action for Admin / Teacher
+  // 11. Delete User Action for Admin / Teacher
   const deleteButtons = document.querySelectorAll('.delete-user-btn');
   deleteButtons.forEach(btn => {
     btn.addEventListener('click', async () => {

@@ -1,0 +1,614 @@
+---
+interface Props {
+  lessonSlug: string;
+  user: any;
+}
+
+const { lessonSlug, user } = Astro.props;
+---
+
+<div class="card p-6 md:p-8 rounded-2xl border-border bg-card shadow-sm space-y-6" id="lkpd-p1-form-card" data-slug={lessonSlug}>
+  
+  <!-- Header LKPD -->
+  <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-border pb-5">
+    <div class="space-y-1">
+      <div class="inline-flex items-center gap-2">
+        <span class="px-2.5 py-0.5 rounded bg-primary/10 text-primary border border-primary/20 text-[11px] font-mono font-bold uppercase">
+          LEMBAR KERJA PESERTA DIDIK (LKPD)
+        </span>
+        <span class="px-2.5 py-0.5 rounded bg-secondary text-foreground text-[11px] font-mono font-semibold border border-border">
+          PERTEMUAN 1 (OR-01)
+        </span>
+      </div>
+      <h2 class="text-xl md:text-2xl font-extrabold text-foreground tracking-tight">
+        Formulir Eksplorasi Digital & Setup Skill Passport
+      </h2>
+      <p class="text-xs text-muted-foreground">
+        Isi seluruh aktivitas lembar kerja di bawah ini langsung melalui form web. Jawaban akan tersimpan otomatis ke database portofolio kalian.
+      </p>
+    </div>
+
+    <div class="flex items-center gap-2 self-start sm:self-auto">
+      <span class="text-xs font-mono font-bold px-3 py-1.5 rounded-lg bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20">
+        ✨ Reward: +25 XP
+      </span>
+      <span id="lkpd-save-status" class="text-[11px] font-mono text-muted-foreground px-2 py-1 bg-secondary rounded border border-border">
+        Belum Disimpan
+      </span>
+    </div>
+  </div>
+
+  <!-- Dynamic Teacher Grade & Feedback Card (Appears when Graded by Teacher) -->
+  <div id="teacher-grade-card" class="hidden p-5 rounded-2xl bg-gradient-to-r from-amber-500/10 via-primary/10 to-purple-500/10 border-2 border-primary/30 space-y-3">
+    <div class="flex flex-wrap items-center justify-between gap-2 border-b border-primary/20 pb-3">
+      <div class="flex items-center gap-2">
+        <span class="text-xl">🏆</span>
+        <div>
+          <span class="text-xs font-mono font-bold text-primary uppercase tracking-wider">Hasil Penilaian Guru</span>
+          <h3 class="text-base font-extrabold text-foreground">Evaluasi Lembar Kerja LKPD P1</h3>
+        </div>
+      </div>
+      <div class="flex items-center gap-2">
+        <span id="display-teacher-level" class="px-2.5 py-1 rounded-lg bg-primary text-primary-foreground font-mono text-xs font-bold">
+          Level 2 (Mencoba ★)
+        </span>
+        <span id="display-teacher-score" class="px-3 py-1 rounded-lg bg-amber-500 text-black font-mono text-xs font-extrabold">
+          Nilai: 85 / 100
+        </span>
+      </div>
+    </div>
+
+    <div class="space-y-1.5 text-xs">
+      <div class="text-muted-foreground font-semibold flex items-center gap-1.5">
+        <span>👨‍🏫 Catatan & Masukan Evaluasi Guru:</span>
+      </div>
+      <div id="display-teacher-feedback" class="p-3.5 rounded-xl bg-card border border-border text-foreground leading-relaxed italic">
+        "Kerja bagus! Seluruh aplikasi telah diidentifikasi perannya dengan tepat."
+      </div>
+      <div class="text-[11px] text-muted-foreground font-mono flex items-center justify-between pt-1">
+        <span id="display-graded-date">🕒 Dinilai pada: -</span>
+        <span class="text-primary font-semibold">Pengampu: Agung Gumelar Saputra, S.Tr.T.</span>
+      </div>
+    </div>
+  </div>
+
+  <form id="form-lkpd-p1" class="space-y-8">
+    
+    <!-- Bagian A: Identitas Peserta Didik -->
+    <div class="space-y-4 p-5 rounded-xl bg-secondary/30 border border-border">
+      <h3 class="text-sm font-bold text-foreground font-mono flex items-center gap-2">
+        <span class="w-6 h-6 rounded-full bg-primary/10 text-primary flex items-center justify-center text-xs">A</span>
+        IDENTITAS PESERTA DIDIK
+      </h3>
+
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div>
+          <label class="block text-xs font-semibold text-foreground mb-1">Nama Lengkap</label>
+          <input 
+            type="text" 
+            name="studentName" 
+            id="studentName"
+            value={user?.name || ''} 
+            required 
+            placeholder="Nama lengkap siswa"
+            class="w-full px-3 py-2 rounded-lg bg-card border border-border text-xs text-foreground focus:outline-none focus:border-primary"
+          />
+        </div>
+
+        <div>
+          <label class="block text-xs font-semibold text-foreground mb-1">NIS / NISN</label>
+          <input 
+            type="text" 
+            name="studentNis" 
+            id="studentNis"
+            required 
+            placeholder="Contoh: 242510001"
+            class="w-full px-3 py-2 rounded-lg bg-card border border-border text-xs text-foreground focus:outline-none focus:border-primary font-mono"
+          />
+        </div>
+
+        <div>
+          <label class="block text-xs font-semibold text-foreground mb-1">Kelas</label>
+          <select 
+            name="studentClass" 
+            id="studentClass"
+            required 
+            class="w-full px-3 py-2 rounded-lg bg-card border border-border text-xs text-foreground focus:outline-none focus:border-primary"
+          >
+            <option value="10 RPL 1">10 RPL 1</option>
+            <option value="10 RPL 2">10 RPL 2</option>
+            <option value="10 RPL 3">10 RPL 3</option>
+          </select>
+        </div>
+
+        <div>
+          <label class="block text-xs font-semibold text-foreground mb-1">Tanggal Pengerjaan</label>
+          <input 
+            type="date" 
+            name="submissionDate" 
+            id="submissionDate"
+            required 
+            class="w-full px-3 py-2 rounded-lg bg-card border border-border text-xs text-foreground focus:outline-none focus:border-primary font-mono"
+          />
+        </div>
+      </div>
+    </div>
+
+    <!-- Bagian B: Petunjuk Pengerjaan -->
+    <div class="p-4 rounded-xl bg-primary/5 border border-primary/20 space-y-1.5 text-xs text-muted-foreground">
+      <div class="font-bold text-foreground flex items-center gap-1.5">
+        <span>📌 Petunjuk Pengisian:</span>
+      </div>
+      <ol class="list-decimal list-inside space-y-1 leading-relaxed">
+        <li>Amati minimal <strong>3 aplikasi digital</strong> yang sering kalian gunakan di HP atau laptop.</li>
+        <li>Tuliskan fitur utama dan perkiraan peran profesi pengembang software di balik aplikasi tersebut.</li>
+        <li>Kalian bisa menambahkan baris baru dengan tombol <em>"+ Tambah Baris Aplikasi"</em>.</li>
+        <li>Tekan tombol <strong>"Kirim LKPD P1"</strong> untuk menyimpan jawaban secara permanen ke akun kalian dan mendapatkan reward XP!</li>
+      </ol>
+    </div>
+
+    <!-- Bagian C: Tabel Audit Profesi & Produk Digital -->
+    <div class="space-y-4">
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+        <h3 class="text-sm font-bold text-foreground font-mono flex items-center gap-2">
+          <span class="w-6 h-6 rounded-full bg-primary/10 text-primary flex items-center justify-center text-xs">B</span>
+          AUDIT PRODUK DIGITAL & PERAN PROFESI TI
+        </h3>
+
+        <button 
+          type="button" 
+          id="btn-add-audit-row"
+          class="btn btn-secondary text-xs font-semibold px-3 py-1.5 rounded-lg border border-border hover:bg-secondary flex items-center gap-1 self-start sm:self-auto"
+        >
+          <span>➕ Tambah Baris Aplikasi</span>
+        </button>
+      </div>
+
+      <div class="overflow-x-auto border border-border rounded-xl">
+        <table class="w-full text-left text-xs border-collapse">
+          <thead>
+            <tr class="bg-secondary/60 border-b border-border text-foreground font-mono">
+              <th class="py-2.5 px-3 w-10 text-center">No</th>
+              <th class="py-2.5 px-3 min-w-[150px]">Nama Produk / Aplikasi</th>
+              <th class="py-2.5 px-3 min-w-[200px]">Fitur Utama</th>
+              <th class="py-2.5 px-3 min-w-[250px]">Peran Pengembang di Balik Fitur</th>
+              <th class="py-2.5 px-2 w-12 text-center">Aksi</th>
+            </tr>
+          </thead>
+          <tbody id="audit-table-body" class="divide-y divide-border">
+            <!-- Row 1 Default -->
+            <tr class="audit-row bg-card/40 hover:bg-secondary/20 transition-colors">
+              <td class="py-3 px-3 text-center font-mono text-muted-foreground row-index">1</td>
+              <td class="py-2 px-3">
+                <input 
+                  type="text" 
+                  name="app_name_1" 
+                  placeholder="Misal: WhatsApp"
+                  value="WhatsApp"
+                  required
+                  class="w-full px-2.5 py-1.5 rounded-lg bg-card border border-border text-xs text-foreground focus:outline-none focus:border-primary"
+                />
+              </td>
+              <td class="py-2 px-3">
+                <input 
+                  type="text" 
+                  name="app_feature_1" 
+                  placeholder="Misal: Kirim pesan suara & panggilan video"
+                  value="Pesan terenkripsi, panggilan video, status"
+                  required
+                  class="w-full px-2.5 py-1.5 rounded-lg bg-card border border-border text-xs text-foreground focus:outline-none focus:border-primary"
+                />
+              </td>
+              <td class="py-2 px-3">
+                <input 
+                  type="text" 
+                  name="app_roles_1" 
+                  placeholder="Misal: Mobile Dev (UI), Backend Dev (Server), Security Engineer (Enkripsi)"
+                  value="Mobile Dev (UI Android/iOS), Backend (Server kirim pesan), Security Engineer (E2EE)"
+                  required
+                  class="w-full px-2.5 py-1.5 rounded-lg bg-card border border-border text-xs text-foreground focus:outline-none focus:border-primary"
+                />
+              </td>
+              <td class="py-2 px-2 text-center">
+                <button type="button" class="btn-delete-row text-muted-foreground hover:text-rose-500 p-1 text-sm transition-colors" title="Hapus baris">
+                  🗑️
+                </button>
+              </td>
+            </tr>
+
+            <!-- Row 2 Default -->
+            <tr class="audit-row bg-card/40 hover:bg-secondary/20 transition-colors">
+              <td class="py-3 px-3 text-center font-mono text-muted-foreground row-index">2</td>
+              <td class="py-2 px-3">
+                <input 
+                  type="text" 
+                  name="app_name_2" 
+                  placeholder="Misal: Tokopedia / Shopee"
+                  value="Tokopedia"
+                  required
+                  class="w-full px-2.5 py-1.5 rounded-lg bg-card border border-border text-xs text-foreground focus:outline-none focus:border-primary"
+                />
+              </td>
+              <td class="py-2 px-3">
+                <input 
+                  type="text" 
+                  name="app_feature_2" 
+                  placeholder="Misal: Keranjang belanja & Pembayaran QRIS"
+                  value="Katalog produk, checkout keranjang, integrasi bank/QRIS"
+                  required
+                  class="w-full px-2.5 py-1.5 rounded-lg bg-card border border-border text-xs text-foreground focus:outline-none focus:border-primary"
+                />
+              </td>
+              <td class="py-2 px-3">
+                <input 
+                  type="text" 
+                  name="app_roles_2" 
+                  placeholder="Misal: Frontend Dev, Payment Gateway Engineer, UI/UX"
+                  value="Frontend Web Dev, Payment Gateway Backend, QA Tester"
+                  required
+                  class="w-full px-2.5 py-1.5 rounded-lg bg-card border border-border text-xs text-foreground focus:outline-none focus:border-primary"
+                />
+              </td>
+              <td class="py-2 px-2 text-center">
+                <button type="button" class="btn-delete-row text-muted-foreground hover:text-rose-500 p-1 text-sm transition-colors" title="Hapus baris">
+                  🗑️
+                </button>
+              </td>
+            </tr>
+
+            <!-- Row 3 Default -->
+            <tr class="audit-row bg-card/40 hover:bg-secondary/20 transition-colors">
+              <td class="py-3 px-3 text-center font-mono text-muted-foreground row-index">3</td>
+              <td class="py-2 px-3">
+                <input 
+                  type="text" 
+                  name="app_name_3" 
+                  placeholder="Misal: Gojek / Grab"
+                  value="Gojek"
+                  required
+                  class="w-full px-2.5 py-1.5 rounded-lg bg-card border border-border text-xs text-foreground focus:outline-none focus:border-primary"
+                />
+              </td>
+              <td class="py-2 px-3">
+                <input 
+                  type="text" 
+                  name="app_feature_3" 
+                  placeholder="Misal: Order GoRide & Pelacakan Driver Real-time di Peta"
+                  value="Peta GPS rute tercepat & pencocokan driver terdekat"
+                  required
+                  class="w-full px-2.5 py-1.5 rounded-lg bg-card border border-border text-xs text-foreground focus:outline-none focus:border-primary"
+                />
+              </td>
+              <td class="py-2 px-3">
+                <input 
+                  type="text" 
+                  name="app_roles_3" 
+                  placeholder="Misal: Map Engineer, Dispatching Backend, UI/UX"
+                  value="Geospatial/Map Engineer, Dispatch Backend Dev, UI/UX Designer"
+                  required
+                  class="w-full px-2.5 py-1.5 rounded-lg bg-card border border-border text-xs text-foreground focus:outline-none focus:border-primary"
+                />
+              </td>
+              <td class="py-2 px-2 text-center">
+                <button type="button" class="btn-delete-row text-muted-foreground hover:text-rose-500 p-1 text-sm transition-colors" title="Hapus baris">
+                  🗑️
+                </button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Bagian D: Bukti Portofolio Google Drive (Opsional / Portofolio Akhir) -->
+    <div class="space-y-4 p-5 rounded-xl bg-secondary/30 border border-border">
+      <div>
+        <h3 class="text-sm font-bold text-foreground font-mono flex items-center gap-2">
+          <span class="w-6 h-6 rounded-full bg-primary/10 text-primary flex items-center justify-center text-xs">C</span>
+          LINK GOOGLE DRIVE PORTOFOLIO (OPSIONAL - DIKUMPULKAN DI AKHIR)
+        </h3>
+        <p class="text-xs text-muted-foreground mt-0.5">
+          Tautan folder Google Drive portofolio bersifat opsional pada pertemuan awal dan akan diverifikasi secara bertahap saat penilaian akhir semester.
+        </p>
+      </div>
+
+      <div class="space-y-3">
+        <div>
+          <label class="block text-xs font-semibold text-foreground mb-1">
+            URL Link Folder Google Drive (Opsional):
+          </label>
+          <div class="relative">
+            <input 
+              type="url" 
+              name="driveUrl" 
+              id="driveUrl"
+              placeholder="https://drive.google.com/drive/folders/..." 
+              class="w-full px-3 py-2.5 rounded-lg bg-card border border-border text-xs text-foreground focus:outline-none focus:border-primary font-mono"
+            />
+          </div>
+          <p id="drive-url-feedback" class="text-[11px] text-muted-foreground mt-1"></p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tombol Aksi Submit / Draft -->
+    <div class="flex flex-col sm:flex-row items-center justify-between gap-4 pt-4 border-t border-border">
+      <div class="text-xs text-muted-foreground">
+        💡 <em>Draf jawaban dan pengumpulan LKPD tersimpan otomatis ke akun Anda.</em>
+      </div>
+
+      <div class="flex items-center gap-3 w-full sm:w-auto">
+        <button 
+          type="button" 
+          id="btn-save-draft" 
+          class="btn btn-secondary text-xs font-semibold px-4 py-2.5 rounded-lg border border-border hover:bg-secondary w-full sm:w-auto"
+        >
+          💾 Simpan Draf
+        </button>
+
+        <button 
+          type="submit" 
+          id="btn-submit-lkpd" 
+          class="btn btn-primary text-xs font-semibold px-6 py-2.5 rounded-lg w-full sm:w-auto flex items-center justify-center gap-2"
+        >
+          <span>🚀 Kirim LKPD P1 (+25 XP)</span>
+        </button>
+      </div>
+    </div>
+
+  </form>
+</div>
+
+<script>
+  const cardEl = document.getElementById('lkpd-p1-form-card');
+  const slug = cardEl?.getAttribute('data-slug') || 'orientasi-pplg-01-pengantar-skill-passport';
+  const form = document.getElementById('form-lkpd-p1') as HTMLFormElement;
+  const statusEl = document.getElementById('lkpd-save-status');
+  const btnAddRow = document.getElementById('btn-add-audit-row');
+  const tableBody = document.getElementById('audit-table-body');
+  const driveUrlInput = document.getElementById('driveUrl') as HTMLInputElement;
+  const driveFeedback = document.getElementById('drive-url-feedback');
+  const btnSaveDraft = document.getElementById('btn-save-draft');
+  const submissionDateInput = document.getElementById('submissionDate') as HTMLInputElement;
+
+  // Teacher grade elements
+  const teacherGradeCard = document.getElementById('teacher-grade-card');
+  const displayScore = document.getElementById('display-teacher-score');
+  const displayLevel = document.getElementById('display-teacher-level');
+  const displayFeedback = document.getElementById('display-teacher-feedback');
+  const displayGradedDate = document.getElementById('display-graded-date');
+
+  // Set default date today
+  if (submissionDateInput && !submissionDateInput.value) {
+    submissionDateInput.value = new Date().toISOString().split('T')[0];
+  }
+
+  // Optional Live Drive URL validator
+  driveUrlInput?.addEventListener('input', () => {
+    const val = driveUrlInput.value.trim();
+    if (!val) {
+      driveFeedback!.textContent = '';
+      return;
+    }
+    if (val.includes('drive.google.com')) {
+      driveFeedback!.className = 'text-[11px] text-emerald-600 dark:text-emerald-400 mt-1 flex items-center gap-1 font-mono';
+      driveFeedback!.textContent = '✓ Format URL Google Drive valid.';
+    } else {
+      driveFeedback!.className = 'text-[11px] text-amber-600 dark:text-amber-400 mt-1 flex items-center gap-1 font-mono';
+      driveFeedback!.textContent = '⚠️ Pastikan URL berasal dari link Google Drive yang benar.';
+    }
+  });
+
+  // Re-number rows helper
+  function updateRowNumbers() {
+    tableBody?.querySelectorAll('.audit-row').forEach((row, idx) => {
+      const idxEl = row.querySelector('.row-index');
+      if (idxEl) idxEl.textContent = String(idx + 1);
+    });
+  }
+
+  // Delete row listener
+  tableBody?.addEventListener('click', (e) => {
+    const target = e.target as HTMLElement;
+    if (target.classList.contains('btn-delete-row')) {
+      const rows = tableBody.querySelectorAll('.audit-row');
+      if (rows.length <= 1) {
+        alert('Minimal harus ada 1 baris aplikasi.');
+        return;
+      }
+      target.closest('.audit-row')?.remove();
+      updateRowNumbers();
+    }
+  });
+
+  // Add row listener
+  btnAddRow?.addEventListener('click', () => {
+    const currentRows = tableBody?.querySelectorAll('.audit-row').length || 0;
+    const nextIdx = currentRows + 1;
+
+    const tr = document.createElement('tr');
+    tr.className = 'audit-row bg-card/40 hover:bg-secondary/20 transition-colors';
+    tr.innerHTML = `
+      <td class="py-3 px-3 text-center font-mono text-muted-foreground row-index">${nextIdx}</td>
+      <td class="py-2 px-3">
+        <input 
+          type="text" 
+          name="app_name_${nextIdx}" 
+          placeholder="Nama aplikasi baru..."
+          required
+          class="w-full px-2.5 py-1.5 rounded-lg bg-card border border-border text-xs text-foreground focus:outline-none focus:border-primary"
+        />
+      </td>
+      <td class="py-2 px-3">
+        <input 
+          type="text" 
+          name="app_feature_${nextIdx}" 
+          placeholder="Fitur utama yang dianalisis..."
+          required
+          class="w-full px-2.5 py-1.5 rounded-lg bg-card border border-border text-xs text-foreground focus:outline-none focus:border-primary"
+        />
+      </td>
+      <td class="py-2 px-3">
+        <input 
+          type="text" 
+          name="app_roles_${nextIdx}" 
+          placeholder="Peran pengembang IT terkait..."
+          required
+          class="w-full px-2.5 py-1.5 rounded-lg bg-card border border-border text-xs text-foreground focus:outline-none focus:border-primary"
+        />
+      </td>
+      <td class="py-2 px-2 text-center">
+        <button type="button" class="btn-delete-row text-muted-foreground hover:text-rose-500 p-1 text-sm transition-colors" title="Hapus baris">
+          🗑️
+        </button>
+      </td>
+    `;
+    tableBody?.appendChild(tr);
+  });
+
+  // Load existing submission data from DB
+  async function loadExistingSubmission() {
+    try {
+      const res = await fetch(`/api/submissions/get?slug=${encodeURIComponent(slug)}`);
+      const data = await res.json();
+      
+      if (data.success && data.submissions) {
+        const lkpdSub = data.submissions.find((s: any) => s.submissionType === 'lkpd');
+        if (lkpdSub) {
+          const formPayload = lkpdSub.formData;
+          if (formPayload.studentName) (document.getElementById('studentName') as HTMLInputElement).value = formPayload.studentName;
+          if (formPayload.studentNis) (document.getElementById('studentNis') as HTMLInputElement).value = formPayload.studentNis;
+          if (formPayload.studentClass) (document.getElementById('studentClass') as HTMLSelectElement).value = formPayload.studentClass;
+          if (formPayload.submissionDate) (document.getElementById('submissionDate') as HTMLInputElement).value = formPayload.submissionDate;
+          if (formPayload.driveUrl || lkpdSub.driveUrl) (document.getElementById('driveUrl') as HTMLInputElement).value = formPayload.driveUrl || lkpdSub.driveUrl;
+
+          // Render saved audit apps
+          if (formPayload.auditApps && Array.isArray(formPayload.auditApps) && formPayload.auditApps.length > 0) {
+            tableBody!.innerHTML = '';
+            formPayload.auditApps.forEach((app: any, idx: number) => {
+              const tr = document.createElement('tr');
+              tr.className = 'audit-row bg-card/40 hover:bg-secondary/20 transition-colors';
+              tr.innerHTML = `
+                <td class="py-3 px-3 text-center font-mono text-muted-foreground row-index">${idx + 1}</td>
+                <td class="py-2 px-3">
+                  <input type="text" value="${app.name || ''}" required class="w-full px-2.5 py-1.5 rounded-lg bg-card border border-border text-xs text-foreground focus:outline-none focus:border-primary" />
+                </td>
+                <td class="py-2 px-3">
+                  <input type="text" value="${app.feature || ''}" required class="w-full px-2.5 py-1.5 rounded-lg bg-card border border-border text-xs text-foreground focus:outline-none focus:border-primary" />
+                </td>
+                <td class="py-2 px-3">
+                  <input type="text" value="${app.roles || ''}" required class="w-full px-2.5 py-1.5 rounded-lg bg-card border border-border text-xs text-foreground focus:outline-none focus:border-primary" />
+                </td>
+                <td class="py-2 px-2 text-center">
+                  <button type="button" class="btn-delete-row text-muted-foreground hover:text-rose-500 p-1 text-sm transition-colors" title="Hapus baris">🗑️</button>
+                </td>
+              `;
+              tableBody?.appendChild(tr);
+            });
+          }
+
+          // Check if Graded by Teacher
+          if (lkpdSub.teacherScore !== null && lkpdSub.teacherScore !== undefined) {
+            if (teacherGradeCard) teacherGradeCard.classList.remove('hidden');
+            if (displayScore) displayScore.textContent = `Nilai Guru: ${lkpdSub.teacherScore} / 100`;
+            if (displayLevel) displayLevel.textContent = lkpdSub.teacherLevel || 'Level 2 (Mencoba ★)';
+            if (displayFeedback) displayFeedback.textContent = lkpdSub.teacherFeedback || 'Telah diverifikasi dan dinilai oleh Guru.';
+            if (displayGradedDate && lkpdSub.gradedAt) {
+              const formattedDate = new Date(lkpdSub.gradedAt).toLocaleDateString('id-ID', {
+                weekday: 'long',
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric'
+              });
+              displayGradedDate.textContent = `🕒 Dinilai pada: ${formattedDate}`;
+            }
+
+            if (statusEl) {
+              statusEl.className = 'text-[11px] font-mono px-2 py-1 bg-amber-500/10 text-amber-600 dark:text-amber-400 rounded border border-amber-500/20 font-bold';
+              statusEl.textContent = `⭐ Dinilai: ${lkpdSub.teacherScore}/100`;
+            }
+          } else if (statusEl) {
+            statusEl.className = 'text-[11px] font-mono px-2 py-1 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 rounded border border-emerald-500/20 font-semibold';
+            statusEl.textContent = '✅ LKPD Terkumpul';
+          }
+        }
+      }
+    } catch (e) {
+      console.warn('Failed to load existing submission:', e);
+    }
+  }
+
+  loadExistingSubmission();
+
+  // Extract structured data from form
+  function getFormDataPayload() {
+    const studentName = (document.getElementById('studentName') as HTMLInputElement).value;
+    const studentNis = (document.getElementById('studentNis') as HTMLInputElement).value;
+    const studentClass = (document.getElementById('studentClass') as HTMLSelectElement).value;
+    const submissionDate = (document.getElementById('submissionDate') as HTMLInputElement).value;
+    const driveUrl = (document.getElementById('driveUrl') as HTMLInputElement).value;
+
+    const auditApps: any[] = [];
+    tableBody?.querySelectorAll('.audit-row').forEach((row) => {
+      const inputs = row.querySelectorAll('input');
+      auditApps.push({
+        name: inputs[0]?.value || '',
+        feature: inputs[1]?.value || '',
+        roles: inputs[2]?.value || '',
+      });
+    });
+
+    return {
+      studentName,
+      studentNis,
+      studentClass,
+      submissionDate,
+      auditApps,
+      driveUrl,
+    };
+  }
+
+  // Save / Submit handler
+  async function submitLkpd(isDraft = false) {
+    const payload = getFormDataPayload();
+    const activeTokenId = localStorage.getItem('ags_active_token_id');
+
+    if (statusEl) {
+      statusEl.textContent = 'Menyimpan...';
+    }
+
+    try {
+      const res = await fetch('/api/submissions/save', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          lessonSlug: slug,
+          submissionType: 'lkpd',
+          formData: payload,
+          driveUrl: payload.driveUrl,
+          tokenId: activeTokenId ? Number(activeTokenId) : null,
+        }),
+      });
+
+      const data = await res.json();
+      if (data.success) {
+        if (statusEl) {
+          statusEl.className = 'text-[11px] font-mono px-2 py-1 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 rounded border border-emerald-500/20 font-semibold';
+          statusEl.textContent = isDraft ? '💾 Draf Tersimpan' : '✅ LKPD Terkumpul (+25 XP)';
+        }
+        alert(data.message || 'Jawaban LKPD berhasil disimpan!');
+      } else {
+        alert(data.error || 'Gagal menyimpan LKPD.');
+      }
+    } catch (e: any) {
+      alert('Terjadi kesalahan jaringan saat menyimpan.');
+    }
+  }
+
+  btnSaveDraft?.addEventListener('click', () => submitLkpd(true));
+
+  form?.addEventListener('submit', (e) => {
+    e.preventDefault();
+    submitLkpd(false);
+  });
+</script>

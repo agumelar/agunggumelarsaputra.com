@@ -9,13 +9,13 @@ tags: ["Orientasi PPLG", "Skill Passport", "Fase E", "OR-01", "Kurikulum Merdeka
 teacherTip: "Pastikan link folder Google Drive siswa sudah diatur ke 'Anyone with the link can view' agar mempermudah proses validasi dan asesmen berkala."
 ---
 
-# Orientasi Mata Pelajaran & Sistem Skill Passport PPLG
+# 🚀 Orientasi Mata Pelajaran & Sistem Skill Passport PPLG
 
-Selamat datang di Program Keahlian **Rekayasa Perangkat Lunak (RPL)** SMK Negeri 1 Rongga! Modul ini merupakan gerbang awal pembelajaran pada mata pelajaran **Orientasi PPLG (Dasar-Dasar PPLG)** untuk **Kelas 10 RPL / Fase E** Tahun Ajaran 2026/2027.
+Selamat datang di Program Keahlian **Rekayasa Perangkat Lunak (PPLG)** SMK Negeri 1 Rongga! Modul ini merupakan gerbang awal pembelajaran pada mata pelajaran **Orientasi PPLG (Dasar-Dasar PPLG)** untuk **Kelas 10 RPL / Fase E** Tahun Ajaran 2026/2027.
 
 ---
 
-## 📌 Identitas & Landasan Pembelajaran
+## 📌 Identitas Pembelajaran & Landasan Kurikulum
 
 | Komponen | Keterangan |
 | :--- | :--- |
@@ -30,64 +30,75 @@ Selamat datang di Program Keahlian **Rekayasa Perangkat Lunak (RPL)** SMK Negeri
 
 ---
 
-## 🎯 Tujuan Pembelajaran (TP) & Indikator Ketercapaian (KKTP)
+## 🎯 Tujuan Pembelajaran (TP)
 
-Setelah menyelesaikan pembelajaran pada modul ini, peserta didik diharapkan mampu:
-1. **Memahami Tujuan Mapel Orientasi PPLG**: Menjelaskan alasan pentingnya wawasan industri dan budaya kerja digital bagi siswa pemula RPL.
-2. **Mengenal Filosofi Skill Passport**: Membedakan konsep akumulasi kompetensi nyata (*evidence-based competency*) dengan penilaian berbasis angka semata.
-3. **Memahami Tangga Level Kompetensi (0 - 4)**: Menjelaskan kriteria penilaian dari Level 0 (*Belum Terlihat*) hingga Level 4 (*Mahir / Portofolio*).
-4. **Menyiapkan Lingkungan Belajar Digital**: Membuat dan menyusun struktur folder portofolio di Google Drive sesuai konvensi baku jurusan.
+Setelah menuntaskan modul pembelajaran interaktif ini, kalian diharapkan mampu:
+1. **Memahami Urgensi Orientasi PPLG**: Mengidentifikasi alasan krusial mengapa calon software engineer harus memahami wawasan ekosistem industri sebelum mulai menulis baris kode (*coding*).
+2. **Mengenal Filosofi Skill Passport**: Membedakan konsep akumulasi kompetensi nyata berbasis karya (*evidence-based portfolio*) dengan sekadar penilaian angka ujian di atas kertas.
+3. **Memahami Tangga Level Kompetensi (0 - 4)**: Mengetahui target minimal capaian Semester 1 yaitu **Level 2 (Mencoba ★)**.
+4. **Menyiapkan Lingkungan Belajar Digital**: Membuat dan mengonfigurasi struktur folder portofolio Google Drive dengan hak akses publik (*Viewer*).
 
 ---
 
-## 📖 Materi Pembelajaran: Deep Dive
+## 📖 Deep Dive Materi: Fondasi Software Engineering
 
 ### 1. Mengapa Kita Mempelajari Orientasi PPLG?
-Di era transformasi digital, perangkat lunak (software) telah menggerakkan seluruh lini kehidupan manusia. Mulai dari aplikasi perpesanan (*WhatsApp*), e-commerce (*Shopee, Tokopedia*), transportasi daring (*Gojek*), hingga gim daring (*Mobile Legends, Genshin Impact*).
 
-Namun, menjadi seorang *Software Engineer* atau pengembang perangkat lunak bukan sekadar menghafal sintaks bahasa pemrograman (*coding*). Industri membutuhkan talenta yang memiliki:
-- **Wawasan Ekosistem Kerja**: Mengetahui bagaimana software dirancang, dibuat, diuji, dan dipelihara secara tim.
-- **Logika & Pemecahan Masalah (*Problem Solving*)**: Kemampuan memecah masalah besar menjadi algoritma yang efisien.
-- **Etos Kerja & Profesionalisme**: Standar disiplin, kolaborasi (*teamwork*), dan etika digital.
+Di era revolusi digital dan kecerdasan buatan (*AI*), perangkat lunak telah menjadi tulang punggung peradaban modern:
+- 📱 **Komunikasi & Sosial**: WhatsApp, Instagram, Discord, Telegram.
+- 🛍️ **Ekonomi Digital**: Shopee, Tokopedia, Gojek, Grab, Dana.
+- 🎮 **Industri Kreatif & Gim**: Mobile Legends, Genshin Impact, Roblox, Valorant.
+- 🏥 **Layanan Publik & Finansial**: M-Banking, SatuSehat, Portal Pembayaran Pajak.
 
-Mata pelajaran **Orientasi PPLG** dirancang sebagai fondasi pemahaman dunia kerja sebelum kalian mendalami pemrograman tingkat lanjut di kelas 11 dan 12.
+Namun, menjadi seorang praktisi RPL **bukan sekadar menghafal sintaks bahasa pemrograman**. Industri teknologi global membutuhkan talenta yang memiliki 3 pilar utama:
 
----
-
-### 2. Apa itu Sistem Skill Passport?
-
-```
+```text
 ┌─────────────────────────────────────────────────────────────┐
-│                   SISTEM SKILL PASSPORT                     │
-│    "Bukan Sekadar Mengumpulkan Nilai, Tapi Membangun        │
-│          Bukti Nyata Karya & Kompetensi Diri"               │
-└─────────────────────────────────────────────────────────────┘
+│                 3 PILAR SOFTWARE ENGINEER MODERN            │
+├──────────────────────────────┬──────────────────────────────┤
+│ 1. Engineering & Code        │ Menulis kode yang bersih,    │
+│    Craftsmanship             │ modular, dan mudah di-scale  │
+├──────────────────────────────┼──────────────────────────────┤
+│ 2. Collaboration & Workflow  │ Bekerja tim dengan Git,      │
+│                              │ Agile/Scrum, dan sprint      │
+├──────────────────────────────┼──────────────────────────────┤
+│ 3. Problem Solving & Empathy │ Memahami masalah pengguna    │
+│                              │ sebelum membuat solusi       │
+└──────────────────────────────┴──────────────────────────────┘
 ```
 
-**Skill Passport** adalah instrumen rekam jejak kompetensi siswa RPL SMKN 1 Rongga. Setiap kompetensi yang kalian pelajari tidak hanya dinilai dalam bentuk angka ulangan, melainkan divalidasi melalui **Evidence (Bukti Karya Nyata)** yang tersimpan rapi dalam folder digital portofolio kalian.
-
-#### Tangga Level Skill Passport (0 - 4)
-
-| Level | Predikat | Kriteria Penilaian | Keterangan untuk Skill OR-01 |
-| :---: | :--- | :--- | :--- |
-| **0** | **Belum Terlihat** | Siswa belum mengumpulkan evidence, link rusak/terkunci, atau karya tidak sesuai instruksi. | Tidak ada file di folder GDrive atau belum membuat folder. |
-| **1** | **Mengenal** | Evidence ada namun belum lengkap, masih meniru persis contoh guru tanpa elaborasi mandiri. | Menulis kurang dari 3 profesi, rencana minat masih kosong. |
-| **2** | **Mencoba ★** *(Target Minimal)* | **Target Semester 1**. Evidence lengkap, mengikuti struktur instruksi, dan dapat diperiksa. | Minimal 5 profesi dipetakan lengkap dan rencana minat terisi. |
-| **3** | **Mandiri** | Evidence lengkap, terstruktur sistematis, orisinal, serta mampu mempresentasikannya dengan lancar. | Mind map detail, analisis profesi terhubung dengan mapel RPL, penjelasan runtut. |
-| **4** | **Mahir / Portofolio** | Karya sangat rapi, mendalam, bernilai estetika tinggi, dan layak menjadi portofolio percontohan. | Visual mind map kreatif, menyertakan referensi industri nyata & roadmap belajar data-driven. |
+Mata pelajaran **Orientasi PPLG** dirancang khusus untuk membangun fondasi mentalitas, etos kerja profesional, dan pengenalan alur industri sejak semester pertama kalian di SMK.
 
 ---
 
-### 3. Konvensi Struktur Folder Google Drive Siswa
+### 2. Filosofi Sistem Skill Passport PPLG
 
-Setiap siswa wajib membuat folder utama di Google Drive akun belajar masing-masing dengan format struktur berikut:
+> 💡 **Analogi Nyata:**  
+> - Seorang **Pilot** memiliki *Flight Logbook* yang mencatat ratusan jam terbang riil.  
+> - Seorang **Dokter Bedah** memiliki rekam jejak operasi yang berhasil ditangani.  
+> - Seorang **Software Engineer** memiliki **Skill Passport & Portofolio Karya Nyata** sebagai bukti sahih kompetensinya.
+
+**Skill Passport** adalah instrumen resmi rekam jejak kompetensi siswa RPL SMKN 1 Rongga. Nilai kalian tidak ditentukan semata oleh angka ujian pilihan ganda, melainkan divalidasi melalui **Evidence (Bukti Karya Nyata)** yang tersimpan rapi pada repositori digital kalian.
+
+#### Tangga Level Kompetensi (Level 0 s/d Level 4)
+- **Level 0 (Belum Terlihat)**: Siswa belum mengumpulkan berkas atau link folder terkunci.
+- **Level 1 (Mengenal)**: Evidence ada namun meniru contoh tanpa analisis mandiri.
+- **Level 2 (Mencoba ★ - Target Minimal Semester 1)**: Evidence lengkap, struktur rapi, link Google Drive valid dan dapat diverifikasi.
+- **Level 3 (Mandiri)**: Analisis mendalam, orisinal, dan mampu mempresentasikan logika karya dengan lancar.
+- **Level 4 (Mahir / Portofolio Standar Industri)**: Karya bernilai estetika tinggi, komprehensif, dan layak menjadi proyek percontohan.
+
+---
+
+### 3. Konvensi Struktur Folder Google Drive Evidence
+
+Setiap siswa wajib menyiapkan folder Google Drive utama pada akun belajar masing-masing dengan struktur hierarki berikut:
 
 ```text
 📁 RPL_SkillPassport_2026-2027/
 └── 📁 10_RPL_[Kelas]/  (Contoh: 10_RPL_1)
     └── 📁 [NIS]_[Nama_Lengkap]/  (Contoh: 262710001_Ahmad_Fauzi)
         ├── 📁 OR-01_Wawasan_Dunia_Kerja/
-        │   ├── 📄 LKPD_P1_Refleksi_Awal.pdf
+        │   ├── 📄 LKPD_P1_AuditTeknologi.pdf (atau tersimpan di sistem web)
         │   ├── 📄 LKPD_P2_Eksplorasi_Profesi.pdf
         │   └── 📄 262710001_Ahmad_OR-01_MindMapProfesi.pdf
         └── 📁 OR-02_Review_Produk_Digital/
@@ -95,76 +106,15 @@ Setiap siswa wajib membuat folder utama di Google Drive akun belajar masing-masi
             └── 📄 262710001_Ahmad_OR-02_ReviewProdukDigital.pdf
 ```
 
-> **Catatan Teknis Guru:** Pastikan pengaturan akses (*Sharing Settings*) pada folder utama diubah menjadi: **"Anyone with the link" (Siapa saja yang memiliki link) -> "Viewer" (Pelihat)**.
+> ⚠️ **Aturan Akses Google Drive (Sangat Penting):**  
+> Buka folder utama kalian di Google Drive ➔ Klik kanan **Bagikan (Share)** ➔ Ubah *General Access* menjadi: **"Anyone with the link" (Siapa saja yang memiliki link) -> "Viewer" (Pelihat)**.
 
 ---
 
-## 📝 Lembar Kerja Peserta Didik (LKPD P1)
+## ⚡ Langkah Selanjutnya: Aktivitas Belajar
 
-### A. Identitas Peserta Didik
-- **Nama Lengkap**: ............................................................................
-- **NIS / NISN**: ............................................................................
-- **Kelas**: [ ] 10 RPL 1 &nbsp;&nbsp; [ ] 10 RPL 2 &nbsp;&nbsp; [ ] 10 RPL 3 &nbsp;&nbsp; [ ] 10 RPL 4
-- **Tanggal Pelaksanaan**: ............................................................................
-- **Kode Skill Passport**: **OR-01** (Pertemuan 1)
+Gunakan tab di bagian atas modul ini untuk menyelesaikan tahapan belajar kalian:
 
----
-
-### B. Aktivitas 1: Audit Teknologi dalam 24 Jam Terakhir
-Tuliskan minimal 3 aplikasi / layanan teknologi yang kalian gunakan dalam 24 jam terakhir, beserta perkiraan profesi IT yang terlibat dalam pembuatannya!
-
-| No | Nama Aplikasi / Produk Digital | Fungsi Utama yang Sering Digunakan | Perkiraan Profesi PPLG yang Terlibat |
-| :---: | :--- | :--- | :--- |
-| 1 | *Contoh: WhatsApp* | *Kirim pesan teks, panggilan video grup* | *Mobile Developer, Backend Engineer, UI/UX Designer* |
-| 2 | ................................................. | ................................................................... | ................................................................... |
-| 3 | ................................................. | ................................................................... | ................................................................... |
-| 4 | ................................................. | ................................................................... | ................................................................... |
-
----
-
-### C. Aktivitas 2: Pembuatan Link Folder Evidence Google Drive
-1. Buat folder baru di Google Drive kalian dengan nama: `RPL_SkillPassport_[NIS]_[NamaLengkap]`.
-2. Di dalam folder tersebut, buat sub-folder bernama: `OR-01_Wawasan_Dunia_Kerja`.
-3. Klik kanan pada folder utama > pilih **Bagikan (Share)** > ubah akses umum menjadi **Siapa saja dengan link (Anyone with link)** sebagai **Viewer**.
-4. Tuliskan link Google Drive kalian di bawah ini:
-
-```text
-URL Link Folder GDrive Saya:
-https://drive.google.com/drive/folders/................................................
-```
-
----
-
-## ✅ Checklist Ketercapaian KKTP (Self-Assessment)
-
-Beri tanda centang (✔) pada kolom yang sesuai dengan kondisi pemahaman kalian:
-
-| No | Indikator Ketercapaian Tujuan Pembelajaran (KKTP) | Sudah (Ya) | Belum | Rencana Tindak Lanjut |
-| :---: | :--- | :---: | :---: | :--- |
-| 1 | Saya dapat menjelaskan arti dan tujuan mata pelajaran Orientasi PPLG dengan bahasa sendiri. | [ ] | [ ] | ........................................ |
-| 2 | Saya memahami fungsi Skill Passport dan target minimal Level 2 (*Mencoba*) di Semester 1. | [ ] | [ ] | ........................................ |
-| 3 | Saya telah berhasil membuat struktur folder Google Drive dan memastikan link akses publik sudah aktif. | [ ] | [ ] | ........................................ |
-| 4 | Saya telah mengisi tabel audit teknologi 24 jam pada LKPD P1. | [ ] | [ ] | ........................................ |
-
----
-
-## 💭 Jurnal Refleksi Pembelajaran Mendalam
-
-Jawablah pertanyaan refleksi di bawah ini secara jujur untuk mengukur perkembangan diri kalian:
-
-1. **Hal baru apa yang paling menarik yang kalian pelajari hari ini tentang dunia Rekayasa Perangkat Lunak?**
-   > *Jawaban:* ........................................................................................................................................
-2. **Menurut kalian, mengapa seorang programmer profesional perlu memiliki bukti portofolio (evidence) selain hanya ijazah sekolah?**
-   > *Jawaban:* ........................................................................................................................................
-3. **Apa tantangan atau kendala teknis yang kalian hadapi saat menyiapkan Google Drive evidence hari ini?**
-   > *Jawaban:* ........................................................................................................................................
-4. **Komitmen belajar saya untuk pertemuan berikutnya adalah:**
-   > *Jawaban:* ........................................................................................................................................
-
----
-
-## 💡 Catatan Guru Pengampu
-
-> *"Selamat bergabung di keluarga besar RPL SMKN 1 Rongga. Ingat prinsip kita: Skill dibangun dari pembiasaan dan karya nyata, bukan sekadar teori di atas kertas. Jaga folder evidence kalian dengan rapi sepanjang 3 tahun ke depan!"*
-> 
-> — **Agung Gumelar Saputra, S.Tr.T, Gr** (Guru Pengampu PPLG)
+1. 📝 **Tab 2 (Form LKPD Interaktif)**: Isi tabel audit teknologi 24 jam dan masukkan URL link folder Google Drive kalian (+25 XP).
+2. 💭 **Tab 3 (Jurnal Refleksi)**: Tuliskan respon refleksi pembelajaran mandiri (+15 XP).
+3. 🎯 **Tab 4 (Panduan Kriteria Guru)**: Pelajari matriks KKTP untuk memastikan karya kalian mencapai minimal Level 2.

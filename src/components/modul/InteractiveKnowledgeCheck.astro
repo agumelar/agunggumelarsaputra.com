@@ -1,0 +1,81 @@
+---
+interface Props {
+  id: string;
+  question: string;
+  options: { label: string; isCorrect: boolean; explanation: string }[];
+  xpReward?: number;
+}
+
+const { id, question, options, xpReward = 5 } = Astro.props;
+---
+
+<div class="my-6 p-5 rounded-xl border border-primary/20 bg-secondary/30 space-y-4 knowledge-check-container" data-quiz-id={id}>
+  <div class="flex items-center justify-between">
+    <div class="inline-flex items-center gap-2">
+      <span class="px-2 py-0.5 rounded bg-primary/10 text-primary text-[11px] font-mono font-bold uppercase tracking-wider border border-primary/20">
+        ⚡ Checkpoint Cepat
+      </span>
+      <span class="text-xs text-muted-foreground">Uji Pemahaman Singkat</span>
+    </div>
+    <span class="text-xs font-mono font-semibold text-amber-600 dark:text-amber-400">
+      +{xpReward} XP
+    </span>
+  </div>
+
+  <p class="text-sm font-semibold text-foreground leading-snug">
+    {question}
+  </p>
+
+  <div class="space-y-2 options-list">
+    {options.map((opt, idx) => (
+      <button
+        type="button"
+        class="w-full text-left p-3 rounded-lg border border-border bg-card/60 hover:bg-secondary hover:border-primary/40 text-xs text-foreground transition-all flex items-start gap-2.5 option-btn"
+        data-is-correct={opt.isCorrect ? "true" : "false"}
+        data-explanation={opt.explanation}
+      >
+        <span class="w-5 h-5 rounded-full border border-border flex items-center justify-center font-mono font-bold text-[10px] shrink-0">
+          {String.fromCharCode(65 + idx)}
+        </span>
+        <span class="leading-relaxed">{opt.label}</span>
+      </button>
+    ))}
+  </div>
+
+  <!-- Feedback Area -->
+  <div class="feedback-box hidden p-3.5 rounded-lg text-xs leading-relaxed transition-all"></div>
+</div>
+
+<script>
+  document.querySelectorAll('.knowledge-check-container').forEach((container) => {
+    const optionBtns = container.querySelectorAll('.option-btn');
+    const feedbackBox = container.querySelector('.feedback-box') as HTMLElement;
+
+    optionBtns.forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const isCorrect = btn.getAttribute('data-is-correct') === 'true';
+        const explanation = btn.getAttribute('data-explanation') || '';
+
+        // Reset all buttons
+        optionBtns.forEach((b) => {
+          b.classList.remove('border-emerald-500', 'bg-emerald-500/10', 'border-rose-500', 'bg-rose-500/10');
+          (b as HTMLButtonElement).disabled = true;
+        });
+
+        if (isCorrect) {
+          btn.classList.add('border-emerald-500', 'bg-emerald-500/10');
+          if (feedbackBox) {
+            feedbackBox.className = 'feedback-box p-3.5 rounded-lg text-xs leading-relaxed bg-emerald-500/10 border border-emerald-500/20 text-emerald-700 dark:text-emerald-300 block space-y-1';
+            feedbackBox.innerHTML = `<strong>🎉 Tepat Sekali!</strong><br/>${explanation}`;
+          }
+        } else {
+          btn.classList.add('border-rose-500', 'bg-rose-500/10');
+          if (feedbackBox) {
+            feedbackBox.className = 'feedback-box p-3.5 rounded-lg text-xs leading-relaxed bg-rose-500/10 border border-rose-500/20 text-rose-700 dark:text-rose-300 block space-y-1';
+            feedbackBox.innerHTML = `<strong>⚠️ Belum Tepat.</strong><br/>${explanation}`;
+          }
+        }
+      });
+    });
+  });
+</script>

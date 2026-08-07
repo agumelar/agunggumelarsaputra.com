@@ -1,0 +1,191 @@
+---
+interface Props {
+  lessonSlug: string;
+  user: any;
+}
+
+const { lessonSlug, user } = Astro.props;
+---
+
+<div class="card p-6 md:p-8 rounded-2xl border-border bg-card shadow-sm space-y-6" id="reflection-form-card" data-slug={lessonSlug}>
+  
+  <!-- Header Refleksi -->
+  <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-border pb-5">
+    <div class="space-y-1">
+      <div class="inline-flex items-center gap-2">
+        <span class="px-2.5 py-0.5 rounded bg-purple-500/10 text-purple-600 dark:text-purple-400 border border-purple-500/20 text-[11px] font-mono font-bold uppercase">
+          LAMPIRAN REFLEKSI SISWA
+        </span>
+        <span class="px-2.5 py-0.5 rounded bg-secondary text-foreground text-[11px] font-mono font-semibold border border-border">
+          JURNAL REFLEKSI MANDIRI
+        </span>
+      </div>
+      <h2 class="text-xl md:text-2xl font-extrabold text-foreground tracking-tight">
+        Jurnal Refleksi Pembelajaran Mendalam
+      </h2>
+      <p class="text-xs text-muted-foreground">
+        Tuliskan refleksi pemahaman dan pengalaman belajar kalian secara jujur untuk mengukur perkembangan diri.
+      </p>
+    </div>
+
+    <div class="flex items-center gap-2 self-start sm:self-auto">
+      <span class="text-xs font-mono font-bold px-3 py-1.5 rounded-lg bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20">
+        ✨ Reward: +15 XP
+      </span>
+      <span id="reflection-save-status" class="text-[11px] font-mono text-muted-foreground px-2 py-1 bg-secondary rounded border border-border">
+        Belum Disimpan
+      </span>
+    </div>
+  </div>
+
+  <form id="form-reflection" class="space-y-6">
+    
+    <!-- Question 1 -->
+    <div class="space-y-2">
+      <label class="block text-xs font-bold text-foreground leading-relaxed">
+        1. Hal baru apa yang paling menarik yang kalian pelajari hari ini tentang dunia Rekayasa Perangkat Lunak & PPLG?
+      </label>
+      <textarea 
+        name="q1" 
+        id="refl_q1"
+        rows="3" 
+        required
+        placeholder="Contoh: Saya baru tahu bahwa membuat aplikasi itu melibatkan banyak profesi seperti UI/UX dan QA, bukan cuma programmer saja..."
+        class="w-full px-3.5 py-2.5 rounded-xl bg-secondary/30 border border-border text-xs text-foreground focus:outline-none focus:border-primary leading-relaxed"
+      ></textarea>
+    </div>
+
+    <!-- Question 2 -->
+    <div class="space-y-2">
+      <label class="block text-xs font-bold text-foreground leading-relaxed">
+        2. Menurut kalian, mengapa seorang praktisi IT / programmer wajib memiliki bukti portofolio (evidence) selain hanya mengandalkan ijazah formal?
+      </label>
+      <textarea 
+        name="q2" 
+        id="refl_q2"
+        rows="3" 
+        required
+        placeholder="Contoh: Karena industri software melihat bukti kemampuan nyata yang pernah dibuat (karya/proyek), bukan hanya nilai di atas kertas..."
+        class="w-full px-3.5 py-2.5 rounded-xl bg-secondary/30 border border-border text-xs text-foreground focus:outline-none focus:border-primary leading-relaxed"
+      ></textarea>
+    </div>
+
+    <!-- Question 3 -->
+    <div class="space-y-2">
+      <label class="block text-xs font-bold text-foreground leading-relaxed">
+        3. Apa kendala atau tantangan teknis yang kalian hadapi saat menyiapkan Google Drive evidence portofolio hari ini?
+      </label>
+      <textarea 
+        name="q3" 
+        id="refl_q3"
+        rows="2" 
+        required
+        placeholder="Contoh: Awalnya sempat bingung mengubah settingan share ke Anyone with link, tapi akhirnya berhasil..."
+        class="w-full px-3.5 py-2.5 rounded-xl bg-secondary/30 border border-border text-xs text-foreground focus:outline-none focus:border-primary leading-relaxed"
+      ></textarea>
+    </div>
+
+    <!-- Question 4 -->
+    <div class="space-y-2">
+      <label class="block text-xs font-bold text-foreground leading-relaxed">
+        4. Tuliskan satu komitmen belajar kalian untuk pertemuan berikutnya:
+      </label>
+      <textarea 
+        name="q4" 
+        id="refl_q4"
+        rows="2" 
+        required
+        placeholder="Contoh: Saya akan lebih aktif berdiskusi dan membaca referensi 8 profesi IT sebelum kelas dimulai..."
+        class="w-full px-3.5 py-2.5 rounded-xl bg-secondary/30 border border-border text-xs text-foreground focus:outline-none focus:border-primary leading-relaxed"
+      ></textarea>
+    </div>
+
+    <!-- Tombol Simpan Refleksi -->
+    <div class="flex flex-col sm:flex-row items-center justify-between gap-4 pt-4 border-t border-border">
+      <div class="text-xs text-muted-foreground">
+        💭 <em>Refleksi ini dibaca oleh Guru untuk umpan balik pembelajaran berkala.</em>
+      </div>
+
+      <button 
+        type="submit" 
+        id="btn-submit-reflection" 
+        class="btn btn-primary text-xs font-semibold px-6 py-2.5 rounded-lg w-full sm:w-auto flex items-center justify-center gap-2"
+      >
+        <span>🚀 Simpan Refleksi (+15 XP)</span>
+      </button>
+    </div>
+
+  </form>
+</div>
+
+<script>
+  const reflCardEl = document.getElementById('reflection-form-card');
+  const reflSlug = reflCardEl?.getAttribute('data-slug') || 'orientasi-pplg-01-pengantar-skill-passport';
+  const formRefl = document.getElementById('form-reflection') as HTMLFormElement;
+  const reflStatusEl = document.getElementById('reflection-save-status');
+
+  async function loadExistingReflection() {
+    try {
+      const res = await fetch(`/api/submissions/get?slug=${encodeURIComponent(reflSlug)}`);
+      const data = await res.json();
+      if (data.success && data.submissions) {
+        const reflSub = data.submissions.find((s: any) => s.submissionType === 'reflection');
+        if (reflSub && reflSub.formData) {
+          const formPayload = reflSub.formData;
+          if (formPayload.q1) (document.getElementById('refl_q1') as HTMLTextAreaElement).value = formPayload.q1;
+          if (formPayload.q2) (document.getElementById('refl_q2') as HTMLTextAreaElement).value = formPayload.q2;
+          if (formPayload.q3) (document.getElementById('refl_q3') as HTMLTextAreaElement).value = formPayload.q3;
+          if (formPayload.q4) (document.getElementById('refl_q4') as HTMLTextAreaElement).value = formPayload.q4;
+
+          if (reflStatusEl) {
+            reflStatusEl.className = 'text-[11px] font-mono px-2 py-1 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 rounded border border-emerald-500/20 font-semibold';
+            reflStatusEl.textContent = '✅ Refleksi Tersimpan';
+          }
+        }
+      }
+    } catch (e) {
+      console.warn('Failed to load existing reflection:', e);
+    }
+  }
+
+  loadExistingReflection();
+
+  formRefl?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const q1 = (document.getElementById('refl_q1') as HTMLTextAreaElement).value;
+    const q2 = (document.getElementById('refl_q2') as HTMLTextAreaElement).value;
+    const q3 = (document.getElementById('refl_q3') as HTMLTextAreaElement).value;
+    const q4 = (document.getElementById('refl_q4') as HTMLTextAreaElement).value;
+
+    const payload = { q1, q2, q3, q4 };
+    const activeTokenId = localStorage.getItem('ags_active_token_id');
+
+    if (reflStatusEl) reflStatusEl.textContent = 'Menyimpan...';
+
+    try {
+      const res = await fetch('/api/submissions/save', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          lessonSlug: reflSlug,
+          submissionType: 'reflection',
+          formData: payload,
+          tokenId: activeTokenId ? Number(activeTokenId) : null,
+        }),
+      });
+
+      const data = await res.json();
+      if (data.success) {
+        if (reflStatusEl) {
+          reflStatusEl.className = 'text-[11px] font-mono px-2 py-1 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 rounded border border-emerald-500/20 font-semibold';
+          reflStatusEl.textContent = '✅ Refleksi Tersimpan (+15 XP)';
+        }
+        alert(data.message || 'Jurnal refleksi berhasil disimpan!');
+      } else {
+        alert(data.error || 'Gagal menyimpan refleksi.');
+      }
+    } catch (err) {
+      alert('Terjadi kesalahan jaringan.');
+    }
+  });
+</script>

@@ -55,8 +55,8 @@ if (user && isDbConfigured()) {
 }
 
 // Pisahkan modul per Sprint
-const sprint1Modules = orientasiModules.filter(m => m.data.order <= 5);
-const sprint2Modules = orientasiModules.filter(m => m.data.order >= 6);
+const sprint1Modules = orientasiModules.filter(m => m.data.order <= 8);
+const sprint2Modules = orientasiModules.filter(m => m.data.order >= 9);
 
 const totalCompleted = orientasiModules.filter(m => completedSlugs.includes(m.id || m.slug)).length;
 const progressPercentage = orientasiModules.length > 0 ? Math.round((totalCompleted / orientasiModules.length) * 100) : 0;
@@ -121,7 +121,7 @@ const progressPercentage = orientasiModules.length > 0 ? Math.round((totalComple
               </div>
               <div class="p-3 rounded-lg bg-secondary/50 border border-border">
                 <span class="text-[10px] font-mono text-muted-foreground block">TOTAL PERTEMUAN</span>
-                <span class="text-xs font-bold text-foreground">16 Pertemuan (8 Modul)</span>
+                <span class="text-xs font-bold text-foreground">16 Pertemuan (16 Modul)</span>
               </div>
               <div class="p-3 rounded-lg bg-secondary/50 border border-border">
                 <span class="text-[10px] font-mono text-muted-foreground block">TARGET EVIDENCE</span>
@@ -129,7 +129,7 @@ const progressPercentage = orientasiModules.length > 0 ? Math.round((totalComple
               </div>
               <div class="p-3 rounded-lg bg-secondary/50 border border-border">
                 <span class="text-[10px] font-mono text-muted-foreground block">TOTAL XP BELAJAR</span>
-                <span class="text-xs font-bold text-amber-600 dark:text-amber-400 font-mono">✨ +120 XP</span>
+                <span class="text-xs font-bold text-amber-600 dark:text-amber-400 font-mono">✨ +240 XP</span>
               </div>
             </div>
           </div>
@@ -185,11 +185,11 @@ const progressPercentage = orientasiModules.length > 0 ? Math.round((totalComple
               </p>
             </div>
             <span class="text-xs font-mono font-semibold px-2.5 py-1 rounded bg-secondary text-foreground border border-border self-start sm:self-auto">
-              5 Modul • 4 LKPD
+              8 Modul • Evidence OR-01
             </span>
           </div>
 
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
             {sprint1Modules.map((mod) => {
               const isDone = completedSlugs.includes(mod.id || mod.slug);
               return (
@@ -197,68 +197,7 @@ const progressPercentage = orientasiModules.length > 0 ? Math.round((totalComple
                   <div class="space-y-2.5">
                     <div class="flex items-center justify-between">
                       <span class="px-2 py-0.5 rounded text-[10px] bg-secondary text-foreground font-mono font-semibold border border-border">
-                        {mod.data.order === 5 ? '🏆 SUMATIF OR-01' : `Pertemuan ${mod.data.order * 2 - 1} & ${mod.data.order * 2}`}
-                      </span>
-                      <span class="text-xs text-muted-foreground font-mono">{mod.data.duration}</span>
-                    </div>
-
-                    <h3 class="text-sm sm:text-base font-bold text-foreground hover:text-primary transition-colors">
-                      <a href={`/pembelajaran/${mod.id || mod.slug}`}>{mod.data.title}</a>
-                    </h3>
-
-                    <p class="text-xs text-muted-foreground line-clamp-2 leading-relaxed">
-                      {mod.data.description}
-                    </p>
-                  </div>
-
-                  <div class="pt-3 border-t border-border flex items-center justify-between text-xs">
-                    <div class="flex items-center gap-2">
-                      <span class="text-amber-600 dark:text-amber-400 font-mono font-medium">✨ +15 XP</span>
-                      {isDone && (
-                        <span class="px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-[10px] font-mono font-bold">
-                          ✓ SELESAI
-                        </span>
-                      )}
-                    </div>
-
-                    <a href={`/pembelajaran/${mod.id || mod.slug}`} class="btn btn-sm btn-primary text-xs font-semibold px-3 py-1.5 rounded-lg">
-                      Buka Modul & LKPD →
-                    </a>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-
-        <!-- SPRINT 2 -->
-        <div class="space-y-4 pt-4">
-          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-border pb-3">
-            <div>
-              <div class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded bg-purple-500/10 text-purple-600 dark:text-purple-400 border border-purple-500/20 text-[11px] font-mono font-bold mb-1">
-                🔍 SPRINT 2: PERTEMUAN 9 S.D 16 (KODE SKILL: OR-02)
-              </div>
-              <h2 class="text-lg sm:text-xl font-bold text-foreground">
-                Analisis & Review Produk Digital PPLG
-              </h2>
-              <p class="text-xs text-muted-foreground">
-                Evidence Akhir: Dokumen Review Produk Digital Berbasis 6 Komponen + Tangkapan Layar Anotasi (Format PDF).
-              </p>
-            </div>
-            <span class="text-xs font-mono font-semibold px-2.5 py-1 rounded bg-secondary text-foreground border border-border self-start sm:self-auto">
-              3 Modul • Rekapitulasi Semester
-            </span>
-          </div>
-
-          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {sprint2Modules.map((mod) => {
-              const isDone = completedSlugs.includes(mod.id || mod.slug);
-              return (
-                <div class="card p-5 border-border bg-card flex flex-col justify-between space-y-4 rounded-xl shadow-sm hover:border-primary/50 transition-all">
-                  <div class="space-y-2.5">
-                    <div class="flex items-center justify-between">
-                      <span class="px-2 py-0.5 rounded text-[10px] bg-secondary text-foreground font-mono font-semibold border border-border">
-                        {mod.data.order === 8 ? '🏆 SUMATIF OR-02 & REKAP' : `Pertemuan ${(mod.data.order - 5) * 2 + 7} & ${(mod.data.order - 5) * 2 + 8}`}
+                        {mod.data.order === 8 ? '🏆 SUMATIF OR-01' : `Pertemuan ${mod.data.order}`}
                       </span>
                       <span class="text-xs text-muted-foreground font-mono">{mod.data.duration}</span>
                     </div>
@@ -283,7 +222,68 @@ const progressPercentage = orientasiModules.length > 0 ? Math.round((totalComple
                     </div>
 
                     <a href={`/pembelajaran/${mod.id || mod.slug}`} class="btn btn-sm btn-primary text-xs font-semibold px-3 py-1.5 rounded-lg">
-                      Buka Modul & LKPD →
+                      Buka Modul →
+                    </a>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+
+        <!-- SPRINT 2 -->
+        <div class="space-y-4 pt-4">
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-border pb-3">
+            <div>
+              <div class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded bg-purple-500/10 text-purple-600 dark:text-purple-400 border border-purple-500/20 text-[11px] font-mono font-bold mb-1">
+                🔍 SPRINT 2: PERTEMUAN 9 S.D 16 (KODE SKILL: OR-02)
+              </div>
+              <h2 class="text-lg sm:text-xl font-bold text-foreground">
+                Analisis & Review Produk Digital PPLG
+              </h2>
+              <p class="text-xs text-muted-foreground">
+                Evidence Akhir: Dokumen Review Produk Digital Berbasis 6 Komponen + Tangkapan Layar Anotasi (Format PDF).
+              </p>
+            </div>
+            <span class="text-xs font-mono font-semibold px-2.5 py-1 rounded bg-secondary text-foreground border border-border self-start sm:self-auto">
+              8 Modul • Evidence OR-02
+            </span>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            {sprint2Modules.map((mod) => {
+              const isDone = completedSlugs.includes(mod.id || mod.slug);
+              return (
+                <div class="card p-5 border-border bg-card flex flex-col justify-between space-y-4 rounded-xl shadow-sm hover:border-primary/50 transition-all">
+                  <div class="space-y-2.5">
+                    <div class="flex items-center justify-between">
+                      <span class="px-2 py-0.5 rounded text-[10px] bg-secondary text-foreground font-mono font-semibold border border-border">
+                        {mod.data.order === 16 ? '🏆 SUMATIF OR-02 & REKAP' : `Pertemuan ${mod.data.order}`}
+                      </span>
+                      <span class="text-xs text-muted-foreground font-mono">{mod.data.duration}</span>
+                    </div>
+
+                    <h3 class="text-sm font-bold text-foreground hover:text-primary transition-colors">
+                      <a href={`/pembelajaran/${mod.id || mod.slug}`}>{mod.data.title}</a>
+                    </h3>
+
+                    <p class="text-xs text-muted-foreground line-clamp-2 leading-relaxed">
+                      {mod.data.description}
+                    </p>
+                  </div>
+
+                  <div class="pt-3 border-t border-border flex items-center justify-between text-xs">
+                    <div class="flex items-center gap-2">
+                      <span class="text-amber-600 dark:text-amber-400 font-mono font-medium">✨ +15 XP</span>
+                      {isDone && (
+                        <span class="px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-[10px] font-mono font-bold">
+                          ✓ SELESAI
+                        </span>
+                      )}
+                    </div>
+
+                    <a href={`/pembelajaran/${mod.id || mod.slug}`} class="btn btn-sm btn-primary text-xs font-semibold px-3 py-1.5 rounded-lg">
+                      Buka Modul →
                     </a>
                   </div>
                 </div>

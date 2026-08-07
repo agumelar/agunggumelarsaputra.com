@@ -1,0 +1,645 @@
+---
+interface Props {
+  user: any;
+}
+
+const { user } = Astro.props;
+---
+
+<div class="space-y-8" id="interactive-material-p1">
+  
+  <!-- Hero Banner Visual -->
+  <div class="relative overflow-hidden rounded-2xl bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 border border-border p-6 md:p-8 text-foreground shadow-lg">
+    <div class="absolute -right-10 -top-10 w-48 h-48 bg-primary/10 rounded-full blur-3xl pointer-events-none"></div>
+    
+    <div class="relative z-10 space-y-4">
+      <div class="flex flex-wrap items-center gap-2">
+        <span class="px-2.5 py-0.5 rounded-full bg-primary/20 text-primary border border-primary/30 text-xs font-mono font-bold uppercase">
+          🚀 Modul 01 • Sprint 1
+        </span>
+        <span class="px-2.5 py-0.5 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 text-xs font-mono font-semibold">
+          Fase E (Kelas 10 RPL)
+        </span>
+        <span class="px-2.5 py-0.5 rounded-full bg-secondary text-muted-foreground border border-border text-xs font-mono">
+          ⏱️ 2 JP (90 Menit)
+        </span>
+      </div>
+
+      <h1 class="text-2xl md:text-3xl lg:text-4xl font-extrabold tracking-tight text-white leading-tight">
+        Orientasi Mata Pelajaran & Sistem Skill Passport PPLG
+      </h1>
+
+      <p class="text-sm md:text-base text-slate-300 max-w-3xl leading-relaxed">
+        Selamat datang di Program Keahlian <strong>Rekayasa Perangkat Lunak (PPLG) SMKN 1 Rongga</strong>! Di modul interaktif ini, kalian akan memahami fondasi profesi software engineer modern, sistem rekam jejak portofolio <strong>Skill Passport</strong>, serta menyiapkan repositori bukti karya (*evidence*).
+      </p>
+
+      <!-- Quick Action Navigation inside Hero -->
+      <div class="pt-2 flex flex-wrap items-center gap-3">
+        <button 
+          type="button" 
+          data-switch-tab="lkpd"
+          class="btn btn-primary text-xs font-semibold px-4 py-2 rounded-xl flex items-center gap-2 shadow-sm hover:scale-[1.02] transition-transform"
+        >
+          <span>📝 Buka Form LKPD P1</span>
+          <span>→</span>
+        </button>
+        <button 
+          type="button" 
+          data-switch-tab="kktp"
+          class="btn btn-secondary text-xs font-semibold px-4 py-2 rounded-xl border border-border bg-slate-800/80 hover:bg-slate-700 text-slate-200"
+        >
+          🎯 Cek Target Penilaian (KKTP)
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Section 1: 3 Pilar Utama Rekayasa Perangkat Lunak -->
+  <div class="card p-6 md:p-8 rounded-2xl border-border bg-card shadow-sm space-y-6">
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-border pb-4">
+      <div>
+        <span class="text-xs font-mono text-primary font-bold uppercase tracking-wider">Pilar Keahlian</span>
+        <h2 class="text-xl md:text-2xl font-extrabold text-foreground tracking-tight">
+          Apa yang Membedakan Programmer Handal vs Pengetik Kode Biasa?
+        </h2>
+      </div>
+      <span class="text-xs px-2.5 py-1 bg-secondary rounded-lg border border-border text-muted-foreground font-mono">
+        3 Pilar Inti
+      </span>
+    </div>
+
+    <p class="text-xs md:text-sm text-muted-foreground leading-relaxed">
+      Di era AI dan teknologi modern, menulis kode hanyalah satu bagian kecil. Industri software mencari praktisi yang menguasai <strong>tiga pilar fundamental</strong> berikut. Klik setiap pilar untuk mengeksplorasi penjelasannya:
+    </p>
+
+    <!-- Interactive 3 Pillars Tabs -->
+    <div class="space-y-4">
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-2 p-1.5 rounded-xl bg-secondary/50 border border-border">
+        <button 
+          type="button" 
+          class="pillar-btn active p-3 rounded-lg text-left transition-all flex items-center gap-2.5 font-semibold text-xs border border-transparent"
+          data-pillar="craftsmanship"
+        >
+          <span class="text-base">💻</span>
+          <div>
+            <div class="text-foreground">1. Craftsmanship</div>
+            <div class="text-[10px] text-muted-foreground font-normal">Kualitas & Kebersihan Kode</div>
+          </div>
+        </button>
+
+        <button 
+          type="button" 
+          class="pillar-btn p-3 rounded-lg text-left transition-all flex items-center gap-2.5 font-semibold text-xs border border-transparent text-muted-foreground hover:text-foreground"
+          data-pillar="workflow"
+        >
+          <span class="text-base">🔄</span>
+          <div>
+            <div class="text-foreground">2. Modern Workflow</div>
+            <div class="text-[10px] text-muted-foreground font-normal">Kolaborasi Git & Tim</div>
+          </div>
+        </button>
+
+        <button 
+          type="button" 
+          class="pillar-btn p-3 rounded-lg text-left transition-all flex items-center gap-2.5 font-semibold text-xs border border-transparent text-muted-foreground hover:text-foreground"
+          data-pillar="problem-solving"
+        >
+          <span class="text-base">🧠</span>
+          <div>
+            <div class="text-foreground">3. Problem Solving</div>
+            <div class="text-[10px] text-muted-foreground font-normal">Solusi Nyata Pengguna</div>
+          </div>
+        </button>
+      </div>
+
+      <!-- Pillar Content 1 -->
+      <div id="pillar-content-craftsmanship" class="pillar-panel p-5 rounded-xl bg-secondary/20 border border-border space-y-3">
+        <div class="flex items-center gap-2">
+          <span class="px-2 py-0.5 rounded bg-blue-500/10 text-blue-600 dark:text-blue-400 text-xs font-mono font-bold">Pilar 1: Engineering Craftsmanship</span>
+          <span class="text-xs text-muted-foreground">• Bukan sekadar asal jalan</span>
+        </div>
+        <p class="text-xs md:text-sm text-foreground leading-relaxed">
+          Seorang pengembang perangkat lunak profesional menulis kode yang <strong>bersih (clean code)</strong>, terstruktur, mudah dibaca oleh anggota tim lain, dan aman dari celah keamanan (*security vulnerabilities*).
+        </p>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-3 pt-2">
+          <div class="p-3 rounded-lg bg-card border border-rose-500/20 text-xs space-y-1">
+            <span class="text-rose-500 font-bold font-mono">❌ Kode Asal Jadi (Spaghetti Code):</span>
+            <p class="text-muted-foreground">Variabel tidak jelas (misal: <code>x1</code>, <code>data2</code>), tidak ada komentar, logika bertumpuk berantakan sehingga ketika ada bug sulit diperbaiki.</p>
+          </div>
+          <div class="p-3 rounded-lg bg-card border border-emerald-500/20 text-xs space-y-1">
+            <span class="text-emerald-500 font-bold font-mono">✅ Standar Rekayasa (Clean Craft):</span>
+            <p class="text-muted-foreground">Penamaan fungsi bermakna (misal: <code>calculateUserScore()</code>), modular, terdokumentasi, dan efisien dalam penggunaan memori.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Pillar Content 2 -->
+      <div id="pillar-content-workflow" class="pillar-panel hidden p-5 rounded-xl bg-secondary/20 border border-border space-y-3">
+        <div class="flex items-center gap-2">
+          <span class="px-2 py-0.5 rounded bg-amber-500/10 text-amber-600 dark:text-amber-400 text-xs font-mono font-bold">Pilar 2: Modern Workflow & Collaboration</span>
+          <span class="text-xs text-muted-foreground">• Software dibangun bersama tim</span>
+        </div>
+        <p class="text-xs md:text-sm text-foreground leading-relaxed">
+          Di dunia industri, tidak ada aplikasi besar yang dikerjakan sendirian tanpa alur kerja standar. Kalian akan belajar menggunakan alat kolaborasi standar dunia:
+        </p>
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-2.5 pt-2">
+          <div class="p-3 rounded-lg bg-card border border-border text-center space-y-1">
+            <span class="text-lg">🐙</span>
+            <div class="text-xs font-bold text-foreground">Git & GitHub</div>
+            <div class="text-[10px] text-muted-foreground">Version control & kode tim</div>
+          </div>
+          <div class="p-3 rounded-lg bg-card border border-border text-center space-y-1">
+            <span class="text-lg">🎨</span>
+            <div class="text-xs font-bold text-foreground">Figma</div>
+            <div class="text-[10px] text-muted-foreground">Desain UI/UX & prototipe</div>
+          </div>
+          <div class="p-3 rounded-lg bg-card border border-border text-center space-y-1">
+            <span class="text-lg">⚡</span>
+            <div class="text-xs font-bold text-foreground">VS Code & CLI</div>
+            <div class="text-[10px] text-muted-foreground">Editor & terminal efisien</div>
+          </div>
+          <div class="p-3 rounded-lg bg-card border border-border text-center space-y-1">
+            <span class="text-lg">🏃</span>
+            <div class="text-xs font-bold text-foreground">Scrum / Agile</div>
+            <div class="text-[10px] text-muted-foreground">Manajemen tugas & sprint</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Pillar Content 3 -->
+      <div id="pillar-content-problem-solving" class="pillar-panel hidden p-5 rounded-xl bg-secondary/20 border border-border space-y-3">
+        <div class="flex items-center gap-2">
+          <span class="px-2 py-0.5 rounded bg-purple-500/10 text-purple-600 dark:text-purple-400 text-xs font-mono font-bold">Pilar 3: Problem Solving & Empathy</span>
+          <span class="text-xs text-muted-foreground">• Kode untuk menyelesaikan masalah manusia</span>
+        </div>
+        <p class="text-xs md:text-sm text-foreground leading-relaxed">
+          Teknologi diciptakan bukan untuk pamer kerumitan, melainkan untuk mempermudah hidup manusia. Sebagai calon engineer, kalian dilatih untuk mendengarkan kebutuhan pengguna, membedah masalah rumit menjadi algoritma sederhana, dan menyajikan solusi yang ramah pengguna (*user friendly*).
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Section 2: Interactive Ecosystem Breakdown (Bedah 4 Aplikasi Populer) -->
+  <div class="card p-6 md:p-8 rounded-2xl border-border bg-card shadow-sm space-y-6">
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-border pb-4">
+      <div>
+        <span class="text-xs font-mono text-emerald-600 dark:text-emerald-400 font-bold uppercase tracking-wider">Eksplorasi Industri</span>
+        <h2 class="text-xl md:text-2xl font-extrabold text-foreground tracking-tight">
+          Bedah Ekosistem: Siapa di Balik Aplikasi Favorit Kalian?
+        </h2>
+      </div>
+      <span class="text-xs text-muted-foreground font-mono">Klik salah satu aplikasi:</span>
+    </div>
+
+    <!-- App Selector Cards -->
+    <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+      <button 
+        type="button" 
+        class="app-card active p-4 rounded-xl border border-primary bg-primary/10 text-left transition-all space-y-1 hover:scale-[1.02]"
+        data-app="whatsapp"
+      >
+        <span class="text-2xl">💬</span>
+        <div class="text-xs font-bold text-foreground">WhatsApp</div>
+        <div class="text-[10px] text-muted-foreground">Perpesanan Real-time</div>
+      </button>
+
+      <button 
+        type="button" 
+        class="app-card p-4 rounded-xl border border-border bg-secondary/30 text-left transition-all space-y-1 hover:border-primary/40 hover:scale-[1.02]"
+        data-app="tokopedia"
+      >
+        <span class="text-2xl">🛍️</span>
+        <div class="text-xs font-bold text-foreground">E-Commerce</div>
+        <div class="text-[10px] text-muted-foreground">Tokopedia / Shopee</div>
+      </button>
+
+      <button 
+        type="button" 
+        class="app-card p-4 rounded-xl border border-border bg-secondary/30 text-left transition-all space-y-1 hover:border-primary/40 hover:scale-[1.02]"
+        data-app="gojek"
+      >
+        <span class="text-2xl">🛵</span>
+        <div class="text-xs font-bold text-foreground">Gojek / Grab</div>
+        <div class="text-[10px] text-muted-foreground">On-Demand Transport</div>
+      </button>
+
+      <button 
+        type="button" 
+        class="app-card p-4 rounded-xl border border-border bg-secondary/30 text-left transition-all space-y-1 hover:border-primary/40 hover:scale-[1.02]"
+        data-app="game"
+      >
+        <span class="text-2xl">🎮</span>
+        <div class="text-xs font-bold text-foreground">Game Online</div>
+        <div class="text-[10px] text-muted-foreground">MLBB / Genshin</div>
+      </button>
+    </div>
+
+    <!-- App Detail View -->
+    <div id="app-detail-view" class="p-5 rounded-xl bg-secondary/20 border border-border space-y-4">
+      <!-- WhatsApp Details (Default) -->
+      <div id="app-content-whatsapp" class="app-panel space-y-3">
+        <div class="flex items-center justify-between border-b border-border/50 pb-2">
+          <div class="font-bold text-sm text-foreground flex items-center gap-2">
+            <span>💬 Arsitektur Tim Aplikasi WhatsApp</span>
+          </div>
+          <span class="text-[11px] font-mono px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
+            Kategori: Real-time Communication
+          </span>
+        </div>
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
+          <div class="p-3 rounded-lg bg-card border border-border space-y-1">
+            <span class="font-bold text-primary font-mono">📱 Mobile Developer</span>
+            <p class="text-muted-foreground">Membangun tampilan antarmuka di Android/iOS, fitur dark mode, dan optimasi baterai saat kirim voice note.</p>
+          </div>
+          <div class="p-3 rounded-lg bg-card border border-border space-y-1">
+            <span class="font-bold text-purple-500 font-mono">⚙️ Backend & Security</span>
+            <p class="text-muted-foreground">Mengelola enkripsi *End-to-End Encryption (E2EE)* dan server pengiriman miliaran pesan per detik tanpa delay.</p>
+          </div>
+          <div class="p-3 rounded-lg bg-card border border-border space-y-1">
+            <span class="font-bold text-amber-500 font-mono">🎨 UI/UX Designer</span>
+            <p class="text-muted-foreground">Merancang kemudahan tombol telepon, status bar, dan navigasi tab agar mudah digunakan oleh kakek-nenek hingga anak muda.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tokopedia Details -->
+      <div id="app-content-tokopedia" class="app-panel hidden space-y-3">
+        <div class="flex items-center justify-between border-b border-border/50 pb-2">
+          <div class="font-bold text-sm text-foreground flex items-center gap-2">
+            <span>🛍️ Arsitektur Tim E-Commerce (Tokopedia / Shopee)</span>
+          </div>
+          <span class="text-[11px] font-mono px-2 py-0.5 rounded bg-blue-500/10 text-blue-600 dark:text-blue-400">
+            Kategori: High-Scale Marketplace
+          </span>
+        </div>
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
+          <div class="p-3 rounded-lg bg-card border border-border space-y-1">
+            <span class="font-bold text-primary font-mono">🌐 Frontend Web & Mobile</span>
+            <p class="text-muted-foreground">Halaman katalog produk, keranjang belanja, checkout kilat, dan animasi flash sale.</p>
+          </div>
+          <div class="p-3 rounded-lg bg-card border border-border space-y-1">
+            <span class="font-bold text-purple-500 font-mono">💳 Payment Gateway Engineer</span>
+            <p class="text-muted-foreground">Integrasi pembayaran aman dengan bank, QRIS, dompet digital, dan pencatatan saldo otomatis.</p>
+          </div>
+          <div class="p-3 rounded-lg bg-card border border-border space-y-1">
+            <span class="font-bold text-emerald-500 font-mono">🤖 Data & AI Engineer</span>
+            <p class="text-muted-foreground">Rekomendasi barang sesuai minat belanja pengguna dan deteksi penipuan transaksi.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Gojek Details -->
+      <div id="app-content-gojek" class="app-panel hidden space-y-3">
+        <div class="flex items-center justify-between border-b border-border/50 pb-2">
+          <div class="font-bold text-sm text-foreground flex items-center gap-2">
+            <span>🛵 Arsitektur Tim On-Demand (Gojek / Grab)</span>
+          </div>
+          <span class="text-[11px] font-mono px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
+            Kategori: Geospatial & Dispatching
+          </span>
+        </div>
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
+          <div class="p-3 rounded-lg bg-card border border-border space-y-1">
+            <span class="font-bold text-primary font-mono">🗺️ Geospatial / Map Engineer</span>
+            <p class="text-muted-foreground">Menghitung rute tercepat menghindari macet dan memperkirakan tarif ongkir secara akurat.</p>
+          </div>
+          <div class="p-3 rounded-lg bg-card border border-border space-y-1">
+            <span class="font-bold text-purple-500 font-mono">🔄 Dispatching Backend</span>
+            <p class="text-muted-foreground">Mencocokkan pesanan penumpang dengan driver terdekat dalam hitungan milidetik.</p>
+          </div>
+          <div class="p-3 rounded-lg bg-card border border-border space-y-1">
+            <span class="font-bold text-amber-500 font-mono">🧪 QA & Reliability</span>
+            <p class="text-muted-foreground">Memastikan aplikasi driver tidak force close saat di jalan dengan sinyal internet lemah.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Game Details -->
+      <div id="app-content-game" class="app-panel hidden space-y-3">
+        <div class="flex items-center justify-between border-b border-border/50 pb-2">
+          <div class="font-bold text-sm text-foreground flex items-center gap-2">
+            <span>🎮 Arsitektur Tim Game Online (MLBB / Genshin)</span>
+          </div>
+          <span class="text-[11px] font-mono px-2 py-0.5 rounded bg-purple-500/10 text-purple-600 dark:text-purple-400">
+            Kategori: Game Engine & Multiplayer
+          </span>
+        </div>
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
+          <div class="p-3 rounded-lg bg-card border border-border space-y-1">
+            <span class="font-bold text-primary font-mono">🕹️ Game Gameplay Programmer</span>
+            <p class="text-muted-foreground">Menulis logika skill hero, collision damage, hitbox, dan fisika pergerakan karakter.</p>
+          </div>
+          <div class="p-3 rounded-lg bg-card border border-border space-y-1">
+            <span class="font-bold text-purple-500 font-mono">🌐 Multiplayer Netcode Dev</span>
+            <p class="text-muted-foreground">Sinkronisasi status game 10 pemain sekaligus dengan latency / ping serendah mungkin.</p>
+          </div>
+          <div class="p-3 rounded-lg bg-card border border-border space-y-1">
+            <span class="font-bold text-amber-500 font-mono">🎨 3D & Technical Artist</span>
+            <p class="text-muted-foreground">Membuat model 3D karakter, efek visual partikel sihir, dan shader grafis yang optimal.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Section 3: Filosofi Skill Passport & Tangga Level Interaktif -->
+  <div class="card p-6 md:p-8 rounded-2xl border-border bg-card shadow-sm space-y-6">
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-border pb-4">
+      <div>
+        <span class="text-xs font-mono text-purple-500 font-bold uppercase tracking-wider">Sistem Portofolio Siswa</span>
+        <h2 class="text-xl md:text-2xl font-extrabold text-foreground tracking-tight">
+          Tangga Level Kompetensi Skill Passport (Level 0 - 4)
+        </h2>
+      </div>
+      <span class="text-xs px-2.5 py-1 rounded bg-amber-500/10 text-amber-600 dark:text-amber-400 font-mono font-bold border border-amber-500/20">
+        ★ Target Minimal Semester 1: Level 2
+      </span>
+    </div>
+
+    <p class="text-xs md:text-sm text-muted-foreground leading-relaxed">
+      Di SMKN 1 Rongga, pencapaian kalian tidak hanya diukur dari hafalan ulangan, melainkan <strong>karya nyata (evidence)</strong> yang tersimpan di Google Drive. Klik tiap level untuk melihat standar penilaiannya:
+    </p>
+
+    <!-- Interactive Level Ladder Tabs -->
+    <div class="grid grid-cols-2 sm:grid-cols-5 gap-2">
+      <button 
+        type="button" 
+        class="level-btn p-3 rounded-xl border border-border bg-secondary/30 text-center transition-all hover:border-primary/40 space-y-1"
+        data-level="0"
+      >
+        <div class="text-xs font-mono font-bold text-rose-500">LEVEL 0</div>
+        <div class="text-[11px] font-semibold text-foreground">Belum Terlihat</div>
+      </button>
+
+      <button 
+        type="button" 
+        class="level-btn p-3 rounded-xl border border-border bg-secondary/30 text-center transition-all hover:border-primary/40 space-y-1"
+        data-level="1"
+      >
+        <div class="text-xs font-mono font-bold text-amber-500">LEVEL 1</div>
+        <div class="text-[11px] font-semibold text-foreground">Mengenal</div>
+      </button>
+
+      <button 
+        type="button" 
+        class="level-btn active p-3 rounded-xl border border-primary bg-primary/10 text-center transition-all space-y-1 shadow-sm"
+        data-level="2"
+      >
+        <div class="text-xs font-mono font-bold text-primary">LEVEL 2 ★</div>
+        <div class="text-[11px] font-bold text-foreground">Mencoba (Target)</div>
+      </button>
+
+      <button 
+        type="button" 
+        class="level-btn p-3 rounded-xl border border-border bg-secondary/30 text-center transition-all hover:border-primary/40 space-y-1"
+        data-level="3"
+      >
+        <div class="text-xs font-mono font-bold text-emerald-500">LEVEL 3</div>
+        <div class="text-[11px] font-semibold text-foreground">Mandiri</div>
+      </button>
+
+      <button 
+        type="button" 
+        class="level-btn p-3 rounded-xl border border-border bg-secondary/30 text-center transition-all hover:border-primary/40 space-y-1"
+        data-level="4"
+      >
+        <div class="text-xs font-mono font-bold text-purple-500">LEVEL 4</div>
+        <div class="text-[11px] font-semibold text-foreground">Mahir / Portofolio</div>
+      </button>
+    </div>
+
+    <!-- Level Info Panel -->
+    <div id="level-detail-card" class="p-5 rounded-xl bg-secondary/20 border border-border space-y-2">
+      <div class="flex items-center justify-between">
+        <span id="level-badge" class="px-2.5 py-0.5 rounded bg-primary/20 text-primary text-xs font-mono font-bold">
+          Level 2: Mencoba ★ (Target Minimal Semester 1)
+        </span>
+        <span class="text-xs text-muted-foreground font-mono">Predikat Capaian</span>
+      </div>
+      <p id="level-desc" class="text-xs md:text-sm text-foreground leading-relaxed">
+        Siswa telah berhasil membuat struktur folder Google Drive dengan format baku, mengatur hak akses ke <em>Anyone with the link can view</em>, dan mengumpulkan minimal 3 aplikasi hasil audit teknologi pada Form LKPD P1.
+      </p>
+      <div id="level-tip" class="p-3 rounded-lg bg-card border border-primary/20 text-xs text-primary flex items-start gap-2">
+        <span>💡</span>
+        <span>Target wajib semua siswa kelas 10 RPL pada pertemuan pertama agar tidak terkena remidi Skill Clinic.</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Section 4: Interactive Step-by-Step Google Drive Setup Wizard -->
+  <div class="card p-6 md:p-8 rounded-2xl border-border bg-card shadow-sm space-y-6">
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-border pb-4">
+      <div>
+        <span class="text-xs font-mono text-primary font-bold uppercase tracking-wider">Langkah Praktik</span>
+        <h2 class="text-xl md:text-2xl font-extrabold text-foreground tracking-tight">
+          Panduan Setup Folder Evidence Google Drive
+        </h2>
+      </div>
+      <button 
+        type="button" 
+        id="btn-copy-folder-template"
+        class="btn btn-secondary text-xs font-mono px-3 py-1.5 rounded-lg border border-border hover:bg-secondary flex items-center gap-1.5"
+      >
+        <span>📋 Salin Format Nama Folder</span>
+      </button>
+    </div>
+
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div class="p-4 rounded-xl bg-secondary/20 border border-border space-y-2">
+        <div class="w-7 h-7 rounded-lg bg-primary/10 text-primary flex items-center justify-center font-mono font-bold text-xs">
+          1
+        </div>
+        <h3 class="text-xs font-bold text-foreground">Buat Folder Utama</h3>
+        <p class="text-[11px] text-muted-foreground leading-relaxed">
+          Buka Google Drive kalian, buat folder baru dengan nama: <code class="bg-secondary px-1 rounded text-primary">RPL_SkillPassport_2026-2027</code>
+        </p>
+      </div>
+
+      <div class="p-4 rounded-xl bg-secondary/20 border border-border space-y-2">
+        <div class="w-7 h-7 rounded-lg bg-primary/10 text-primary flex items-center justify-center font-mono font-bold text-xs">
+          2
+        </div>
+        <h3 class="text-xs font-bold text-foreground">Buat Subfolder Siswa</h3>
+        <p class="text-[11px] text-muted-foreground leading-relaxed">
+          Di dalamnya buat subfolder kelas dan nama: <code class="bg-secondary px-1 rounded text-primary">[NIS]_[NamaLengkap]</code>
+        </p>
+      </div>
+
+      <div class="p-4 rounded-xl bg-secondary/20 border border-border space-y-2">
+        <div class="w-7 h-7 rounded-lg bg-emerald-500/10 text-emerald-500 flex items-center justify-center font-mono font-bold text-xs">
+          3
+        </div>
+        <h3 class="text-xs font-bold text-foreground">Ubah Akses Publik</h3>
+        <p class="text-[11px] text-muted-foreground leading-relaxed">
+          Klik kanan folder ➔ <strong>Bagikan (Share)</strong> ➔ Ubah akses ke: <strong>"Anyone with the link can view"</strong>.
+        </p>
+      </div>
+
+      <div class="p-4 rounded-xl bg-secondary/20 border border-border space-y-2">
+        <div class="w-7 h-7 rounded-lg bg-amber-500/10 text-amber-500 flex items-center justify-center font-mono font-bold text-xs">
+          4
+        </div>
+        <h3 class="text-xs font-bold text-foreground">Salin & Tempel Link</h3>
+        <p class="text-[11px] text-muted-foreground leading-relaxed">
+          Salin link Google Drive kalian lalu tempelkan pada formulir di <strong>Tab 2 (Form LKPD)</strong> untuk diverifikasi guru.
+        </p>
+      </div>
+    </div>
+
+    <!-- Action Prompt Banner -->
+    <div class="p-4 rounded-xl bg-primary/10 border border-primary/20 flex flex-col sm:flex-row items-center justify-between gap-3">
+      <div class="space-y-0.5 text-center sm:text-left">
+        <span class="text-xs font-bold text-foreground">Siap Mengisi Lembar Kerja & Menyimpan Bukti Drive?</span>
+        <p class="text-[11px] text-muted-foreground">Pindah ke Tab LKPD untuk memasukkan data dan mengklaim +25 XP belajar.</p>
+      </div>
+      <button 
+        type="button" 
+        data-switch-tab="lkpd"
+        class="btn btn-primary text-xs font-semibold px-5 py-2 rounded-xl shrink-0"
+      >
+        Lanjut ke Form LKPD Interaktif →
+      </button>
+    </div>
+  </div>
+
+  <!-- Catatan Guru Card -->
+  <div class="p-6 rounded-2xl bg-secondary/30 border border-border flex items-start gap-4">
+    <div class="w-12 h-12 rounded-2xl bg-primary/10 text-primary flex items-center justify-center text-xl shrink-0 border border-primary/20">
+      👨‍🏫
+    </div>
+    <div class="space-y-1 text-xs">
+      <div class="font-bold text-foreground text-sm">Pesan dari Guru Pengampu</div>
+      <p class="text-muted-foreground leading-relaxed italic">
+        "Selamat datang di gerbang awal petualangan RPL! Ingat pesan saya: Jangan takut salah kode. Yang terpenting adalah kalian konsisten mendokumentasikan setiap proses belajar kalian di folder evidence Skill Passport ini."
+      </p>
+      <div class="font-mono text-primary font-semibold pt-1">
+        — Agung Gumelar Saputra, S.Tr.T, Gr (Guru Produktif PPLG SMKN 1 Rongga)
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+  // Interactive Pillars Switcher
+  const pillarBtns = document.querySelectorAll('.pillar-btn');
+  const pillarPanels = document.querySelectorAll('.pillar-panel');
+
+  pillarBtns.forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const pillar = btn.getAttribute('data-pillar');
+      
+      pillarBtns.forEach(b => {
+        b.classList.remove('active', 'border-primary', 'bg-card', 'text-primary');
+        b.classList.add('text-muted-foreground');
+      });
+      btn.classList.add('active', 'border-primary', 'bg-card', 'text-primary');
+      btn.classList.remove('text-muted-foreground');
+
+      pillarPanels.forEach(p => {
+        if (p.id === `pillar-content-${pillar}`) {
+          p.classList.remove('hidden');
+        } else {
+          p.classList.add('hidden');
+        }
+      });
+    });
+  });
+
+  // Interactive Ecosystem Apps Switcher
+  const appCards = document.querySelectorAll('.app-card');
+  const appPanels = document.querySelectorAll('.app-panel');
+
+  appCards.forEach((card) => {
+    card.addEventListener('click', () => {
+      const app = card.getAttribute('data-app');
+
+      appCards.forEach(c => {
+        c.classList.remove('active', 'border-primary', 'bg-primary/10');
+        c.classList.add('border-border', 'bg-secondary/30');
+      });
+      card.classList.add('active', 'border-primary', 'bg-primary/10');
+      card.classList.remove('border-border', 'bg-secondary/30');
+
+      appPanels.forEach(p => {
+        if (p.id === `app-content-${app}`) {
+          p.classList.remove('hidden');
+        } else {
+          p.classList.add('hidden');
+        }
+      });
+    });
+  });
+
+  // Interactive Level Ladder Explorer
+  const levelData: Record<string, { badge: string; desc: string; tip: string; color: string }> = {
+    '0': {
+      badge: 'Level 0: Belum Terlihat',
+      desc: 'Siswa belum membuat folder Google Drive, link terkunci/rusak, atau belum mengisi formulir LKPD P1.',
+      tip: '⚠️ Segera buat folder dan ubah setting share agar terhindar dari remidi awal semester.',
+      color: 'rose'
+    },
+    '1': {
+      badge: 'Level 1: Mengenal',
+      desc: 'Folder Google Drive sudah dibuat namun penamaan belum sesuai konvensi baku atau isian audit teknologi masih kurang dari 3 aplikasi.',
+      tip: '💡 Perbaiki penamaan folder sesuai format: RPL_SkillPassport_[NIS]_[NamaLengkap].',
+      color: 'amber'
+    },
+    '2': {
+      badge: 'Level 2: Mencoba ★ (Target Minimal Semester 1)',
+      desc: 'Folder Google Drive lengkap sesuai konvensi, link share Viewer aktif, dan tabel audit teknologi terisi minimal 3 aplikasi dengan tepat.',
+      tip: '🎯 Target utama yang harus dicapai oleh seluruh siswa pada pertemuan 1.',
+      color: 'primary'
+    },
+    '3': {
+      badge: 'Level 3: Mandiri',
+      desc: 'Evidence terstruktur rapi, tabel audit memetakan lebih dari 5 aplikasi lengkap dengan analisis detail peran arsitektur backend, frontend, dan UX.',
+      tip: '✨ Mampu mempresentasikan hasil temuan profesi IT di depan kelas dengan percaya diri.',
+      color: 'emerald'
+    },
+    '4': {
+      badge: 'Level 4: Mahir / Portofolio Percontohan',
+      desc: 'Hasil eksplorasi sangat mendalam, membuat dokumen PDF visual ber-anotasi mandiri, dan menyertakan rencana roadmap belajar programming 3 tahun.',
+      tip: '🏆 Layak menjadi portofolio percontohan jurusan dan dibagikan ke media sosial / LinkedIn.',
+      color: 'purple'
+    }
+  };
+
+  const levelBtns = document.querySelectorAll('.level-btn');
+  const levelBadge = document.getElementById('level-badge');
+  const levelDesc = document.getElementById('level-desc');
+  const levelTip = document.getElementById('level-tip');
+
+  levelBtns.forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const lvl = btn.getAttribute('data-level') || '2';
+      const info = levelData[lvl];
+
+      levelBtns.forEach(b => {
+        b.classList.remove('active', 'border-primary', 'bg-primary/10');
+        b.classList.add('border-border', 'bg-secondary/30');
+      });
+      btn.classList.add('active', 'border-primary', 'bg-primary/10');
+      btn.classList.remove('border-border', 'bg-secondary/30');
+
+      if (info && levelBadge && levelDesc && levelTip) {
+        levelBadge.textContent = info.badge;
+        levelDesc.innerHTML = info.desc;
+        levelTip.innerHTML = `<span>💡</span><span>${info.tip}</span>`;
+      }
+    });
+  });
+
+  // Copy template folder helper
+  const btnCopyFolder = document.getElementById('btn-copy-folder-template');
+  btnCopyFolder?.addEventListener('click', () => {
+    const template = 'RPL_SkillPassport_2026-2027/10_RPL_1/[NIS]_[Nama_Lengkap]/OR-01_Wawasan_Dunia_Kerja';
+    navigator.clipboard.writeText(template).then(() => {
+      const originalText = btnCopyFolder.innerHTML;
+      btnCopyFolder.innerHTML = '<span>✅ Format Tersalin!</span>';
+      setTimeout(() => {
+        btnCopyFolder.innerHTML = originalText;
+      }, 2000);
+    });
+  });
+</script>

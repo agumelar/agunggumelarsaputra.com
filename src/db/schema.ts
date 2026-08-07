@@ -60,3 +60,23 @@ export const tkaAttempts = pgTable('tka_attempts', {
   xpEarned: integer('xp_earned').default(0).notNull(),
   createdAt: timestamp('created_at').defaultNow().notNull(),
 });
+
+export const userSubmissions = pgTable('user_submissions', {
+  id: serial('id').primaryKey(),
+  userId: integer('user_id').references(() => users.id, { onDelete: 'cascade' }).notNull(),
+  tokenId: integer('token_id').references(() => enrollmentTokens.id, { onDelete: 'set null' }),
+  lessonSlug: text('lesson_slug').notNull(),
+  submissionType: text('submission_type').notNull(), // 'lkpd', 'reflection', 'kktp_self_assessment', 'quiz'
+  formData: text('form_data').notNull(), // JSON string payload jawaban siswa
+  driveUrl: text('drive_url'), // Link GDrive evidence (opsional)
+  score: integer('score'), // Nilai / persentase ketercapaian jika ada
+  teacherScore: integer('teacher_score'), // Nilai angka (0-100) dari Guru
+  teacherLevel: text('teacher_level'), // Level KKTP ('Level 0', 'Level 1', 'Level 2', 'Level 3', 'Level 4')
+  teacherFeedback: text('teacher_feedback'), // Catatan masukan evaluasi dari Guru
+  gradedBy: integer('graded_by').references(() => users.id, { onDelete: 'set null' }),
+  gradedAt: timestamp('graded_at'),
+  status: text('status').default('submitted').notNull(), // 'draft', 'submitted', 'graded'
+  submittedAt: timestamp('submitted_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+});
+
