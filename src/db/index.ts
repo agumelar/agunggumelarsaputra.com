@@ -44,7 +44,7 @@ export async function ensureDbInitialized(): Promise<{ success: boolean; message
 
   initPromise = (async () => {
     try {
-      // Execute consolidated DDL in one go to minimize serverless cold-start latency
+      // 1. Users table
       await sql`
         CREATE TABLE IF NOT EXISTS users (
           id SERIAL PRIMARY KEY,
@@ -56,10 +56,12 @@ export async function ensureDbInitialized(): Promise<{ success: boolean; message
           student_class TEXT,
           avatar_url TEXT,
           created_at TIMESTAMP NOT NULL DEFAULT NOW()
-        );
+        )
+      `;
+      try { await sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS student_class TEXT`; } catch {}
 
-        ALTER TABLE users ADD COLUMN IF NOT EXISTS student_class TEXT;
-        
+      // 2. User gamification table
+      await sql`
         CREATE TABLE IF NOT EXISTS user_gamification (
           id SERIAL PRIMARY KEY,
           user_id INTEGER NOT NULL UNIQUE REFERENCES users(id) ON DELETE CASCADE,
@@ -67,8 +69,11 @@ export async function ensureDbInitialized(): Promise<{ success: boolean; message
           level INTEGER NOT NULL DEFAULT 1,
           streak_days INTEGER NOT NULL DEFAULT 1,
           last_active_date TIMESTAMP NOT NULL DEFAULT NOW()
-        );
-        
+        )
+      `;
+
+      // 3. Enrollment tokens table
+      await sql`
         CREATE TABLE IF NOT EXISTS enrollment_tokens (
           id SERIAL PRIMARY KEY,
           token TEXT NOT NULL UNIQUE,
@@ -81,25 +86,33 @@ export async function ensureDbInitialized(): Promise<{ success: boolean; message
           created_by INTEGER REFERENCES users(id) ON DELETE SET NULL,
           created_at TIMESTAMP NOT NULL DEFAULT NOW(),
           expires_at TIMESTAMP
-        );
+        )
+      `;
 
+      // 4. User enrollments association table
+      await sql`
         CREATE TABLE IF NOT EXISTS user_enrollments (
           id SERIAL PRIMARY KEY,
           user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
           token_id INTEGER NOT NULL REFERENCES enrollment_tokens(id) ON DELETE CASCADE,
           enrolled_at TIMESTAMP NOT NULL DEFAULT NOW()
-        );
+        )
+      `;
 
+      // 5. User progress table
+      await sql`
         CREATE TABLE IF NOT EXISTS user_progress (
           id SERIAL PRIMARY KEY,
           user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
           token_id INTEGER REFERENCES enrollment_tokens(id) ON DELETE SET NULL,
           lesson_slug TEXT NOT NULL,
           completed_at TIMESTAMP NOT NULL DEFAULT NOW()
-        );
+        )
+      `;
+      try { await sql`ALTER TABLE user_progress ADD COLUMN IF NOT EXISTS token_id INTEGER REFERENCES enrollment_tokens(id) ON DELETE SET NULL`; } catch {}
 
-        ALTER TABLE user_progress ADD COLUMN IF NOT EXISTS token_id INTEGER REFERENCES enrollment_tokens(id) ON DELETE SET NULL;
-
+      // 6. TKA attempts table
+      await sql`
         CREATE TABLE IF NOT EXISTS tka_attempts (
           id SERIAL PRIMARY KEY,
           user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
@@ -109,10 +122,12 @@ export async function ensureDbInitialized(): Promise<{ success: boolean; message
           correct_answers INTEGER NOT NULL,
           xp_earned INTEGER NOT NULL DEFAULT 0,
           created_at TIMESTAMP NOT NULL DEFAULT NOW()
-        );
+        )
+      `;
+      try { await sql`ALTER TABLE tka_attempts ADD COLUMN IF NOT EXISTS token_id INTEGER REFERENCES enrollment_tokens(id) ON DELETE SET NULL`; } catch {}
 
-        ALTER TABLE tka_attempts ADD COLUMN IF NOT EXISTS token_id INTEGER REFERENCES enrollment_tokens(id) ON DELETE SET NULL;
-
+      // 7. User submissions (LKPD & Reflection) table
+      await sql`
         CREATE TABLE IF NOT EXISTS user_submissions (
           id SERIAL PRIMARY KEY,
           user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
@@ -130,14 +145,21 @@ export async function ensureDbInitialized(): Promise<{ success: boolean; message
           status TEXT NOT NULL DEFAULT 'submitted',
           submitted_at TIMESTAMP NOT NULL DEFAULT NOW(),
           updated_at TIMESTAMP NOT NULL DEFAULT NOW()
-        );
-
-        ALTER TABLE user_submissions ADD COLUMN IF NOT EXISTS teacher_score INTEGER;
-        ALTER TABLE user_submissions ADD COLUMN IF NOT EXISTS teacher_level TEXT;
-        ALTER TABLE user_submissions ADD COLUMN IF NOT EXISTS teacher_feedback TEXT;
-        ALTER TABLE user_submissions ADD COLUMN IF NOT EXISTS graded_by INTEGER REFERENCES users(id) ON DELETE SET NULL;
-        ALTER TABLE user_submissions ADD COLUMN IF NOT EXISTS graded_at TIMESTAMP;
+        )
       `;
+
+      // Safe column migration for existing user_submissions tables
+      try { await sql`ALTER TABLE user_submissions ADD COLUMN IF NOT EXISTS token_id INTEGER REFERENCES enrollment_tokens(id) ON DELETE SET NULL`; } catch {}
+      try { await sql`ALTER TABLE user_submissions ADD COLUMN IF NOT EXISTS drive_url TEXT`; } catch {}
+      try { await sql`ALTER TABLE user_submissions ADD COLUMN IF NOT EXISTS score INTEGER`; } catch {}
+      try { await sql`ALTER TABLE user_submissions ADD COLUMN IF NOT EXISTS teacher_score INTEGER`; } catch {}
+      try { await sql`ALTER TABLE user_submissions ADD COLUMN IF NOT EXISTS teacher_level TEXT`; } catch {}
+      try { await sql`ALTER TABLE user_submissions ADD COLUMN IF NOT EXISTS teacher_feedback TEXT`; } catch {}
+      try { await sql`ALTER TABLE user_submissions ADD COLUMN IF NOT EXISTS graded_by INTEGER REFERENCES users(id) ON DELETE SET NULL`; } catch {}
+      try { await sql`ALTER TABLE user_submissions ADD COLUMN IF NOT EXISTS graded_at TIMESTAMP`; } catch {}
+      try { await sql`ALTER TABLE user_submissions ADD COLUMN IF NOT EXISTS status TEXT NOT NULL DEFAULT 'submitted'`; } catch {}
+      try { await sql`ALTER TABLE user_submissions ADD COLUMN IF NOT EXISTS submitted_at TIMESTAMP NOT NULL DEFAULT NOW()`; } catch {}
+      try { await sql`ALTER TABLE user_submissions ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP NOT NULL DEFAULT NOW()`; } catch {}
 
       isInitialized = true;
       return true;
@@ -152,3 +174,4 @@ export async function ensureDbInitialized(): Promise<{ success: boolean; message
   const success = await initPromise;
   return { success };
 }
+
