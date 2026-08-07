@@ -94,7 +94,7 @@ export const GET: APIRoute = async ({ url, locals }) => {
     const avgScore = studentsWithExam.length > 0
       ? Math.round(studentsWithExam.reduce((acc, curr) => acc + (curr.examScore || 0), 0) / studentsWithExam.length)
       : 0;
-    const passCount = studentsWithExam.filter(s => (s.examScore || 0) >= 75).length;
+    const passCount = studentsWithExam.filter(s => (s.examScore || 0) >= 73).length;
     const passRate = studentsWithExam.length > 0
       ? Math.round((passCount / studentsWithExam.length) * 100)
       : 0;

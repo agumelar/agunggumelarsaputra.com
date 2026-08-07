@@ -151,6 +151,17 @@ for (const ex of allExamLogs) {
 }
 
 // 6. Metrics Calculations
+const lkpdSubmissions = allSubmissions.filter(s => s.submissionType !== 'reflection');
+const reflectionSubmissions = allSubmissions.filter(s => s.submissionType === 'reflection');
+
+const totalLkpd = lkpdSubmissions.length;
+const pendingLkpd = lkpdSubmissions.filter(s => s.teacherScore === null || s.teacherScore === undefined).length;
+const gradedLkpd = lkpdSubmissions.filter(s => s.teacherScore !== null && s.teacherScore !== undefined).length;
+
+const totalReflections = reflectionSubmissions.length;
+const pendingReflections = reflectionSubmissions.filter(s => s.status !== 'reviewed' && !s.teacherFeedback).length;
+const reviewedReflections = reflectionSubmissions.filter(s => s.status === 'reviewed' || s.teacherFeedback).length;
+
 const totalStudents = allUsers.filter(u => u.role === 'student' && !isSuperAdminEmail(u.email)).length;
 const totalTeachers = allUsers.filter(u => (u.role === 'teacher' || u.role === 'admin') && !isSuperAdminEmail(u.email)).length;
 const totalSuperAdmins = allUsers.filter(u => u.role === 'superadmin' || isSuperAdminEmail(u.email)).length;
@@ -158,7 +169,7 @@ const totalExamsTaken = allExamLogs.length;
 const avgScoreAll = totalExamsTaken > 0
   ? Math.round(allExamLogs.reduce((acc, curr) => acc + curr.score, 0) / totalExamsTaken)
   : 0;
-const passingExams = allExamLogs.filter(e => e.score >= 75).length;
+const passingExams = allExamLogs.filter(e => e.score >= 73).length;
 const passRate = totalExamsTaken > 0 ? Math.round((passingExams / totalExamsTaken) * 100) : 0;
 ---
 
@@ -177,22 +188,25 @@ const passRate = totalExamsTaken > 0 ? Math.round((passingExams / totalExamsTake
           Panel Manajemen Guru & Monitoring Siswa
         </h1>
         <p class="text-xs sm:text-sm text-muted-foreground max-w-xl leading-relaxed">
-          Kelola token sesi pembelajaran (Roll Token), pantau partisipasi siswa per-token, kelola perizinan hak akses, dan evaluasi hasil nilai ujian Drilling TKA secara real-time.
+          Kelola token sesi pembelajaran, evaluasi lembar kerja (LKPD), tinjau respon refleksi kualitatif siswa, pantau hak akses, dan analisis hasil ujian Drilling TKA secara real-time.
         </p>
       </div>
 
       <div class="flex flex-wrap items-center gap-2 flex-shrink-0">
-        <a href="#tokens" class="btn btn-sm bg-cyan-600 hover:bg-cyan-500 text-white font-semibold rounded-lg">
-          🎟️ Token Sesi ({allTokens.length})
+        <a href="#tokens" class="btn btn-sm bg-cyan-600 hover:bg-cyan-500 text-white font-semibold rounded-lg shadow-sm">
+          🎟️ Token ({allTokens.length})
         </a>
-        <a href="#submissions" class="btn btn-sm bg-purple-600 hover:bg-purple-500 text-white font-semibold rounded-lg">
-          📝 Penilaian LKPD ({allSubmissions.length})
+        <a href="#submissions" class="btn btn-sm bg-purple-600 hover:bg-purple-500 text-white font-semibold rounded-lg shadow-sm">
+          📝 LKPD ({totalLkpd})
         </a>
-        <a href="#students" class="btn btn-sm bg-amber-500 hover:bg-amber-400 text-black font-semibold rounded-lg">
-          👥 Data Siswa ({allUsers.length})
+        <a href="#reflections" class="btn btn-sm bg-pink-600 hover:bg-pink-500 text-white font-semibold rounded-lg shadow-sm">
+          💭 Refleksi ({totalReflections})
+        </a>
+        <a href="#students" class="btn btn-sm bg-amber-500 hover:bg-amber-400 text-black font-semibold rounded-lg shadow-sm">
+          👥 Siswa ({allUsers.length})
         </a>
         <a href="#exams" class="btn btn-sm btn-outline border-border text-foreground hover:bg-accent font-semibold rounded-lg">
-          📈 Log Ujian ({totalExamsTaken})
+          📈 Ujian ({totalExamsTaken})
         </a>
       </div>
     </div>
@@ -231,39 +245,41 @@ const passRate = totalExamsTaken > 0 ? Math.round((passingExams / totalExamsTake
       <!-- Metric 3: Penilaian LKPD -->
       <div class="card p-5 rounded-xl border-border bg-card space-y-1.5 shadow-sm">
         <div class="flex items-center justify-between">
-          <span class="text-xs font-medium text-muted-foreground">LKPD Masuk</span>
+          <span class="text-xs font-medium text-muted-foreground">Evaluasi LKPD</span>
           <span class="text-base">📝</span>
         </div>
         <div class="text-2xl font-bold text-purple-600 dark:text-purple-400 font-mono">
-          {allSubmissions.length} <span class="text-xs text-muted-foreground font-sans font-normal">Set</span>
+          {totalLkpd} <span class="text-xs text-muted-foreground font-sans font-normal">Set</span>
         </div>
         <p class="text-[11px] text-muted-foreground">
-          <span class="text-amber-600 dark:text-amber-400 font-bold">{allSubmissions.filter(s => s.teacherScore === null || s.teacherScore === undefined).length} Menunggu</span> • <span class="text-emerald-600 dark:text-emerald-400 font-bold">{allSubmissions.filter(s => s.teacherScore !== null && s.teacherScore !== undefined).length} Dinilai</span>
+          <span class="text-amber-600 dark:text-amber-400 font-bold">{pendingLkpd} Menunggu</span> • <span class="text-emerald-600 dark:text-emerald-400 font-bold">{gradedLkpd} Dinilai</span>
         </p>
       </div>
 
-      <!-- Metric 4: Rata-Rata Nilai -->
+      <!-- Metric 4: Jurnal Refleksi Siswa -->
       <div class="card p-5 rounded-xl border-border bg-card space-y-1.5 shadow-sm">
         <div class="flex items-center justify-between">
-          <span class="text-xs font-medium text-muted-foreground">Rata-Rata Nilai TKA</span>
+          <span class="text-xs font-medium text-muted-foreground">Jurnal Refleksi</span>
+          <span class="text-base">💭</span>
+        </div>
+        <div class="text-2xl font-bold text-pink-600 dark:text-pink-400 font-mono">
+          {totalReflections} <span class="text-xs text-muted-foreground font-sans font-normal">Jurnal</span>
+        </div>
+        <p class="text-[11px] text-muted-foreground">
+          <span class="text-amber-600 dark:text-amber-400 font-bold">{pendingReflections} Baru</span> • <span class="text-pink-600 dark:text-pink-400 font-bold">{reviewedReflections} Ditinjau</span>
+        </p>
+      </div>
+
+      <!-- Metric 5: Rata-Rata Nilai TKA -->
+      <div class="card p-5 rounded-xl border-border bg-card space-y-1.5 shadow-sm">
+        <div class="flex items-center justify-between">
+          <span class="text-xs font-medium text-muted-foreground">Rata-Rata Drilling TKA</span>
           <span class="text-base">📊</span>
         </div>
         <div class="text-2xl font-bold text-amber-600 dark:text-amber-400 font-mono">
           {avgScoreAll} <span class="text-xs text-muted-foreground font-sans font-normal">/ 100</span>
         </div>
-        <p class="text-[11px] text-muted-foreground">Tingkat Kelulusan: <span class="text-emerald-600 dark:text-emerald-400 font-bold">{passRate}%</span></p>
-      </div>
-
-      <!-- Metric 5: Modul Diselesaikan -->
-      <div class="card p-5 rounded-xl border-border bg-card space-y-1.5 shadow-sm">
-        <div class="flex items-center justify-between">
-          <span class="text-xs font-medium text-muted-foreground">Modul Diselesaikan</span>
-          <span class="text-base">📚</span>
-        </div>
-        <div class="text-2xl font-bold text-emerald-600 dark:text-emerald-400 font-mono">
-          {allLessonLogs.length} <span class="text-xs text-muted-foreground font-sans font-normal">Kali</span>
-        </div>
-        <p class="text-[11px] text-muted-foreground">Aktivitas Belajar Mandiri</p>
+        <p class="text-[11px] text-muted-foreground">Kelulusan KKM: <span class="text-emerald-600 dark:text-emerald-400 font-bold">{passRate}%</span></p>
       </div>
 
     </div>
@@ -565,33 +581,33 @@ const passRate = totalExamsTaken > 0 ? Math.round((passingExams / totalExamsTake
               <span>📝 Penilaian & Evaluasi LKPD Siswa</span>
             </h2>
             <span class="px-2 py-0.5 rounded font-mono text-[10px] font-bold bg-purple-500/10 text-purple-600 dark:text-purple-400 border border-purple-500/25">
-              EVALUASI GURU
+              EVALUASI KOMPETENSI LKPD
             </span>
           </div>
           <p class="text-xs text-muted-foreground">
-            Periksa lembar kerja dan refleksi siswa, berikan skor angka (0-100), capaian KKTP (Level 0-4), serta catatan evaluasi guru.
+            Periksa hasil kerja praktik / LKPD siswa, berikan skor angka (0-100) berbasis KKM (73), capaian KKTP (Level 0-4), serta catatan evaluasi guru.
           </p>
         </div>
 
         <div class="flex items-center gap-3">
           <div class="flex items-center gap-1.5 text-xs font-mono">
             <span class="px-2.5 py-1 rounded bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20 font-semibold">
-              ⏳ {allSubmissions.filter(s => s.teacherScore === null || s.teacherScore === undefined).length} Menunggu
+              ⏳ {pendingLkpd} Menunggu
             </span>
             <span class="px-2.5 py-1 rounded bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 font-semibold">
-              ✓ {allSubmissions.filter(s => s.teacherScore !== null && s.teacherScore !== undefined).length} Dinilai
+              ✓ {gradedLkpd} Dinilai
             </span>
           </div>
         </div>
       </div>
 
-      <!-- Filter Controls -->
+      <!-- Filter Controls for LKPD -->
       <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
         <div class="relative">
           <input 
             type="text" 
             id="submission-search-input" 
-            placeholder="Cari nama siswa / email / modul..." 
+            placeholder="Cari nama siswa / email / modul LKPD..." 
             class="w-full px-3 py-2 bg-background border border-border rounded-lg text-xs focus:outline-none focus:border-primary placeholder:text-muted-foreground"
           />
         </div>
@@ -617,18 +633,20 @@ const passRate = totalExamsTaken > 0 ? Math.round((passingExams / totalExamsTake
             id="submission-status-filter" 
             class="w-full px-3 py-2 bg-background border border-border rounded-lg text-xs focus:outline-none focus:border-primary"
           >
-            <option value="">Semua Status</option>
+            <option value="">Semua Status LKPD</option>
             <option value="pending">Menunggu Penilaian</option>
-            <option value="graded">Sudah Dinilai</option>
+            <option value="graded">Sudah Dinilai (Semua)</option>
+            <option value="passed">✓ Tuntas KKM (>= 73)</option>
+            <option value="remedial">⚠️ Belum Tuntas (< 73)</option>
           </select>
         </div>
       </div>
 
-      <!-- Submissions Table -->
-      {allSubmissions.length === 0 ? (
+      <!-- LKPD Submissions Table -->
+      {lkpdSubmissions.length === 0 ? (
         <div class="p-8 text-center bg-background rounded-lg border border-border/50 text-xs text-muted-foreground space-y-2">
           <div class="text-2xl">📥</div>
-          <p class="font-medium text-foreground">Belum ada LKPD atau refleksi yang dikumpulkan oleh siswa.</p>
+          <p class="font-medium text-foreground">Belum ada tugas LKPD yang dikumpulkan oleh siswa.</p>
           <p class="text-[11px]">Ketika siswa mengisi formulir LKPD di modul materi dan menekan tombol simpan, data akan muncul di sini.</p>
         </div>
       ) : (
@@ -637,15 +655,17 @@ const passRate = totalExamsTaken > 0 ? Math.round((passingExams / totalExamsTake
             <thead class="text-[11px] text-muted-foreground uppercase font-mono bg-secondary/40 border-b border-border">
               <tr>
                 <th class="py-3 px-3">Siswa & Kelas</th>
-                <th class="py-3 px-3">Modul & Tipe</th>
+                <th class="py-3 px-3">Modul & Tipe LKPD</th>
                 <th class="py-3 px-3">Waktu Kirim</th>
                 <th class="py-3 px-3">Status / Nilai Guru</th>
                 <th class="py-3 px-3 text-right">Aksi</th>
               </tr>
             </thead>
             <tbody class="divide-y divide-border font-medium bg-card">
-              {allSubmissions.map((sub: any) => {
+              {lkpdSubmissions.map((sub: any) => {
                 const isGraded = sub.teacherScore !== null && sub.teacherScore !== undefined;
+                const isPassed = isGraded && sub.teacherScore >= 73;
+                const statusTag = isGraded ? (isPassed ? 'passed' : 'remedial') : 'pending';
                 const dateFormatted = new Date(sub.submittedAt).toLocaleDateString('id-ID', {
                   day: 'numeric',
                   month: 'short',
@@ -661,7 +681,8 @@ const passRate = totalExamsTaken > 0 ? Math.round((passingExams / totalExamsTake
                     data-email={sub.userEmail.toLowerCase()}
                     data-class={sub.studentClass || ''}
                     data-slug={sub.lessonSlug.toLowerCase()}
-                    data-status={isGraded ? 'graded' : 'pending'}
+                    data-status={statusTag}
+                    data-graded={isGraded ? 'graded' : 'pending'}
                   >
                     <td class="py-3 px-3">
                       <div class="space-y-0.5">
@@ -684,7 +705,7 @@ const passRate = totalExamsTaken > 0 ? Math.round((passingExams / totalExamsTake
                       <div class="space-y-1">
                         <div class="flex items-center gap-1.5">
                           <span class="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-primary/10 text-primary border border-primary/20 uppercase">
-                            {sub.submissionType}
+                            {sub.submissionType || 'LKPD'}
                           </span>
                         </div>
                         <div class="text-[11px] font-mono text-muted-foreground truncate max-w-[220px]" title={sub.lessonSlug}>
@@ -700,9 +721,9 @@ const passRate = totalExamsTaken > 0 ? Math.round((passingExams / totalExamsTake
                     <td class="py-3 px-3">
                       {isGraded ? (
                         <div class="space-y-1">
-                          <div class="flex items-center gap-2">
-                            <span class="px-2.5 py-0.5 rounded bg-amber-500/15 text-amber-600 dark:text-amber-400 font-mono text-xs font-bold border border-amber-500/30">
-                              ⭐ {sub.teacherScore} / 100
+                          <div class="flex items-center gap-1.5 flex-wrap">
+                            <span class={`px-2 py-0.5 rounded font-mono text-[11px] font-bold border ${sub.teacherScore >= 73 ? 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border-emerald-500/30' : 'bg-amber-500/15 text-amber-600 dark:text-amber-400 border-amber-500/30'}`}>
+                              {sub.teacherScore >= 73 ? '✓ Tuntas (Terkunci)' : '⚠️ Remedial'}: {sub.teacherScore}
                             </span>
                             {sub.teacherLevel && (
                               <span class="text-[10px] font-mono text-primary px-1.5 py-0.5 bg-primary/10 rounded border border-primary/20">
@@ -711,7 +732,7 @@ const passRate = totalExamsTaken > 0 ? Math.round((passingExams / totalExamsTake
                             )}
                           </div>
                           {sub.teacherFeedback && (
-                            <div class="text-[10px] text-muted-foreground italic truncate max-w-[200px]" title={sub.teacherFeedback}>
+                            <div class="text-[10px] text-muted-foreground italic truncate max-w-[220px]" title={sub.teacherFeedback}>
                               "{sub.teacherFeedback}"
                             </div>
                           )}
@@ -730,6 +751,212 @@ const passRate = totalExamsTaken > 0 ? Math.round((passingExams / totalExamsTake
                         data-submission={JSON.stringify(sub)}
                       >
                         <span>{isGraded ? '✏️ Edit Nilai' : '🔍 Periksa & Nilai'}</span>
+                      </button>
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+      )}
+    </div>
+
+    <!-- ========================================== -->
+    <!-- SECTION: JURNAL REFLEKSI & SUARA SISWA (TERPISAH DARI LKPD) -->
+    <!-- ========================================== -->
+    <div id="reflections" class="card p-5 sm:p-6 rounded-xl border-border bg-card space-y-6 shadow-sm">
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-border pb-4">
+        <div class="space-y-1">
+          <div class="inline-flex items-center gap-2">
+            <h2 class="text-base font-bold text-foreground flex items-center gap-2">
+              <span>💭 Jurnal Refleksi & Suara Siswa</span>
+            </h2>
+            <span class="px-2 py-0.5 rounded font-mono text-[10px] font-bold bg-pink-500/10 text-pink-600 dark:text-pink-400 border border-pink-500/25">
+              ASESMEN FORMATIF KUALITATIF
+            </span>
+          </div>
+          <p class="text-xs text-muted-foreground">
+            Telaah pengalaman belajar, kendala teknis, dan umpan balik siswa secara kualitatif tanpa beban skor angka / KKM. Berikan tanggapan & apresiasi untuk membangun motivasi siswa.
+          </p>
+        </div>
+
+        <div class="flex items-center gap-3">
+          <div class="flex items-center gap-1.5 text-xs font-mono">
+            <span class="px-2.5 py-1 rounded bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20 font-semibold">
+              ⏳ {pendingReflections} Baru
+            </span>
+            <span class="px-2.5 py-1 rounded bg-pink-500/10 text-pink-600 dark:text-pink-400 border border-pink-500/20 font-semibold">
+              ✓ {reviewedReflections} Ditinjau
+            </span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Filter Controls for Reflections -->
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+        <div class="relative">
+          <input 
+            type="text" 
+            id="reflection-search-input" 
+            placeholder="Cari nama siswa / email / modul refleksi..." 
+            class="w-full px-3 py-2 bg-background border border-border rounded-lg text-xs focus:outline-none focus:border-primary placeholder:text-muted-foreground"
+          />
+        </div>
+
+        <div>
+          <select 
+            id="reflection-class-filter" 
+            class="w-full px-3 py-2 bg-background border border-border rounded-lg text-xs focus:outline-none focus:border-primary"
+          >
+            <option value="">Semua Kelas</option>
+            <option value="10 RPL 1">10 RPL 1</option>
+            <option value="10 RPL 2">10 RPL 2</option>
+            <option value="10 RPL 3">10 RPL 3</option>
+            <option value="11 RPL 1">11 RPL 1</option>
+            <option value="11 RPL 2">11 RPL 2</option>
+            <option value="12 RPL 1">12 RPL 1</option>
+            <option value="12 RPL 2">12 RPL 2</option>
+          </select>
+        </div>
+
+        <div>
+          <select 
+            id="reflection-status-filter" 
+            class="w-full px-3 py-2 bg-background border border-border rounded-lg text-xs focus:outline-none focus:border-primary"
+          >
+            <option value="">Semua Status Refleksi</option>
+            <option value="pending">Menunggu Tanggapan Guru</option>
+            <option value="reviewed">Telah Ditinjau Guru</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Reflection Submissions Table -->
+      {reflectionSubmissions.length === 0 ? (
+        <div class="p-8 text-center bg-background rounded-lg border border-border/50 text-xs text-muted-foreground space-y-2">
+          <div class="text-2xl">💭</div>
+          <p class="font-medium text-foreground">Belum ada jurnal refleksi yang dikirimkan oleh siswa.</p>
+          <p class="text-[11px]">Ketika siswa mengisi formulir Refleksi di akhir modul pembelajaran, data kualitatif akan otomatis muncul di sini.</p>
+        </div>
+      ) : (
+        <div class="overflow-x-auto border border-border rounded-lg">
+          <table class="w-full text-left text-xs" id="reflections-table">
+            <thead class="text-[11px] text-muted-foreground uppercase font-mono bg-secondary/40 border-b border-border">
+              <tr>
+                <th class="py-3 px-3">Siswa & Kelas</th>
+                <th class="py-3 px-3">Modul Pembelajaran</th>
+                <th class="py-3 px-3 min-w-[220px]">Cuplikan Pengalaman / Komitmen Siswa</th>
+                <th class="py-3 px-3">Waktu Kirim</th>
+                <th class="py-3 px-3">Status Tinjauan</th>
+                <th class="py-3 px-3 text-right">Aksi</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-border font-medium bg-card">
+              {reflectionSubmissions.map((sub: any) => {
+                const isReviewed = sub.status === 'reviewed' || !!sub.teacherFeedback;
+                const dateFormatted = new Date(sub.submittedAt).toLocaleDateString('id-ID', {
+                  day: 'numeric',
+                  month: 'short',
+                  year: 'numeric',
+                  hour: '2-digit',
+                  minute: '2-digit'
+                });
+
+                // Parse reflection snippets safely
+                let parsedFd: any = {};
+                try {
+                  let d = sub.formData;
+                  while (typeof d === 'string') d = JSON.parse(d);
+                  parsedFd = typeof d === 'object' && d !== null ? d : {};
+                } catch { parsedFd = {}; }
+
+                const q1Text = parsedFd.q1 || '';
+                const q3Text = parsedFd.q3 || '';
+                const q4Text = parsedFd.q4 || '';
+                const previewSnippet = q4Text || q1Text || q3Text || 'Jurnal refleksi telah diisi.';
+
+                return (
+                  <tr 
+                    class="reflection-row hover:bg-accent/40 transition-colors"
+                    data-name={sub.userName.toLowerCase()}
+                    data-email={sub.userEmail.toLowerCase()}
+                    data-class={sub.studentClass || ''}
+                    data-slug={sub.lessonSlug.toLowerCase()}
+                    data-status={isReviewed ? 'reviewed' : 'pending'}
+                  >
+                    <td class="py-3 px-3">
+                      <div class="space-y-0.5">
+                        <div class="font-bold text-foreground">{sub.userName}</div>
+                        <div class="text-[10px] text-muted-foreground font-mono flex items-center gap-1.5">
+                          <span>{sub.userEmail}</span>
+                          {sub.studentClass && (
+                            <>
+                              <span>•</span>
+                              <span class="px-1.5 py-0.2 rounded bg-secondary text-foreground border border-border font-semibold">
+                                {sub.studentClass}
+                              </span>
+                            </>
+                          )}
+                        </div>
+                      </div>
+                    </td>
+
+                    <td class="py-3 px-3">
+                      <div class="space-y-1">
+                        <span class="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-pink-500/10 text-pink-600 dark:text-pink-400 border border-pink-500/20 uppercase">
+                          Refleksi
+                        </span>
+                        <div class="text-[11px] font-mono text-muted-foreground truncate max-w-[200px]" title={sub.lessonSlug}>
+                          {sub.lessonSlug}
+                        </div>
+                      </div>
+                    </td>
+
+                    <td class="py-3 px-3">
+                      <div class="space-y-1 max-w-[280px]">
+                        <p class="text-xs text-foreground line-clamp-2 italic leading-snug">
+                          "{previewSnippet}"
+                        </p>
+                        {q3Text && (
+                          <div class="text-[10px] text-amber-600 dark:text-amber-400 truncate flex items-center gap-1">
+                            <span>⚠️ Kendala:</span>
+                            <span class="truncate">{q3Text}</span>
+                          </div>
+                        )}
+                      </div>
+                    </td>
+
+                    <td class="py-3 px-3 font-mono text-muted-foreground text-[11px] whitespace-nowrap">
+                      {dateFormatted}
+                    </td>
+
+                    <td class="py-3 px-3">
+                      {isReviewed ? (
+                        <div class="space-y-1">
+                          <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded font-mono text-[10px] font-bold bg-pink-500/15 text-pink-600 dark:text-pink-400 border border-pink-500/30">
+                            <span>✓</span> Telah Ditinjau
+                          </span>
+                          {sub.teacherFeedback && (
+                            <div class="text-[10px] text-muted-foreground italic truncate max-w-[180px]" title={sub.teacherFeedback}>
+                              Tanggapan: "{sub.teacherFeedback}"
+                            </div>
+                          )}
+                        </div>
+                      ) : (
+                        <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded text-[10px] font-mono font-semibold bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/25">
+                          <span>⏳</span> Menunggu Tanggapan
+                        </span>
+                      )}
+                    </td>
+
+                    <td class="py-3 px-3 text-right whitespace-nowrap">
+                      <button 
+                        type="button"
+                        class="review-reflection-btn px-3 py-1.5 rounded-lg text-xs font-semibold bg-pink-600 hover:bg-pink-500 text-white transition-all shadow-sm flex items-center gap-1.5 ml-auto"
+                        data-reflection={JSON.stringify(sub)}
+                      >
+                        <span>{isReviewed ? '✏️ Edit Tanggapan' : '📖 Baca & Balas'}</span>
                       </button>
                     </td>
                   </tr>
@@ -944,7 +1171,7 @@ const passRate = totalExamsTaken > 0 ? Math.round((passingExams / totalExamsTake
                   hour: '2-digit',
                   minute: '2-digit'
                 });
-                const isPass = exam.score >= 75;
+                const isPass = exam.score >= 73;
 
                 return (
                   <tr class="hover:bg-accent/40 transition-colors">
@@ -1239,7 +1466,7 @@ const passRate = totalExamsTaken > 0 ? Math.round((passingExams / totalExamsTake
                     <span class="text-destructive">*</span>
                   </label>
                   <span id="score-status-indicator" class="text-[10px] font-mono font-semibold px-2 py-0.2 rounded bg-amber-500/10 text-amber-600 dark:text-amber-400">
-                    KKM: 75
+                    KKM: 73
                   </span>
                 </div>
                 <input 
@@ -1320,6 +1547,147 @@ const passRate = totalExamsTaken > 0 ? Math.round((passingExams / totalExamsTake
                 class="px-6 py-2.5 rounded-xl text-xs font-bold bg-primary hover:bg-primary/90 text-primary-foreground transition-all shadow-md hover:shadow-primary/20 flex items-center gap-1.5"
               >
                 <span id="grade-btn-text">💾 Simpan & Rilis Nilai ke Siswa</span>
+              </button>
+            </div>
+          </form>
+        </div>
+
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ========================================== -->
+  <!-- MODAL TINJAUAN JURNAL REFLEKSI SISWA (FORMATIF KUALITATIF) -->
+  <!-- ========================================== -->
+  <div id="reflection-modal" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-md hidden flex items-center justify-center p-3 sm:p-5 transition-all">
+    <div class="bg-card border border-border/80 rounded-2xl max-w-3xl w-full max-h-[92vh] flex flex-col shadow-2xl overflow-hidden animate-fadeIn">
+      
+      <!-- Modal Header -->
+      <div class="p-4 sm:p-5 border-b border-border flex items-start sm:items-center justify-between bg-secondary/40 gap-3">
+        <div class="space-y-1">
+          <div class="flex items-center gap-2 flex-wrap">
+            <span class="px-2.5 py-0.5 rounded font-mono font-bold text-xs bg-pink-500/15 text-pink-600 dark:text-pink-400 border border-pink-500/30">
+              💭 JURNAL REFLEKSI SISWA
+            </span>
+            <span class="px-2.5 py-0.5 rounded font-mono text-xs bg-secondary text-foreground border border-border" id="refl-modal-class">
+              -
+            </span>
+            <span class="text-xs text-muted-foreground font-mono hidden sm:inline" id="refl-modal-slug">
+              -
+            </span>
+          </div>
+          <h3 class="text-base sm:text-lg font-extrabold text-foreground tracking-tight" id="refl-modal-student">
+            Refleksi Siswa
+          </h3>
+        </div>
+
+        <button 
+          type="button" 
+          id="close-refl-modal-btn"
+          class="p-2 rounded-xl text-muted-foreground hover:text-foreground hover:bg-accent transition-colors shrink-0"
+          title="Tutup Modal (Esc)"
+        >
+          <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
+      </div>
+
+      <!-- Modal Body -->
+      <div class="p-4 sm:p-6 overflow-y-auto space-y-6 flex-grow">
+        
+        <!-- Section A: Student Qualitative Voice / Responses -->
+        <div class="space-y-3">
+          <div class="flex items-center justify-between">
+            <h4 class="text-xs font-bold text-foreground uppercase tracking-wider font-mono flex items-center gap-2">
+              <span>💡 Isian Jurnal Refleksi Mandiri Siswa</span>
+            </h4>
+            <div id="refl-modal-drive-container" class="hidden">
+              <a 
+                id="refl-modal-drive-link" 
+                href="#" 
+                target="_blank" 
+                rel="noopener noreferrer" 
+                class="px-3 py-1 rounded-lg bg-pink-500/10 text-pink-600 dark:text-pink-400 border border-pink-500/25 text-xs font-semibold hover:bg-pink-500/20 transition-all flex items-center gap-1.5"
+              >
+                <span>📂 Buka Bukti Drive Siswa</span> ↗
+              </a>
+            </div>
+          </div>
+
+          <div id="refl-modal-answers-area" class="space-y-3">
+            <!-- Dynamically populated reflection questions -->
+          </div>
+        </div>
+
+        <!-- Section B: Teacher Qualitative Feedback & Appreciation Form -->
+        <div class="p-4 sm:p-5 rounded-2xl bg-secondary/30 border border-border/90 space-y-4">
+          <div class="flex items-center justify-between border-b border-border/60 pb-3">
+            <div>
+              <h4 class="text-xs font-bold text-foreground uppercase tracking-wider font-mono flex items-center gap-2">
+                <span>💬 Tanggapan & Apresiasi Guru</span>
+              </h4>
+              <p class="text-[11px] text-muted-foreground mt-0.5">
+                Refleksi tidak membutuhkan skor angka / KKM agar siswa terbiasa jujur dan terbuka saat mengevaluasi diri.
+              </p>
+            </div>
+            <span class="text-[11px] font-mono text-muted-foreground hidden sm:inline">
+              Pengampu: Agung Gumelar Saputra, S.Tr.T.
+            </span>
+          </div>
+
+          <form id="teacher-reflection-form" class="space-y-4">
+            <input type="hidden" id="refl-submission-id" />
+
+            <!-- Feedback & Presets -->
+            <div class="space-y-2">
+              <div class="flex items-center justify-between">
+                <label for="refl-feedback-input" class="text-xs font-semibold text-foreground">
+                  <span>Catatan Apresiasi / Tanggapan untuk Siswa</span>
+                </label>
+                <span class="text-[10px] text-muted-foreground">Klik preset cepat di bawah:</span>
+              </div>
+
+              <!-- Quick Reflection Preset Chips -->
+              <div class="flex flex-wrap gap-1.5">
+                <button type="button" class="quick-refl-chip px-2.5 py-1 rounded-md bg-card hover:bg-accent text-foreground text-[11px] border border-border transition-colors" data-preset="Terima kasih atas refleksimu yang sangat jujur dan mendalam! Pertahankan semangat eksplorasi dan rasa ingin tahumu. 🌟">
+                  ✨ Sangat Mendalam
+                </button>
+                <button type="button" class="quick-refl-chip px-2.5 py-1 rounded-md bg-card hover:bg-accent text-foreground text-[11px] border border-border transition-colors" data-preset="Bagus sekali! Kendala yang kamu alami adalah hal wajar dalam belajar pemrograman. Terus berlatih dan jangan ragu bertanya. 💪">
+                  💪 Apresiasi Kendala
+                </button>
+                <button type="button" class="quick-refl-chip px-2.5 py-1 rounded-md bg-card hover:bg-accent text-foreground text-[11px] border border-border transition-colors" data-preset="Pemahaman konsepmu terhadap materi modul ini sudah sangat baik. Komitmen belajarmu patut diacungi jempol! 👍">
+                  👍 Konsep Sangat Baik
+                </button>
+                <button type="button" class="quick-refl-chip px-2.5 py-1 rounded-md bg-card hover:bg-accent text-foreground text-[11px] border border-border transition-colors" data-preset="Catatan kendala teknismu telah dicatat. Pada sesi tatap muka berikutnya kita akan bedah solusinya bersama. 🎯">
+                  🎯 Solusi di Sesi Depan
+                </button>
+              </div>
+
+              <textarea 
+                id="refl-feedback-input" 
+                rows="3" 
+                placeholder="Tuliskan apresiasi, motivasi, atau jawaban atas kendala yang dialami siswa saat belajar..."
+                class="w-full px-3.5 py-2.5 bg-background border border-border rounded-xl text-xs text-foreground focus:outline-none focus:border-primary placeholder:text-muted-foreground leading-relaxed"
+              ></textarea>
+            </div>
+
+            <!-- Modal Action Buttons -->
+            <div class="flex items-center justify-end gap-2.5 pt-2 border-t border-border/60">
+              <button 
+                type="button" 
+                id="cancel-refl-btn"
+                class="px-4 py-2.5 rounded-xl text-xs font-medium bg-secondary hover:bg-accent text-foreground border border-border transition-colors"
+              >
+                Batal
+              </button>
+              <button 
+                type="submit" 
+                id="submit-refl-btn"
+                class="px-6 py-2.5 rounded-xl text-xs font-bold bg-pink-600 hover:bg-pink-500 text-white transition-all shadow-md hover:shadow-pink-500/20 flex items-center gap-1.5"
+              >
+                <span id="refl-btn-text">✓ Simpan Tanggapan Guru</span>
               </button>
             </div>
           </form>
@@ -1527,7 +1895,7 @@ const passRate = totalExamsTaken > 0 ? Math.round((passingExams / totalExamsTake
                 ? new Date(s.examSubmittedAt).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })
                 : '-';
 
-              const isPass = s.examScore !== null && s.examScore >= 75;
+              const isPass = s.examScore !== null && s.examScore >= 73;
               const statusBadge = s.hasTakenExam 
                 ? `<span class="px-2 py-0.5 rounded text-[10px] font-semibold ${isPass ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/25' : 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/25'}">${isPass ? 'KOMPETEN' : 'BELUM KOMPETEN'}</span>`
                 : '<span class="text-muted-foreground text-[10px]">Belum Ujian</span>';
@@ -1558,7 +1926,7 @@ const passRate = totalExamsTaken > 0 ? Math.round((passingExams / totalExamsTake
     });
   });
 
-  // 7. Submissions Filter & Search Logic
+  // 7. LKPD Submissions Filter & Search Logic
   const subSearchInput = document.getElementById('submission-search-input') as HTMLInputElement | null;
   const subClassFilter = document.getElementById('submission-class-filter') as HTMLSelectElement | null;
   const subStatusFilter = document.getElementById('submission-status-filter') as HTMLSelectElement | null;
@@ -1570,6 +1938,46 @@ const passRate = totalExamsTaken > 0 ? Math.round((passingExams / totalExamsTake
     const selectedStatus = subStatusFilter?.value || '';
 
     subRows.forEach(row => {
+      const name = row.getAttribute('data-name') || '';
+      const email = row.getAttribute('data-email') || '';
+      const rowClass = row.getAttribute('data-class') || '';
+      const slug = row.getAttribute('data-slug') || '';
+      const status = row.getAttribute('data-status') || '';
+      const graded = row.getAttribute('data-graded') || '';
+
+      const matchesSearch = !q || name.includes(q) || email.includes(q) || slug.includes(q);
+      const matchesClass = !selectedClass || rowClass === selectedClass;
+      
+      let matchesStatus = true;
+      if (selectedStatus === 'pending') matchesStatus = graded === 'pending';
+      else if (selectedStatus === 'graded') matchesStatus = graded === 'graded';
+      else if (selectedStatus === 'passed') matchesStatus = status === 'passed';
+      else if (selectedStatus === 'remedial') matchesStatus = status === 'remedial';
+
+      if (matchesSearch && matchesClass && matchesStatus) {
+        (row as HTMLElement).style.display = '';
+      } else {
+        (row as HTMLElement).style.display = 'none';
+      }
+    });
+  }
+
+  subSearchInput?.addEventListener('input', applySubmissionFilters);
+  subClassFilter?.addEventListener('change', applySubmissionFilters);
+  subStatusFilter?.addEventListener('change', applySubmissionFilters);
+
+  // 7b. Jurnal Refleksi Filter & Search Logic
+  const reflSearchInput = document.getElementById('reflection-search-input') as HTMLInputElement | null;
+  const reflClassFilter = document.getElementById('reflection-class-filter') as HTMLSelectElement | null;
+  const reflStatusFilter = document.getElementById('reflection-status-filter') as HTMLSelectElement | null;
+  const reflRows = document.querySelectorAll('.reflection-row');
+
+  function applyReflectionFilters() {
+    const q = reflSearchInput?.value.toLowerCase().trim() || '';
+    const selectedClass = reflClassFilter?.value || '';
+    const selectedStatus = reflStatusFilter?.value || '';
+
+    reflRows.forEach(row => {
       const name = row.getAttribute('data-name') || '';
       const email = row.getAttribute('data-email') || '';
       const rowClass = row.getAttribute('data-class') || '';
@@ -1588,9 +1996,9 @@ const passRate = totalExamsTaken > 0 ? Math.round((passingExams / totalExamsTake
     });
   }
 
-  subSearchInput?.addEventListener('input', applySubmissionFilters);
-  subClassFilter?.addEventListener('change', applySubmissionFilters);
-  subStatusFilter?.addEventListener('change', applySubmissionFilters);
+  reflSearchInput?.addEventListener('input', applyReflectionFilters);
+  reflClassFilter?.addEventListener('change', applyReflectionFilters);
+  reflStatusFilter?.addEventListener('change', applyReflectionFilters);
 
   // 8. LKPD Teacher Grading Modal & Rich Answer Renderer
   const gradeModal = document.getElementById('grade-modal');
@@ -1623,8 +2031,9 @@ const passRate = totalExamsTaken > 0 ? Math.round((passingExams / totalExamsTake
 
   // Close on Escape or click outside
   window.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape' && gradeModal && !gradeModal.classList.contains('hidden')) {
-      closeGradeModal();
+    if (e.key === 'Escape') {
+      if (gradeModal && !gradeModal.classList.contains('hidden')) closeGradeModal();
+      if (reflModal && !reflModal.classList.contains('hidden')) closeReflModal();
     }
   });
 
@@ -1649,16 +2058,16 @@ const passRate = totalExamsTaken > 0 ? Math.round((passingExams / totalExamsTake
   function updateScoreIndicator(scoreVal: number) {
     if (!scoreStatusIndicator) return;
     if (isNaN(scoreVal) || inputScore?.value === '') {
-      scoreStatusIndicator.textContent = 'KKM: 75';
+      scoreStatusIndicator.textContent = 'KKM: 73';
       scoreStatusIndicator.className = 'text-[10px] font-mono font-semibold px-2 py-0.5 rounded bg-secondary text-muted-foreground border border-border';
     } else if (scoreVal >= 90) {
       scoreStatusIndicator.textContent = '🌟 Sangat Kompeten (A)';
       scoreStatusIndicator.className = 'text-[10px] font-mono font-semibold px-2 py-0.5 rounded bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30';
-    } else if (scoreVal >= 75) {
+    } else if (scoreVal >= 73) {
       scoreStatusIndicator.textContent = '✓ Kompeten (KKM Tercapai)';
       scoreStatusIndicator.className = 'text-[10px] font-mono font-semibold px-2 py-0.5 rounded bg-cyan-500/15 text-cyan-600 dark:text-cyan-400 border border-cyan-500/30';
     } else {
-      scoreStatusIndicator.textContent = '⚠️ Belum Tuntas (< 75)';
+      scoreStatusIndicator.textContent = '⚠️ Belum Tuntas (< 73)';
       scoreStatusIndicator.className = 'text-[10px] font-mono font-semibold px-2 py-0.5 rounded bg-amber-500/15 text-amber-600 dark:text-amber-400 border border-amber-500/30';
     }
   }
@@ -1975,6 +2384,172 @@ const passRate = totalExamsTaken > 0 ? Math.round((passingExams / totalExamsTake
       showAlert(err.message || 'Terjadi kesalahan jaringan.', true);
       if (submitGradeBtn) submitGradeBtn.disabled = false;
       if (gradeBtnText) gradeBtnText.textContent = '💾 Simpan & Rilis Nilai ke Siswa';
+    }
+  });
+
+  // 8b. Jurnal Refleksi Review Modal Logic
+  const reflModal = document.getElementById('reflection-modal');
+  const closeReflModalBtn = document.getElementById('close-refl-modal-btn');
+  const cancelReflBtn = document.getElementById('cancel-refl-btn');
+  const teacherReflForm = document.getElementById('teacher-reflection-form') as HTMLFormElement | null;
+  const submitReflBtn = document.getElementById('submit-refl-btn') as HTMLButtonElement | null;
+  const reflBtnText = document.getElementById('refl-btn-text');
+
+  const reflModalStudent = document.getElementById('refl-modal-student');
+  const reflModalClass = document.getElementById('refl-modal-class');
+  const reflModalSlug = document.getElementById('refl-modal-slug');
+  const reflModalAnswersArea = document.getElementById('refl-modal-answers-area');
+  const reflModalDriveContainer = document.getElementById('refl-modal-drive-container');
+  const reflModalDriveLink = document.getElementById('refl-modal-drive-link') as HTMLAnchorElement | null;
+  const inputReflSubmissionId = document.getElementById('refl-submission-id') as HTMLInputElement | null;
+  const textareaReflFeedback = document.getElementById('refl-feedback-input') as HTMLTextAreaElement | null;
+
+  function closeReflModal() {
+    reflModal?.classList.add('hidden');
+  }
+
+  closeReflModalBtn?.addEventListener('click', closeReflModal);
+  cancelReflBtn?.addEventListener('click', closeReflModal);
+
+  reflModal?.addEventListener('click', (e) => {
+    if (e.target === reflModal) closeReflModal();
+  });
+
+  // Quick reflection chips
+  document.querySelectorAll('.quick-refl-chip').forEach(chip => {
+    chip.addEventListener('click', () => {
+      const preset = chip.getAttribute('data-preset');
+      if (textareaReflFeedback && preset) {
+        textareaReflFeedback.value = preset;
+        textareaReflFeedback.focus();
+      }
+    });
+  });
+
+  function renderReflectionAnswers(rawFormData: any): string {
+    const fd = parseFormDataSafe(rawFormData);
+    const reflectionPrompts: Record<string, { label: string; icon: string }> = {
+      q1: { label: 'Hal Baru yang Dipelajari tentang Rekayasa Perangkat Lunak & PPLG', icon: '🌱' },
+      q2: { label: 'Urgensi Bukti Portofolio (Evidence) vs Ijazah Formal di Industri IT', icon: '💼' },
+      q3: { label: 'Kendala & Solusi Teknis saat Menyiapkan Evidence Google Drive', icon: '⚠️' },
+      q4: { label: 'Komitmen Belajar untuk Pertemuan / Modul Berikutnya', icon: '🎯' },
+    };
+
+    const keys = ['q1', 'q2', 'q3', 'q4'].filter(k => fd[k] !== undefined && fd[k] !== '');
+    if (keys.length === 0) {
+      // Check other fields
+      const allKeys = Object.keys(fd).filter(k => !['studentName', 'studentNis', 'studentClass', 'submissionDate', 'driveUrl'].includes(k));
+      if (allKeys.length === 0) {
+        return '<div class="p-6 text-center text-muted-foreground italic bg-secondary/20 rounded-xl border border-border/50">Tidak ada isian refleksi yang tersimpan.</div>';
+      }
+      return `
+        <div class="space-y-3">
+          ${allKeys.map(k => `
+            <div class="p-3.5 rounded-xl bg-secondary/30 border border-border space-y-1.5">
+              <span class="font-bold text-foreground block text-xs">${escapeHtml(k)}:</span>
+              <div class="p-3 rounded-lg bg-card border border-border text-foreground text-xs leading-relaxed">
+                ${escapeHtml(String(fd[k]))}
+              </div>
+            </div>
+          `).join('')}
+        </div>
+      `;
+    }
+
+    return `
+      <div class="space-y-3">
+        ${keys.map(k => {
+          const item = reflectionPrompts[k] || { label: k, icon: '💡' };
+          return `
+            <div class="p-3.5 rounded-xl bg-secondary/30 border border-border space-y-1.5">
+              <div class="flex items-center gap-2">
+                <span class="text-base">${item.icon}</span>
+                <span class="font-bold text-foreground text-xs font-mono">${escapeHtml(item.label)}</span>
+              </div>
+              <div class="p-3 rounded-lg bg-card border border-border text-foreground text-xs leading-relaxed font-normal whitespace-pre-wrap">
+                ${escapeHtml(fd[k])}
+              </div>
+            </div>
+          `;
+        }).join('')}
+      </div>
+    `;
+  }
+
+  document.querySelectorAll('.review-reflection-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const rawData = btn.getAttribute('data-reflection');
+      if (!rawData) return;
+
+      try {
+        const sub = JSON.parse(rawData);
+
+        if (inputReflSubmissionId) inputReflSubmissionId.value = sub.id.toString();
+        if (reflModalStudent) reflModalStudent.textContent = `${sub.userName} (${sub.userEmail})`;
+        if (reflModalClass) reflModalClass.textContent = sub.studentClass ? `Kelas: ${sub.studentClass}` : 'Kelas Tidak Disetel';
+        if (reflModalSlug) reflModalSlug.textContent = `Materi: /pembelajaran/${sub.lessonSlug}`;
+
+        if (textareaReflFeedback) textareaReflFeedback.value = sub.teacherFeedback || '';
+
+        // Google Drive link
+        const driveUrl = sub.driveUrl || (parseFormDataSafe(sub.formData)?.driveUrl);
+        if (driveUrl && reflModalDriveContainer && reflModalDriveLink) {
+          reflModalDriveContainer.classList.remove('hidden');
+          reflModalDriveLink.href = driveUrl;
+        } else if (reflModalDriveContainer) {
+          reflModalDriveContainer.classList.add('hidden');
+        }
+
+        // Render reflection answers
+        if (reflModalAnswersArea) {
+          reflModalAnswersArea.innerHTML = renderReflectionAnswers(sub.formData);
+        }
+
+        reflModal?.classList.remove('hidden');
+      } catch (err) {
+        console.error('Parse reflection error:', err);
+        showAlert('Gagal membuka jurnal refleksi siswa.', true);
+      }
+    });
+  });
+
+  teacherReflForm?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const submissionId = Number(inputReflSubmissionId?.value);
+    const teacherFeedback = textareaReflFeedback?.value.trim();
+
+    if (!submissionId) {
+      alert('Data refleksi tidak valid.');
+      return;
+    }
+
+    if (submitReflBtn) submitReflBtn.disabled = true;
+    if (reflBtnText) reflBtnText.textContent = 'Menyimpan Tanggapan...';
+
+    try {
+      const res = await fetch('/api/admin/submissions/review', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          submissionId,
+          teacherFeedback,
+        })
+      });
+
+      const data = await res.json();
+      if (res.ok && data.success) {
+        showAlert('Tanggapan & apresiasi guru untuk refleksi siswa berhasil disimpan!');
+        closeReflModal();
+        setTimeout(() => window.location.reload(), 1000);
+      } else {
+        showAlert(data.error || 'Gagal menyimpan tanggapan.', true);
+        if (submitReflBtn) submitReflBtn.disabled = false;
+        if (reflBtnText) reflBtnText.textContent = '✓ Simpan Tanggapan Guru';
+      }
+    } catch (err: any) {
+      showAlert(err.message || 'Terjadi kesalahan jaringan.', true);
+      if (submitReflBtn) submitReflBtn.disabled = false;
+      if (reflBtnText) reflBtnText.textContent = '✓ Simpan Tanggapan Guru';
     }
   });
 

@@ -24,7 +24,7 @@ const { lessonSlug, user } = Astro.props;
         Jurnal Refleksi Pembelajaran Mendalam
       </h2>
       <p class="text-xs text-muted-foreground">
-        Tuliskan refleksi pemahaman dan pengalaman belajar kalian secara jujur untuk mengukur perkembangan diri.
+        Tuliskan refleksi pemahaman dan pengalaman belajar kalian secara jujur untuk mengukur perkembangan diri dan memberi masukan bagi Guru.
       </p>
     </div>
 
@@ -38,6 +38,20 @@ const { lessonSlug, user } = Astro.props;
     </div>
   </div>
 
+  <!-- Banner Tanggapan & Apresiasi Guru (Jika sudah ditinjau) -->
+  <div id="teacher-review-banner" class="hidden p-4 rounded-xl bg-purple-500/10 border border-purple-500/25 space-y-2">
+    <div class="flex items-center justify-between">
+      <div class="flex items-center gap-2">
+        <span class="text-base">💬</span>
+        <span class="text-xs font-bold text-purple-600 dark:text-purple-400">Tanggapan & Apresiasi Guru:</span>
+      </div>
+      <span id="refl-review-date" class="text-[10px] font-mono text-muted-foreground"></span>
+    </div>
+    <p id="refl-teacher-feedback" class="text-xs text-foreground bg-background/60 p-3 rounded-lg border border-purple-500/20 leading-relaxed font-sans italic">
+      "Terima kasih atas refleksimu. Tetap semangat mengasah keahlian di bidang PPLG!"
+    </p>
+  </div>
+
   <form id="form-reflection" class="space-y-6">
     
     <!-- Question 1 -->
@@ -47,7 +61,7 @@ const { lessonSlug, user } = Astro.props;
       </label>
       <textarea 
         name="q1" 
-        id="refl_q1"
+        id="refl_q1" 
         rows="3" 
         required
         placeholder="Contoh: Saya baru tahu bahwa membuat aplikasi itu melibatkan banyak profesi seperti UI/UX dan QA, bukan cuma programmer saja..."
@@ -62,7 +76,7 @@ const { lessonSlug, user } = Astro.props;
       </label>
       <textarea 
         name="q2" 
-        id="refl_q2"
+        id="refl_q2" 
         rows="3" 
         required
         placeholder="Contoh: Karena industri software melihat bukti kemampuan nyata yang pernah dibuat (karya/proyek), bukan hanya nilai di atas kertas..."
@@ -77,7 +91,7 @@ const { lessonSlug, user } = Astro.props;
       </label>
       <textarea 
         name="q3" 
-        id="refl_q3"
+        id="refl_q3" 
         rows="2" 
         required
         placeholder="Contoh: Awalnya sempat bingung mengubah settingan share ke Anyone with link, tapi akhirnya berhasil..."
@@ -92,7 +106,7 @@ const { lessonSlug, user } = Astro.props;
       </label>
       <textarea 
         name="q4" 
-        id="refl_q4"
+        id="refl_q4" 
         rows="2" 
         required
         placeholder="Contoh: Saya akan lebih aktif berdiskusi dan membaca referensi 8 profesi IT sebelum kelas dimulai..."
@@ -103,7 +117,7 @@ const { lessonSlug, user } = Astro.props;
     <!-- Tombol Simpan Refleksi -->
     <div class="flex flex-col sm:flex-row items-center justify-between gap-4 pt-4 border-t border-border">
       <div class="text-xs text-muted-foreground">
-        💭 <em>Refleksi ini dibaca oleh Guru untuk umpan balik pembelajaran berkala.</em>
+        💭 <em>Refleksi ini dibaca oleh Guru untuk mendengarkan saran dan kendala belajarmu secara langsung.</em>
       </div>
 
       <button 
@@ -123,6 +137,9 @@ const { lessonSlug, user } = Astro.props;
   const reflSlug = reflCardEl?.getAttribute('data-slug') || 'orientasi-pplg-01-pengantar-skill-passport';
   const formRefl = document.getElementById('form-reflection') as HTMLFormElement;
   const reflStatusEl = document.getElementById('reflection-save-status');
+  const teacherBannerEl = document.getElementById('teacher-review-banner');
+  const teacherFeedbackEl = document.getElementById('refl-teacher-feedback');
+  const reviewDateEl = document.getElementById('refl-review-date');
 
   async function loadExistingReflection() {
     try {
@@ -137,9 +154,28 @@ const { lessonSlug, user } = Astro.props;
           if (formPayload.q3) (document.getElementById('refl_q3') as HTMLTextAreaElement).value = formPayload.q3;
           if (formPayload.q4) (document.getElementById('refl_q4') as HTMLTextAreaElement).value = formPayload.q4;
 
-          if (reflStatusEl) {
-            reflStatusEl.className = 'text-[11px] font-mono px-2 py-1 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 rounded border border-emerald-500/20 font-semibold';
-            reflStatusEl.textContent = '✅ Refleksi Tersimpan';
+          const isReviewed = reflSub.status === 'reviewed' || reflSub.teacherFeedback;
+          if (isReviewed) {
+            if (teacherBannerEl && reflSub.teacherFeedback) {
+              teacherBannerEl.classList.remove('hidden');
+              if (teacherFeedbackEl) teacherFeedbackEl.textContent = `"${reflSub.teacherFeedback}"`;
+              if (reviewDateEl && reflSub.gradedAt) {
+                reviewDateEl.textContent = new Date(reflSub.gradedAt).toLocaleDateString('id-ID', {
+                  day: 'numeric',
+                  month: 'short',
+                  year: 'numeric'
+                });
+              }
+            }
+            if (reflStatusEl) {
+              reflStatusEl.className = 'text-[11px] font-mono px-2 py-1 bg-purple-500/15 text-purple-600 dark:text-purple-400 rounded border border-purple-500/30 font-bold';
+              reflStatusEl.textContent = '✓ Telah Ditinjau Guru';
+            }
+          } else {
+            if (reflStatusEl) {
+              reflStatusEl.className = 'text-[11px] font-mono px-2 py-1 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 rounded border border-emerald-500/20 font-semibold';
+              reflStatusEl.textContent = '✅ Refleksi Tersimpan';
+            }
           }
         }
       }

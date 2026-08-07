@@ -34,17 +34,30 @@ export const POST: APIRoute = async ({ request, locals }) => {
       ))
       .limit(1);
 
+    // Kunci pengeditan di sisi server jika sudah dinilai tuntas (>= 73)
+    if (existing && existing.teacherScore !== null && existing.teacherScore !== undefined && existing.teacherScore >= 73) {
+      return new Response(JSON.stringify({ 
+        error: 'Lembar kerja ini telah dinilai tuntas oleh guru (KKM Tercapai) dan telah dikunci secara permanen.' 
+      }), { status: 403 });
+    }
+
     let isNewSubmission = false;
+    let isRemedialResubmit = false;
     let submissionId: number;
 
     if (existing) {
       submissionId = existing.id;
+      if (existing.teacherScore !== null && existing.teacherScore < 73) {
+        isRemedialResubmit = true;
+      }
+
       await db.update(userSubmissions)
         .set({
           formData: jsonFormData,
           driveUrl: driveUrl || existing.driveUrl,
           tokenId: tokenId ? Number(tokenId) : existing.tokenId,
           score: score !== undefined ? Number(score) : existing.score,
+          status: isRemedialResubmit ? 'submitted' : existing.status,
           updatedAt: new Date(),
         })
         .where(eq(userSubmissions.id, existing.id));

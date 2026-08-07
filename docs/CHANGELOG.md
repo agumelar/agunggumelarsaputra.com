@@ -12,6 +12,47 @@ Format penulisan mengacu pada [Keep a Changelog](https://keepachangelog.com/id/1
 
 ---
 
+## [2.4.4] - 2026-08-07
+### Added
+- **Pemisahan Terpadu Jurnal Refleksi Siswa dari Evaluasi LKPD di Dashboard Guru (`/admin`):**
+  - **Seksi & Tabel Mandiri (`#reflections`):** Memisahkan data Jurnal Refleksi Pembelajaran ke dalam seksi terpisah khusus asesmen formatif kualitatif, sehingga tidak bercampur dengan portofolio kerja praktik / LKPD.
+  - **Asesmen Kualitatif Murni (Tanpa Beban Skor Angka / KKM):** Jurnal refleksi difokuskan untuk menampung suara siswa (hal baru, pandangan portofolio vs ijazah, kendala teknis, dan komitmen belajar) serta tanggapan/apresiasi guru tanpa tuntutan angka KKM.
+  - **Endpoint API Review Refleksi (`/api/admin/submissions/review.ts`):** Endpoint khusus untuk menyimpan tanggapan guru dan menandai status `reviewed`.
+  - **Modal Tinjau Jurnal Refleksi (`#reflection-modal`):** Modal khusus dengan visualisasi 4 butir refleksi terstruktur, tautan Google Drive siswa, textarea tanggapan guru, dan tombol quick preset chip apresiasi.
+  - **Pemisahan KPI Metrics & Hero Banner Admin:** Metrik dashboard kini menampilkan counter terpisah untuk LKPD (Menunggu Penilaian vs Dinilai) dan Refleksi (Baru vs Telah Ditinjau).
+  - **Sistem Filter Independen:** Filter pencarian nama/email/slug, filter rombel/kelas, dan filter status kini bekerja secara independen pada tabel LKPD dan tabel Jurnal Refleksi.
+
+---
+
+## [2.4.3] - 2026-08-07
+### Changed
+- **Penyesuaian Standar KKM Orientasi PPLG (KKM: 73):**
+  - Mengubah nilai ambang batas KKM dari 75 menjadi **73** pada seluruh ekosistem pembelajaran.
+  - Penyesuaian ambang tuntas & penguncian otomatis formulir LKPD (`InteractiveLkpdP1.astro`, `GeneralInteractiveLkpd.astro`) menjadi $\ge 73$.
+  - Penyesuaian ambang remedial LKPD menjadi $< 73$.
+  - Proteksi server-side endpoint `/api/submissions/save.ts` kini menggunakan ambang batas 73.
+  - Sinkronisasi indikator KKM pada panel Admin (`/admin`), rekap token (`/api/admin/tokens/report.ts`), dan dashboard riwayat siswa (`/dashboard/riwayat.astro`).
+
+---
+
+## [2.4.2] - 2026-08-07
+### Added
+- **Sistem Penguncian Portofolio & Remedial Terpadu (Mastery Learning):**
+  - **Auto-Locking Modul Tuntas (Skor $\ge$ 75):**
+    - Formulir LKPD (`InteractiveLkpdP1.astro` dan `GeneralInteractiveLkpd.astro`) otomatis dikunci (*disabled state*) setelah dinilai oleh Guru dan memenuhi standar KKM (75).
+    - Tombol simpan draf & kirim dinonaktifkan dan digantikan dengan banner konfirmasi: *"Lembar Kerja Ini Telah Dinilai & Tuntas KKM (Formulir Terkunci sebagai Portofolio Resmi)"*.
+    - Tombol tambah/hapus baris audit disembunyikan untuk menjaga integritas arsip portofolio siswa.
+  - **Alur Remedial / Perbaikan (Skor < 75):**
+    - Formulir tetap terbuka (*editable*) jika nilai belum mencapai KKM.
+    - Banner evaluasi menampilkan status kuning/amber peringatan: *"Perlu Perbaikan / Remedial LKPD (Nilai di bawah KKM 75)"* lengkap dengan instruksi perbaikan dari catatan guru.
+    - Tombol kirim berubah otomatis menjadi *"Simpan & Kirim Ulang Perbaikan LKPD"*.
+  - **Proteksi Server-Side:**
+    - Endpoint `/api/submissions/save.ts` memvalidasi `teacherScore` secara mutlak; jika `teacherScore >= 75`, mutasi data ditolak (HTTP 403 Forbidden).
+    - Jika siswa mengirim ulang perbaikan (remedial), status pengumpulan direset kembali menjadi `submitted` agar guru dapat memeriksa perbaikan tersebut.
+  - **Penyempurnaan Label Admin Table:** Kolom status pada `/admin#submissions` kini membedakan badge `✓ Tuntas (Kunci)` (hijau) dan `⚠️ Remedial` (kuning) secara instan.
+
+---
+
 ## [2.4.1] - 2026-08-07
 ### Enhanced
 - **Penyempurnaan Modal Periksa Nilai Guru (`/admin#submissions`):**

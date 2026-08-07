@@ -98,7 +98,7 @@ const avgScore = examAttempts.length > 0
           </thead>
           <tbody class="divide-y divide-border/40 font-medium">
             {examAttempts.map((attempt) => {
-              const isPass = attempt.score >= 75;
+              const isPass = attempt.score >= 73;
               const dateFormatted = new Date(attempt.createdAt).toLocaleDateString('id-ID', {
                 day: 'numeric',
                 month: 'short',

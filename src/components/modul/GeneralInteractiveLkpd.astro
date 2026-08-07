@@ -40,20 +40,20 @@ const { lessonSlug, moduleTitle, user } = Astro.props;
   </div>
 
   <!-- Dynamic Teacher Grade & Feedback Card -->
-  <div id="gen-teacher-grade-card" class="hidden p-5 rounded-2xl bg-gradient-to-r from-amber-500/10 via-primary/10 to-purple-500/10 border-2 border-primary/30 space-y-3">
-    <div class="flex flex-wrap items-center justify-between gap-2 border-b border-primary/20 pb-3">
+  <div id="gen-teacher-grade-card" class="hidden p-5 rounded-2xl border-2 space-y-3 transition-all">
+    <div class="flex flex-wrap items-center justify-between gap-2 border-b pb-3" id="gen-teacher-grade-header-border">
       <div class="flex items-center gap-2">
-        <span class="text-xl">🏆</span>
+        <span class="text-xl" id="gen-teacher-grade-icon">🏆</span>
         <div>
-          <span class="text-xs font-mono font-bold text-primary uppercase tracking-wider">Hasil Penilaian Guru</span>
-          <h3 class="text-base font-extrabold text-foreground">Evaluasi Lembar Kerja LKPD</h3>
+          <span class="text-xs font-mono font-bold uppercase tracking-wider" id="gen-teacher-grade-tag">Hasil Penilaian Guru</span>
+          <h3 class="text-base font-extrabold text-foreground" id="gen-teacher-grade-title">Evaluasi Lembar Kerja LKPD</h3>
         </div>
       </div>
       <div class="flex items-center gap-2">
         <span id="gen-display-teacher-level" class="px-2.5 py-1 rounded-lg bg-primary text-primary-foreground font-mono text-xs font-bold">
           Level 2 (Mencoba ★)
         </span>
-        <span id="gen-display-teacher-score" class="px-3 py-1 rounded-lg bg-amber-500 text-black font-mono text-xs font-extrabold">
+        <span id="gen-display-teacher-score" class="px-3 py-1 rounded-lg font-mono text-xs font-extrabold">
           Nilai: 85 / 100
         </span>
       </div>
@@ -70,6 +70,24 @@ const { lessonSlug, moduleTitle, user } = Astro.props;
         <span id="gen-display-graded-date">🕒 Dinilai pada: -</span>
         <span class="text-primary font-semibold">Pengampu: Agung Gumelar Saputra, S.Tr.T.</span>
       </div>
+    </div>
+
+    <!-- Status Alert Notice: Lock vs Remedial -->
+    <div id="gen-teacher-lock-notice" class="hidden p-3.5 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-600 dark:text-emerald-400 text-xs font-medium flex items-center gap-2.5">
+      <span class="text-lg">🔒</span>
+      <div>
+        <strong class="font-bold">Lembar Kerja Terkunci:</strong> Nilai Anda telah memenuhi KKM (Minimal 73). Isian lembar kerja ini telah dikunci sebagai bukti portofolio pembelajaran resmi.
+      </div>
+    </div>
+
+    <div id="gen-teacher-remedial-notice" class="hidden p-3.5 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-700 dark:text-amber-300 text-xs font-medium space-y-1">
+      <div class="font-bold flex items-center gap-1.5 text-amber-600 dark:text-amber-400">
+        <span class="text-base">⚠️</span>
+        <span>Perlu Perbaikan / Remedial LKPD (Nilai di bawah KKM 73)</span>
+      </div>
+      <p class="leading-relaxed">
+        Pelajari catatan evaluasi guru di atas, perbaiki isian analisis/jawaban formulir di bawah ini, kemudian klik tombol <strong>"Kirim Ulang Hasil Perbaikan"</strong>.
+      </p>
     </div>
   </div>
 
@@ -176,12 +194,12 @@ const { lessonSlug, moduleTitle, user } = Astro.props;
     </div>
 
     <!-- Tombol Simpan & Submit -->
-    <div class="flex flex-col sm:flex-row items-center justify-between gap-4 pt-4 border-t border-border">
-      <div class="text-xs text-muted-foreground">
+    <div id="gen-lkpd-action-footer" class="flex flex-col sm:flex-row items-center justify-between gap-4 pt-4 border-t border-border">
+      <div class="text-xs text-muted-foreground" id="gen-lkpd-footer-note">
         💡 <em>Jawaban akan langsung tersimpan dan tercatat di dashboard guru.</em>
       </div>
 
-      <div class="flex items-center gap-3 w-full sm:w-auto">
+      <div class="flex items-center gap-3 w-full sm:w-auto" id="gen-lkpd-btn-group">
         <button 
           type="button" 
           id="btn-gen-save-draft" 
@@ -193,10 +211,17 @@ const { lessonSlug, moduleTitle, user } = Astro.props;
         <button 
           type="submit" 
           id="btn-gen-submit-lkpd" 
-          class="btn btn-primary text-xs font-semibold px-6 py-2.5 rounded-lg w-full sm:w-auto flex items-center justify-center gap-2"
+          class="btn btn-primary text-xs font-semibold px-6 py-2.5 rounded-lg w-full sm:w-auto flex items-center justify-center gap-2 transition-all shadow-md"
         >
-          <span>🚀 Kirim LKPD (+25 XP)</span>
+          <span id="gen-submit-icon">🚀</span>
+          <span id="gen-submit-text">Kirim LKPD (+25 XP)</span>
         </button>
+      </div>
+
+      <!-- Locked Banner when Graded >= 75 -->
+      <div id="gen-lkpd-locked-banner" class="hidden w-full p-4 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-600 dark:text-emerald-400 font-mono text-xs font-bold text-center flex items-center justify-center gap-2">
+        <span>🔒</span>
+        <span>Lembar Kerja Ini Telah Dinilai & Tuntas KKM (Formulir Terkunci sebagai Portofolio Resmi)</span>
       </div>
     </div>
 
@@ -238,10 +263,51 @@ const { lessonSlug, moduleTitle, user } = Astro.props;
 
           // Check if Graded
           if (lkpdSub.teacherScore !== null && lkpdSub.teacherScore !== undefined) {
-            if (teacherGradeCard) teacherGradeCard.classList.remove('hidden');
-            if (displayScore) displayScore.textContent = `Nilai Guru: ${lkpdSub.teacherScore} / 100`;
-            if (displayLevel) displayLevel.textContent = lkpdSub.teacherLevel || 'Level 2 (Mencoba ★)';
+            const score = Number(lkpdSub.teacherScore);
+            const isPassedKKM = score >= 73;
+
+            if (teacherGradeCard) {
+              teacherGradeCard.classList.remove('hidden');
+              teacherGradeCard.className = isPassedKKM
+                ? 'p-5 rounded-2xl border-2 border-emerald-500/40 bg-emerald-500/5 space-y-3 transition-all'
+                : 'p-5 rounded-2xl border-2 border-amber-500/40 bg-amber-500/5 space-y-3 transition-all';
+            }
+
+            const headerBorder = document.getElementById('gen-teacher-grade-header-border');
+            if (headerBorder) {
+              headerBorder.className = isPassedKKM ? 'flex flex-wrap items-center justify-between gap-2 border-b border-emerald-500/20 pb-3' : 'flex flex-wrap items-center justify-between gap-2 border-b border-amber-500/20 pb-3';
+            }
+
+            const tagEl = document.getElementById('gen-teacher-grade-tag');
+            if (tagEl) {
+              tagEl.className = isPassedKKM ? 'text-xs font-mono font-bold uppercase tracking-wider text-emerald-500' : 'text-xs font-mono font-bold uppercase tracking-wider text-amber-500';
+              tagEl.textContent = isPassedKKM ? '✓ Hasil Penilaian: Tuntas KKM' : '⚠️ Hasil Penilaian: Perlu Remedial';
+            }
+
+            const titleEl = document.getElementById('gen-teacher-grade-title');
+            if (titleEl) {
+              titleEl.textContent = isPassedKKM ? 'Evaluasi LKPD — Kompetensi Tercapai' : 'Evaluasi LKPD — Perlu Perbaikan';
+            }
+
+            const iconEl = document.getElementById('gen-teacher-grade-icon');
+            if (iconEl) iconEl.textContent = isPassedKKM ? '🏆' : '📝';
+
+            if (displayScore) {
+              displayScore.className = isPassedKKM 
+                ? 'px-3 py-1 rounded-lg bg-emerald-500 text-black font-mono text-xs font-extrabold shadow-sm'
+                : 'px-3 py-1 rounded-lg bg-amber-500 text-black font-mono text-xs font-extrabold shadow-sm';
+              displayScore.textContent = `Nilai: ${score} / 100 ${isPassedKKM ? '(Tuntas)' : '(Belum KKM)'}`;
+            }
+
+            if (displayLevel) {
+              displayLevel.className = isPassedKKM
+                ? 'px-2.5 py-1 rounded-lg bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 font-mono text-xs font-bold border border-emerald-500/30'
+                : 'px-2.5 py-1 rounded-lg bg-amber-500/20 text-amber-600 dark:text-amber-400 font-mono text-xs font-bold border border-amber-500/30';
+              displayLevel.textContent = lkpdSub.teacherLevel || (isPassedKKM ? 'Level 2 (Mencoba ★)' : 'Level 1 (Mulai)');
+            }
+
             if (displayFeedback) displayFeedback.textContent = lkpdSub.teacherFeedback || 'Telah dinilai oleh Guru.';
+            
             if (displayGradedDate && lkpdSub.gradedAt) {
               const formattedDate = new Date(lkpdSub.gradedAt).toLocaleDateString('id-ID', {
                 weekday: 'long',
@@ -252,9 +318,51 @@ const { lessonSlug, moduleTitle, user } = Astro.props;
               displayGradedDate.textContent = `🕒 Dinilai pada: ${formattedDate}`;
             }
 
-            if (genStatusEl) {
-              genStatusEl.className = 'text-[11px] font-mono px-2 py-1 bg-amber-500/10 text-amber-600 dark:text-amber-400 rounded border border-amber-500/20 font-bold';
-              genStatusEl.textContent = `⭐ Dinilai: ${lkpdSub.teacherScore}/100`;
+            const lockNotice = document.getElementById('gen-teacher-lock-notice');
+            const remedialNotice = document.getElementById('gen-teacher-remedial-notice');
+            const btnGroup = document.getElementById('gen-lkpd-btn-group');
+            const lockedBanner = document.getElementById('gen-lkpd-locked-banner');
+            const footerNote = document.getElementById('gen-lkpd-footer-note');
+
+            if (isPassedKKM) {
+              // CASE 1: TUNTAS (>= 73) -> LOCK FORM
+              if (lockNotice) lockNotice.classList.remove('hidden');
+              if (remedialNotice) remedialNotice.classList.add('hidden');
+              if (btnGroup) btnGroup.classList.add('hidden');
+              if (lockedBanner) lockedBanner.classList.remove('hidden');
+              if (footerNote) footerNote.classList.add('hidden');
+
+              // Lock all fields
+              genForm?.querySelectorAll('input, textarea, select').forEach((input) => {
+                (input as HTMLInputElement).disabled = true;
+                input.classList.add('opacity-80', 'cursor-not-allowed', 'bg-secondary/40');
+              });
+
+              if (genStatusEl) {
+                genStatusEl.className = 'text-[11px] font-mono px-2.5 py-1 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 rounded border border-emerald-500/20 font-bold flex items-center gap-1';
+                genStatusEl.textContent = `🔒 Tuntas: ${score}/100`;
+              }
+            } else {
+              // CASE 2: REMEDIAL (< 73) -> TETAP TERBUKA UNTUK EDIT
+              if (lockNotice) lockNotice.classList.add('hidden');
+              if (remedialNotice) remedialNotice.classList.remove('hidden');
+              if (btnGroup) btnGroup.classList.remove('hidden');
+              if (lockedBanner) lockedBanner.classList.add('hidden');
+
+              const submitText = document.getElementById('gen-submit-text');
+              const submitIcon = document.getElementById('gen-submit-icon');
+              const submitBtn = document.getElementById('btn-gen-submit-lkpd');
+
+              if (submitText) submitText.textContent = 'Simpan & Kirim Ulang Perbaikan LKPD';
+              if (submitIcon) submitIcon.textContent = '🔄';
+              if (submitBtn) {
+                submitBtn.className = 'btn text-xs font-bold px-6 py-2.5 rounded-lg w-full sm:w-auto flex items-center justify-center gap-2 bg-amber-500 hover:bg-amber-400 text-black shadow-lg transition-all';
+              }
+
+              if (genStatusEl) {
+                genStatusEl.className = 'text-[11px] font-mono px-2.5 py-1 bg-amber-500/10 text-amber-600 dark:text-amber-400 rounded border border-amber-500/20 font-bold flex items-center gap-1';
+                genStatusEl.textContent = `⚠️ Perlu Revisi (${score}/100)`;
+              }
             }
           } else if (genStatusEl) {
             genStatusEl.className = 'text-[11px] font-mono px-2 py-1 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 rounded border border-emerald-500/20 font-semibold';
