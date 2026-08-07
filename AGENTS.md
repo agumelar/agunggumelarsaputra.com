@@ -16,9 +16,9 @@
    - **TIDAK ADA AI SLOP:** Dilarang menggunakan gradien neon ungu-cyan acak, aura blur berlebih di background, teks bergradien menyilaukan, atau glassmorphism kabur yang menurunkan keterbacaan (*readability*).
    - **Desain Bersih & Solid:** Gunakan palet warna solid bernilai kontras tinggi (Dark slate `#090d16`, `#111827`, border halus `rgba(255,255,255,0.08)`, teks terang `#f3f4f6`).
    - **Artisanal & Human Feel:** Tipografi bersih (*Inter*, *Outfit*, *JetBrains Mono*), komponen fungsional dengan micro-interaction yang halus dan bermakna.
-3. **Aturan Pengujian Lokal:**
-   - Selalu sertakan URL localhost (misal: `http://localhost:4321`) saat memberikan panduan pengujian kepada pemilik proyek.
-   - Gunakan `node dev-server.mjs` untuk menjalankan server lokal, **bukan** `npm run dev` atau `npx astro dev` langsung karena keterbatasan terminal tertentu di Windows.
+3. **Aturan Deployment & Pengujian:**
+   - **Langsung Deploy ke Production:** Tidak perlu menginstruksikan atau menunggu pengujian di localhost. Langsung jalankan build verification (`npm run build`) lalu deploy langsung ke production menggunakan `npx vercel --prod --yes` (atau `vercel --prod`).
+   - Berikan tautan production langsung (`https://agunggumelarsaputra.com`) untuk peninjauan hasil kerja.
 
 ---
 
