@@ -1,6 +1,6 @@
 # Desain Paritas Pembelajaran Bermakna Modul 02–16 Orientasi PPLG
 
-> **Status:** Implementasi dan verifikasi lokal selesai; **RELEASE BLOCKED** oleh akses team Vercel, deployment kanonis READY dan uji siswa masih wajib
+> **Status:** Implementasi dan verifikasi lokal selesai; **RELEASE BLOCKED** oleh akses team Vercel, deployment kanonis belum `READY` dan uji siswa masih wajib
 > **Tanggal:** 2026-08-08
 > **Acuan mutu:** Struktur, keterbacaan, dan ritme belajar Modul 01
 
