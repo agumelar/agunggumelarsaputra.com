@@ -10,11 +10,13 @@ import InteractiveKnowledgeCheck from '../../components/modul/InteractiveKnowled
 import LiveScoreWidget from '../../components/modul/LiveScoreWidget.astro';
 import AntiCopyPasteGuardian from '../../components/modul/AntiCopyPasteGuardian.astro';
 import SmartMarkdownWrapper from '../../components/modul/SmartMarkdownWrapper.astro';
-import InteractiveModuleMaterial from '../../components/modul/InteractiveModuleMaterial.astro';
+import TeacherMessageCard from '../../components/modul/TeacherMessageCard.astro';
+import OrientasiLearningScene from '../../components/modul/OrientasiLearningScene.astro';
 import { db, isDbConfigured, ensureDbInitialized } from '../../db';
 import { userSubmissions, userProgress } from '../../db/schema';
 import { eq, and } from 'drizzle-orm';
 import { isCanonicalOrientasiSlug, selectCanonicalOrientasiModules } from '../../utils/orientasiPplgPolicy.ts';
+import { getOrientasiInteractiveMaterial } from '../../utils/orientasiInteractiveMaterials.ts';
 import { getOrientasiServerState } from '../../utils/orientasiPplgServer.ts';
 
 const { slug } = Astro.params;
@@ -30,6 +32,9 @@ const { Content } = await render(entry);
 const isModul1 = (entry.id || entry.slug) === 'orientasi-pplg-01-pengantar-skill-passport';
 const lessonSlug = entry.id || entry.slug;
 const isOrientasiModule = isCanonicalOrientasiSlug(lessonSlug);
+const orientasiMaterial = isOrientasiModule && !isModul1
+  ? getOrientasiInteractiveMaterial(lessonSlug)
+  : null;
 const sortedSidebarModules = selectCanonicalOrientasiModules(allModules);
 
 // Fetch user completed lessons and submission states from database
@@ -131,7 +136,7 @@ const progressPercentage = sortedSidebarModules.length > 0 ? Math.round((totalCo
         </div>
       </div>
 
-      {entry.data.teacherTip && (
+      {entry.data.teacherTip && (!isOrientasiModule || isModul1) && (
         <div class="p-3.5 rounded-xl bg-secondary/40 border border-border text-xs md:text-sm font-medium flex items-start gap-2.5">
           <span class="text-base">💡</span>
           <div class="text-muted-foreground">
@@ -305,7 +310,7 @@ const progressPercentage = sortedSidebarModules.length > 0 ? Math.round((totalCo
           <>
             <section id="panel-materi" class="tab-panel space-y-6">
               {isModul1 && (
-                <details class="group p-4 sm:p-5 rounded-2xl bg-secondary/30 border border-border/80 hover:border-border transition-all shadow-sm">
+                <details data-reference-material class="group p-4 sm:p-5 rounded-2xl bg-secondary/30 border border-border/80 hover:border-border transition-all shadow-sm">
                   <summary class="cursor-pointer font-bold text-xs sm:text-sm text-foreground flex items-center justify-between list-none select-none outline-none">
                     <span class="flex items-center gap-2">
                       <span class="text-base">📜</span>
@@ -331,12 +336,7 @@ const progressPercentage = sortedSidebarModules.length > 0 ? Math.round((totalCo
 
               {isOrientasiModule && !isModul1 && (
                 <>
-                  <InteractiveModuleMaterial
-                    lessonSlug={lessonSlug}
-                    moduleTitle={entry.data.title}
-                  />
-
-                  <details class="group p-4 sm:p-5 rounded-2xl bg-secondary/30 border border-border/80 hover:border-border transition-all shadow-sm">
+                  <details data-reference-material class="group p-4 sm:p-5 rounded-2xl bg-secondary/30 border border-border/80 hover:border-border transition-all shadow-sm">
                     <summary class="cursor-pointer font-bold text-xs sm:text-sm text-foreground flex items-center justify-between list-none select-none outline-none">
                       <span class="flex items-center gap-2">
                         <span class="text-base">📜</span>
@@ -350,6 +350,13 @@ const progressPercentage = sortedSidebarModules.length > 0 ? Math.round((totalCo
                       </article>
                     </div>
                   </details>
+
+                  <TeacherMessageCard teacherMessage={orientasiMaterial!.teacherMessage} />
+
+                  <OrientasiLearningScene
+                    lessonSlug={lessonSlug}
+                    moduleTitle={entry.data.title}
+                  />
                 </>
               )}
 

@@ -85,10 +85,11 @@ test('reader mounts canonical Module 02–16 activities while preserving Module 
     'utf8',
   );
 
-  assert.match(source, /import InteractiveModuleMaterial from '..\/..\/components\/modul\/InteractiveModuleMaterial\.astro';/);
+  assert.match(source, /import TeacherMessageCard from '..\/..\/components\/modul\/TeacherMessageCard\.astro';/);
+  assert.match(source, /import OrientasiLearningScene from '..\/..\/components\/modul\/OrientasiLearningScene\.astro';/);
   assert.match(
     source,
-    /\{isOrientasiModule && !isModul1 && \(\s*<>\s*<InteractiveModuleMaterial\s+lessonSlug=\{lessonSlug\}\s+moduleTitle=\{entry\.data\.title\}\s+\/>[\s\S]*?<details[\s\S]*?Bacaan Rujukan & Materi Lengkap[\s\S]*?<Content \/>[\s\S]*?<\/details>\s*<\/>\s*\)\}/,
+    /\{isOrientasiModule && !isModul1 && \([\s\S]*data-reference-material[\s\S]*TeacherMessageCard[\s\S]*OrientasiLearningScene[\s\S]*InteractiveKnowledgeCheck/,
   );
-  assert.match(source, /\{isModul1 \?\s*\(\s*<InteractiveMaterialP1 user=\{user\} \/>\s*\)/);
+  assert.match(source, /\{isModul1 && \([\s\S]*data-reference-material[\s\S]*InteractiveMaterialP1/);
 });

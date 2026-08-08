@@ -1,8 +1,18 @@
 import assert from 'node:assert/strict';
+import { readFile } from 'node:fs/promises';
 import test from 'node:test';
 
 import { getOrientasiInteractiveMaterial } from '../src/utils/orientasiInteractiveMaterials.ts';
 import { CANONICAL_ORIENTASI_SLUGS } from '../src/utils/orientasiPplgPolicy.ts';
+
+const readerSource = await readFile(
+  new URL('../src/pages/pembelajaran/[...slug].astro', import.meta.url),
+  'utf8',
+);
+const learningSceneSource = await readFile(
+  new URL('../src/components/modul/OrientasiLearningScene.astro', import.meta.url),
+  'utf8',
+);
 
 const expectedTopicMarkers = {
   'orientasi-pplg-02-profesi-peluang-karier': { hero: ['delapan profesi', 'handoff'], scenes: ['Frontend Developer', 'Product Manager', 'QA Engineer'] },
@@ -21,6 +31,24 @@ const expectedTopicMarkers = {
   'orientasi-pplg-15-pengumpulan-validasi-or02': { hero: ['OR-02', 'tautan publik', 'evidence'], scenes: ['Atur akses', 'Salin link'] },
   'orientasi-pplg-16-rekap-skill-clinic-refleksi': { hero: ['Skill Passport', 'Skill Clinic', 'refleksi'], scenes: ['Level 2', 'Semester genap'] },
 } as const;
+
+test('reader keeps Module 01 intact and couples the Module 02–16 reference-to-checkpoint order', () => {
+  assert.match(
+    readerSource,
+    /\{isOrientasiModule && !isModul1 && \([\s\S]*data-reference-material[\s\S]*TeacherMessageCard[\s\S]*OrientasiLearningScene[\s\S]*InteractiveKnowledgeCheck/,
+  );
+  assert.match(
+    readerSource,
+    /\{isModul1 && \([\s\S]*data-reference-material[\s\S]*InteractiveMaterialP1/,
+  );
+
+  const module02Branch = readerSource.match(
+    /\{isOrientasiModule && !isModul1 && \(([\s\S]*?)\)\}\s*<div class="space-y-4 pt-2" id="checkpoint-challenge-area">/,
+  )?.[1];
+  assert.ok(module02Branch, 'Reader must expose one coupled Module 02–16 branch before the checkpoint.');
+  assert.doesNotMatch(module02Branch, /SmartMarkdownWrapper|InteractiveModuleMaterial/);
+  assert.doesNotMatch(learningSceneSource, /TeacherMessageCard|data-teacher-message/);
+});
 
 test('every Module 02–16 owns factual hero, teacher message, and two contextual scenes', () => {
   assert.deepEqual(Object.keys(expectedTopicMarkers), CANONICAL_ORIENTASI_SLUGS.slice(1));

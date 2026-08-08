@@ -1,11 +1,9 @@
 ---
-import TeacherMessageCard from './TeacherMessageCard.astro';
 import { getSequencePresentationItems } from '../../utils/interactiveModuleMaterialBehavior.ts';
 import {
   getOrientasiInteractiveMaterial,
   type LearningHero,
   type LearningScene,
-  type TeacherMessage,
 } from '../../utils/orientasiInteractiveMaterials.ts';
 import type { OrientasiSlug } from '../../utils/orientasiPplgPolicy.ts';
 
@@ -17,7 +15,6 @@ interface Props {
 const { lessonSlug, moduleTitle } = Astro.props;
 const material = getOrientasiInteractiveMaterial(lessonSlug);
 const hero: LearningHero = material.hero;
-const teacherMessage: TeacherMessage = material.teacherMessage;
 const scenes: [LearningScene, LearningScene] = material.scenes;
 const kindLabels = { explore: 'Jelajahi fakta', scenario: 'Cermati situasi', sequence: 'Susun alur', checklist: 'Tandai kesiapan' } as const;
 const getChoiceActionLabel = (kind: LearningScene['kind'], label: string) => (
@@ -37,8 +34,6 @@ const getChoiceActionLabel = (kind: LearningScene['kind'], label: string) => (
       <div><strong>Target yang dapat diamati</strong><p>{hero.objective}</p></div>
     </div>
   </header>
-
-  <TeacherMessageCard teacherMessage={teacherMessage} />
 
   <div class="learning-scene__cards">
     {scenes.map((scene, index) => (
