@@ -345,3 +345,20 @@ Expected: Vercel returns a successful production deployment URL for `https://agu
 git add docs/CHANGELOG.md docs/ARCHITECTURE_AND_HANDOVER.md docs/superpowers/specs/2026-08-08-module-parity-design.md docs/superpowers/plans/2026-08-08-orientasi-pplg-module-parity.md
 git commit -m "docs: hand over orientasi module parity release"
 ```
+
+---
+
+### Task 6: Security follow-up — atomic checkpoint reward claim
+
+**Files:**
+- Modify: `src/db/schema.ts`, `src/db/index.ts`
+- Modify: `src/pages/api/gamification/claim-checkpoint.ts`
+- Create: `tests/orientasi-checkpoint-atomicity.test.ts`
+- Modify: parity design, architecture handover, dan changelog
+
+- [x] Tambahkan focused guard terlebih dahulu dan saksikan gagal karena composite uniqueness belum ada (RED).
+- [x] Deklarasikan unique key `(userId, lessonSlug, submissionType)` di Drizzle dan migrasi runtime idempoten yang membersihkan duplicate lama secara deterministik.
+- [x] Ganti `SELECT` → `INSERT` dengan `onConflictDoNothing(...).returning(...)`; award XP hanya bila insert mengembalikan row.
+- [x] Ganti XP read/modify/write dengan atomic upsert/increment.
+- [x] Jalankan focused guard kembali hingga lulus (GREEN).
+- [ ] Jalankan suite Orientasi, parity guard, dan build; deploy production; smoke test HTTP 200/401; catat deployment aktual di report release.

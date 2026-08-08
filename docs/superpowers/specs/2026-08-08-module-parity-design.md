@@ -60,6 +60,14 @@ Jika dokumen handover belum cukup untuk membuat agen atau sesi berikutnya dapat 
 
 ## Hasil verifikasi dan deployment (2026-08-08)
 
+### Security addendum: atomisitas reward checkpoint
+
+- Identity submission dibakukan menjadi `(user_id, lesson_slug, submission_type)` dan dipaksakan oleh unique index PostgreSQL, bukan oleh pre-check aplikasi.
+- Klaim checkpoint memakai conflict-safe insert + `RETURNING`; hanya request pemenang yang memperoleh 15 XP. XP ditambahkan dengan atomic upsert untuk mencegah lost update antar-checkpoint.
+- Migrasi runtime mempertahankan baris duplikat lama yang sudah dinilai atau paling baru sebelum membuat index, dengan advisory/table lock agar inisialisasi serverless paralel tetap aman.
+- Duplikat submission historis dibersihkan, tetapi XP historis tidak dikurangi otomatis karena tidak ada reward ledger yang dapat membuktikan XP mana yang berasal dari race lama.
+- Regression contract berada di `tests/orientasi-checkpoint-atomicity.test.ts` dan harus lulus sebelum parity guard/build/deploy.
+
 ### Final review fix: server authority dan pelestarian LKPD
 
 - Batas kepercayaan dipindahkan ke server: enrollment aktif, prerequisite, serta checkpoint → LKPD → refleksi → completion dibaca dari database oleh policy bersama. Browser event/localStorage hanya memperbarui UX setelah response sukses.

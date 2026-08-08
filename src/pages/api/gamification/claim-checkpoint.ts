@@ -1,7 +1,7 @@
 import type { APIRoute } from 'astro';
 import { db, isDbConfigured, ensureDbInitialized } from '../../../db';
 import { userSubmissions, userGamification } from '../../../db/schema';
-import { eq, and } from 'drizzle-orm';
+import { sql } from 'drizzle-orm';
 import { authorizeOrientasiAction, getApprovedCheckpoint } from '../../../utils/orientasiPplgPolicy.ts';
 import { getOrientasiServerState } from '../../../utils/orientasiPplgServer.ts';
 
@@ -32,52 +32,52 @@ export const POST: APIRoute = async ({ request, locals }) => {
       return new Response(JSON.stringify({ error: authorization.error }), { status: authorization.status });
     }
 
-    // Cek apakah checkpoint modul ini sudah pernah di-claim oleh user
-    const [existing] = await db.select()
-      .from(userSubmissions)
-      .where(and(
-        eq(userSubmissions.userId, userId),
-        eq(userSubmissions.lessonSlug, checkpoint.lessonSlug),
-        eq(userSubmissions.submissionType, 'checkpoint')
-      ))
-      .limit(1);
+    // The composite unique key makes this insert the single arbiter for parallel
+    // first claims. Only the request receiving a RETURNING row may award XP.
+    const [inserted] = await db.insert(userSubmissions).values({
+      userId,
+      tokenId: serverState.enrollmentTokenId,
+      lessonSlug: checkpoint.lessonSlug,
+      submissionType: 'checkpoint',
+      formData: JSON.stringify({ quizId: checkpoint.quizId, passed: true, autoGraded: true, timestamp: new Date().toISOString() }),
+      score: 100,
+      teacherScore: 100,
+      teacherLevel: 'Level 2',
+      teacherFeedback: 'Selesai otomatis via Gamified Checkpoint Quest',
+      gradedAt: new Date(),
+      status: 'verified',
+    })
+      .onConflictDoNothing({
+        target: [
+          userSubmissions.userId,
+          userSubmissions.lessonSlug,
+          userSubmissions.submissionType,
+        ],
+      })
+      .returning({ id: userSubmissions.id });
 
-    let xpEarned = 0;
-    let isFirstTime = false;
+    const isFirstTime = Boolean(inserted);
+    const xpEarned = inserted ? checkpoint.xpReward : 0;
 
-    if (!existing) {
-      isFirstTime = true;
-      xpEarned = checkpoint.xpReward;
+    if (inserted) {
+      const initialLevel = Math.min(5, Math.floor(xpEarned / 100) + 1);
+      const now = new Date();
 
-      await db.insert(userSubmissions).values({
+      // Atomic upsert avoids read/modify/write lost updates when two different
+      // checkpoints are legitimately claimed at the same time.
+      await db.insert(userGamification).values({
         userId,
-        tokenId: serverState.enrollmentTokenId,
-        lessonSlug: checkpoint.lessonSlug,
-        submissionType: 'checkpoint',
-        formData: JSON.stringify({ quizId: checkpoint.quizId, passed: true, autoGraded: true, timestamp: new Date().toISOString() }),
-        score: 100,
-        teacherScore: 100,
-        teacherLevel: 'Level 2',
-        teacherFeedback: 'Selesai otomatis via Gamified Checkpoint Quest',
-        gradedAt: new Date(),
-        status: 'verified',
+        xp: xpEarned,
+        level: initialLevel,
+        lastActiveDate: now,
+      }).onConflictDoUpdate({
+        target: userGamification.userId,
+        set: {
+          xp: sql`${userGamification.xp} + ${xpEarned}`,
+          level: sql`LEAST(5, FLOOR((${userGamification.xp} + ${xpEarned}) / 100.0)::int + 1)`,
+          lastActiveDate: now,
+        },
       });
-
-      // Update XP & Level
-      const [gam] = await db.select().from(userGamification).where(eq(userGamification.userId, userId)).limit(1);
-      if (gam) {
-        const newXp = gam.xp + xpEarned;
-        const newLevel = Math.min(5, Math.floor(newXp / 100) + 1);
-        await db.update(userGamification)
-          .set({ xp: newXp, level: newLevel, lastActiveDate: new Date() })
-          .where(eq(userGamification.userId, userId));
-      } else {
-        await db.insert(userGamification).values({
-          userId,
-          xp: xpEarned,
-          level: 1,
-        });
-      }
     }
 
     return new Response(JSON.stringify({

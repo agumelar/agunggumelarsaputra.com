@@ -17,6 +17,12 @@ Format penulisan mengacu pada [Keep a Changelog](https://keepachangelog.com/id/1
 - Production dideploy pada `https://agunggumelarsaputra-1l124rpo0-agumelars-projects.vercel.app` dan dialiaskan ke `https://www.agunggumelarsaputra.com`; pemeriksaan halaman publik tidak menemukan regresi.
 - Batas verifikasi: alur terlindungi Modul 02 (locked state, checkpoint → LKPD → refleksi, tombol selesai, dan unlock Modul 03) belum diuji di production karena tidak tersedia sesi siswa uji yang sah. Uji tersebut harus dilakukan dengan akun siswa dan enrollment yang legitimate.
 
+### 2026-08-08 — Checkpoint Reward Atomicity Security Fix
+- Menutup race condition klaim checkpoint pertama: `user_submissions` kini memiliki unique key komposit `(user_id, lesson_slug, submission_type)`, dan `/api/gamification/claim-checkpoint` memakai `INSERT ... ON CONFLICT DO NOTHING RETURNING` sebagai satu-satunya arbiter reward pertama.
+- XP hanya diberikan ketika insert checkpoint benar-benar menghasilkan baris baru. Mutasi `user_gamification` diubah menjadi atomic upsert/increment agar klaim sah pada checkpoint berbeda tidak mengalami lost update.
+- Bootstrap skema production melakukan migrasi idempoten di bawah advisory lock dan table lock. Bila ada baris duplikat lama, satu baris hasil penilaian guru/versi terbaru dipertahankan sebelum unique index dibuat; koreksi XP historis tidak ditebak karena tabel submission tidak menyediakan ledger reward yang cukup untuk rekonsiliasi kausal.
+- Menambahkan regression test `tests/orientasi-checkpoint-atomicity.test.ts`; siklus TDD diverifikasi RED pada skema lama lalu GREEN setelah patch.
+
 ### 2026-08-08 — Orientasi PPLG Server Authority & Structured LKPD Fix
 - Memindahkan otorisasi checkpoint → LKPD → refleksi → completion ke policy server bersama. Ketiga endpoint mutasi kini memeriksa login, enrollment aktif, modul prasyarat, submission tahap sebelumnya, dan slug kanonik terhadap state database; `localStorage` hanya menjadi cache tampilan.
 - `/api/gamification/claim-checkpoint` tidak lagi menerima `xpReward`, `quizId`, atau `tokenId` sebagai sumber kebenaran. Slug, ID Quest, token enrollment, dan reward 15 XP diturunkan dari katalog server; guest, database offline, dan slug arbitrer ditolak.

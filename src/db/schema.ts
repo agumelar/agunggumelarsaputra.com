@@ -1,4 +1,4 @@
-import { pgTable, serial, text, integer, timestamp, boolean } from 'drizzle-orm/pg-core';
+import { pgTable, serial, text, integer, timestamp, boolean, unique } from 'drizzle-orm/pg-core';
 
 export const users = pgTable('users', {
   id: serial('id').primaryKey(),
@@ -78,5 +78,10 @@ export const userSubmissions = pgTable('user_submissions', {
   status: text('status').default('submitted').notNull(), // 'draft', 'submitted', 'graded'
   submittedAt: timestamp('submitted_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
-});
-
+}, (table) => [
+  unique('user_submissions_user_lesson_type_unique').on(
+    table.userId,
+    table.lessonSlug,
+    table.submissionType,
+  ),
+]);

@@ -111,6 +111,9 @@ Mencatat pengumpulan lembar kerja (LKPD & Refleksi) siswa beserta nilai dan cata
 - `status` (Text, Default `'submitted'`, Nilai: `'submitted'` | `'graded'` | `'needs_revision'`)
 - `submittedAt` (Timestamp, Default `NOW()`)
 - `updatedAt` (Timestamp, Default `NOW()`)
+- Unique key komposit `(userId, lessonSlug, submissionType)`. Satu siswa hanya boleh memiliki satu record per jenis submission pada satu modul; penyimpanan ulang LKPD/refleksi memperbarui record tersebut.
+
+`ensureDbInitialized()` adalah jalur migrasi runtime untuk deployment serverless. Migrasi unique key dijalankan idempoten di bawah PostgreSQL advisory lock. Pada instalasi lama, bootstrap mengunci tabel, merangking duplikat per key, mempertahankan baris yang sudah dinilai guru terlebih dahulu (kemudian versi terbaru), menghapus baris redundan, lalu membuat index `user_submissions_user_lesson_type_unique`. Setelah index tersedia, cold start berikutnya melewati cleanup berat. Jangan menghapus cleanup ini sebelum seluruh environment dipastikan memiliki index tersebut.
 
 ---
 
@@ -176,9 +179,11 @@ tags: ["PPLG", "Kurikulum Merdeka", "Skill Passport", "Kelas 10"]
 
 **Integritas dan akses.** `authorizeOrientasiAction` dan `getOrientasiServerState` wajib dipanggil oleh endpoint checkpoint, submission, dan completion. Policy memeriksa slug kanonik, enrollment aktif/tidak kedaluwarsa, modul prasyarat, dan urutan submission dari database; admin hanya memperoleh bypass enrollment/prasyarat untuk inspeksi, bukan bypass urutan tahap aksi. `getApprovedCheckpoint` menurunkan Quest ID dan reward 15 XP di server. Reader menggunakan `isCurrentModuleLocked` sebagai proteksi UX, tetapi endpoint tetap menjadi batas keamanan final. `AntiCopyPasteGuardian` memblokir paste, drop, `Ctrl/Cmd+V`, dan `Shift+Insert` pada jawaban pembelajaran. Pengecualian dibatasi oleh allowlist eksplisit identitas dan URL evidence yang benar-benar dirender, termasuk URL lowongan/screenshot evidence terstruktur.
 
+**Atomisitas reward checkpoint.** Endpoint checkpoint dilarang memakai pola `SELECT` lalu `INSERT` untuk menentukan first claim. Constraint komposit `user_submissions_user_lesson_type_unique` menjadi sumber kebenaran: handler melakukan conflict-safe insert dengan `RETURNING`, menganggap klaim pertama hanya jika satu row dikembalikan, dan baru kemudian menjalankan atomic upsert/increment XP. Regression guard berada di `tests/orientasi-checkpoint-atomicity.test.ts` dan ikut dijalankan oleh `npm run test:orientasi`. Jika migrasi constraint gagal, klaim harus fail closed; jangan kembali ke pre-check aplikasi sebagai fallback.
+
 **Kontrak LKPD terstruktur.** `src/utils/orientasiLkpdSchemas.ts` menyimpan section dan field khusus Modul 02–16; jangan menggantinya dengan satu `analysisSummary`. Setiap perubahan materi wajib memperbarui skema tugas dan evidence yang sesuai. Modul 02 memerlukan 3 × (nama profesi, tanggung jawab, tools, alasan), profesi prioritas, dan dua langkah aksi. Modul 12 memerlukan dua rangkaian terpisah screenshot URL + Claim + Evidence + Reasoning untuk bukti positif dan negatif.
 
-**Urutan verifikasi wajib.** Jalankan `npm run test:orientasi`, `npm run verify:orientasi-parity`, lalu `npm run build`. Tes menguji policy sebagai perilaku; guard memeriksa wiring endpoint/reader, 16 Markdown, katalog Quest/LKPD, posisi tombol selesai, dan kontrak gating. Setelah seluruhnya berhasil, deploy dengan `vercel --prod --yes`.
+**Urutan verifikasi wajib.** Jalankan focused guard `node --experimental-strip-types --test tests/orientasi-checkpoint-atomicity.test.ts`, `npm run test:orientasi`, `npm run verify:orientasi-parity`, lalu `npm run build`. Tes menguji policy dan kontrak atomisitas; guard parity memeriksa wiring endpoint/reader, 16 Markdown, katalog Quest/LKPD, posisi tombol selesai, dan kontrak gating. Setelah seluruhnya berhasil, deploy dengan `vercel --prod --yes`.
 
 **Checklist modul baru/perubahan modul.**
 
@@ -190,6 +195,7 @@ tags: ["PPLG", "Kurikulum Merdeka", "Skill Passport", "Kelas 10"]
 - [ ] Gating prasyarat, urutan event checkpoint/LKPD, dan lokasi tunggal tombol selesai tetap utuh.
 - [ ] Changelog, spesifikasi, dan handover diperbarui.
 - [ ] `npm run test:orientasi`, `npm run verify:orientasi-parity`, lalu `npm run build` berhasil.
+- [ ] Focused checkpoint atomicity guard berhasil dan index `user_submissions_user_lesson_type_unique` tersedia pada database target.
 - [ ] Production dideploy dan halaman publik diperiksa.
 
 **Status production per 2026-08-08.** Final authority fix deployment `dpl_69TnjsE2Fqc4KCv6f7ZqygUArjQe` READY di `https://agunggumelarsaputra-g2dztreej-agumelars-projects.vercel.app` dan teralias ke `https://www.agunggumelarsaputra.com`. Lima tes policy lulus, guard parity PASS, Astro build berhasil, beranda publik HTTP 200, dan POST checkpoint tanpa login ditolak HTTP 401. Verifikasi interaksi terlindungi lengkap belum dilakukan karena tidak ada sesi siswa uji yang sah; lanjutkan dengan akun siswa terdaftar untuk menguji locked-state Modul 02, checkpoint → LKPD → refleksi, tombol selesai, dan terbukanya Modul 03. Jangan membypass autentikasi untuk menggantikan uji tersebut.
