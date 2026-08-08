@@ -25,8 +25,7 @@ assert.deepEqual(orientasi.map((name) => name.replace(/\.md$/, '')), CANONICAL_O
 assert.match(reader, /<InteractiveKnowledgeCheck/, 'Reader harus memasang checkpoint bersama.');
 assert.match(reader, /<GeneralInteractiveLkpd/, 'Reader harus memasang LKPD generik untuk Modul 02–16.');
 assert.match(reader, /import InteractiveModuleMaterial from '..\/..\/components\/modul\/InteractiveModuleMaterial\.astro';/, 'Reader harus mengimpor renderer materi interaktif Modul 02–16.');
-assert.match(reader, /isOrientasiModule && !isModul1/, 'Reader harus membatasi renderer materi interaktif pada Modul 02–16 Orientasi.');
-assert.match(reader, /<InteractiveModuleMaterial\s+lessonSlug=\{lessonSlug\}\s+moduleTitle=\{entry\.data\.title\}\s+\/>/, 'Reader harus meneruskan slug dan judul modul ke renderer materi interaktif.');
+assert.match(reader, /\{isOrientasiModule && !isModul1 && \(\s*<>\s*<InteractiveModuleMaterial\s+lessonSlug=\{lessonSlug\}\s+moduleTitle=\{entry\.data\.title\}\s+\/>[\s\S]*?<details[\s\S]*?Bacaan Rujukan & Materi Lengkap[\s\S]*?<Content \/>[\s\S]*?<\/details>\s*<\/>\s*\)\}/, 'Reader harus memasang renderer dan Markdown referensi hanya dalam cabang Modul 02–16 Orientasi.');
 assert.match(reader, /<InteractiveReflectionForm[\s\S]*moduleTitle=\{entry\.data\.title\}/, 'Refleksi harus menerima judul modul.');
 assert.match(reader, /id="btn-complete-lesson"/, 'Reader harus menyediakan tombol tuntas.');
 assert.match(reader, /<section id="panel-refleksi"[\s\S]*id="btn-complete-lesson"/, 'Tombol tuntas hanya berada di panel refleksi.');
