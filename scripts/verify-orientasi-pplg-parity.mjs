@@ -26,7 +26,7 @@ assert.match(reader, /window\.addEventListener\('checkpoint-passed'/, 'Checkpoin
 assert.match(reader, /window\.addEventListener\('lkpd-submitted'/, 'LKPD harus membuka refleksi.');
 assert.match(reader, /isCurrentModuleLocked/, 'Reader harus memeriksa gating modul.');
 assert.match(reader, /user\?\.role !== 'admin'/, 'Admin harus mempertahankan bypass gating.');
-assert.doesNotMatch(antiCopyPasteGuardian, /'groupmembers'|'studentgroup'|'token'|'tokencode'|'email'|'password'|'search'|'query'/, 'Hanya identitas siswa dan evidence yang boleh diizinkan di dalam form pembelajaran.');
+assert.doesNotMatch(antiCopyPasteGuardian, /'groupmembers'|'studentgroup'|'token'|'tokencode'|'email'|'password'|'search'|'query'|'evidenceurl'|'repositoryurl'|'repourl'/, 'Hanya identitas siswa dan evidence yang digunakan form boleh diizinkan di dalam form pembelajaran.');
 assert.doesNotMatch(antiCopyPasteGuardian, /el instanceof HTMLInputElement && el\.type === 'url'/, 'Tidak semua input URL boleh menerima paste.');
 assert.match(antiCopyPasteGuardian, /'studentname'[\s\S]*'studentnis'[\s\S]*'studentclass'[\s\S]*'submissiondate'[\s\S]*'driveurl'[\s\S]*'evidencedriveurl'/, 'Identitas siswa dan URL evidence harus tetap diizinkan.');
 assert.match(antiCopyPasteGuardian, /const isLearningTask = [\s\S]*if \(!isLearningTask\) \{[\s\S]*return true;[\s\S]*return false;/, 'Jawaban LKPD dan refleksi yang bukan pengecualian harus tetap diblokir.');
