@@ -18,6 +18,7 @@ Format penulisan mengacu pada [Keep a Changelog](https://keepachangelog.com/id/1
   3. **Simulator Sinergi Tim (Flash Sale 12.12 / War Tiket Konser)**: Stepper interaktif 6 tahap alur kerja lintas peran dari Product Manager hingga DevOps.
   4. **Simulasi Krisis Proyek ("What-If Scenario")**: Eksplorasi konsekuensi jika satu peran dihilangkan dalam tim digital.
   5. **Paritas Struktur Modul 01**: Menghadirkan *Bacaan Rujukan Silabus & Catatan Kurikulum Lengkap*, `TeacherMessageCard`, serta integrasi mulus dengan kuis checkpoint 3 nyawa.
+- **Hotfix (23:00):** Menulis ulang event listener interaktif dengan *robust delegated event handler* (via `document.addEventListener('click')`) untuk mengatasi kendala *button toggle* teka-teki yang tidak responsif pasca-*hydration*. Mengimplementasikan atribut `aria-expanded` untuk standar aksesibilitas interaksi.
 - Verifikasi lokal lulus 22/22 unit tests (`npm run test:orientasi`), Astro server build exit 0 (`npm run build`), dan deployment kanonis berhasil live di production `https://agunggumelarsaputra.com`.
 
 ### 2026-08-08 — Rilis Produksi & Uji Siswa Orientasi PPLG
