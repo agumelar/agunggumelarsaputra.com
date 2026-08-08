@@ -1,6 +1,6 @@
 # Desain Paritas Pembelajaran Bermakna Modul 02–16 Orientasi PPLG
 
-> **Status:** Disetujui untuk spesifikasi; menunggu review spesifikasi tertulis sebelum rencana implementasi
+> **Status:** Implementasi dan verifikasi lokal selesai; **RELEASE BLOCKED** oleh akses team Vercel, deployment kanonis READY dan uji siswa masih wajib
 > **Tanggal:** 2026-08-08
 > **Acuan mutu:** Struktur, keterbacaan, dan ritme belajar Modul 01
 
@@ -26,13 +26,13 @@ Urutan Tab Materi akan selalu sama:
 
 Modul 01 tidak diubah secara fungsional. Ia tetap menjadi baseline yang telah ada; shell baru hanya dipakai Modul 02–16 agar tidak merusak materi/interaksi Modul 01.
 
-## Arsitektur
+## Arsitektur terimplementasi
 
-1. Tambahkan shell Astro bersama, misalnya `OrientasiLearningScene.astro`, untuk reference panel, kartu guru, hero, indikator scene, dan area aktivitas. Shell menggunakan token dark-slate proyek, kontras tinggi, dan fokus keyboard eksplisit; tidak memakai gradien neon, blur, atau glassmorphism.
-2. Ubah katalog `orientasiInteractiveMaterials.ts` menjadi data pembelajaran terstruktur. Setiap modul memuat `teacherMessage`, `hero`, tujuan, dan dua scene dengan fakta/detail yang berasal dari Markdown modul terkait.
-3. Gunakan renderer scene yang kecil dan terpisah menurut mekanik—misalnya kartu eksplorasi, pembanding, urutan, audit bukti, dan keputusan skenario—bukan satu kartu generik untuk seluruh bahan.
-4. Simpan state scene hanya di DOM selama halaman aktif. Dilarang menggunakan API, `localStorage`, XP, atau navigasi untuk aktivitas formatif.
-5. Reader menempatkan rujukan dan kartu guru di atas shell scene untuk Modul 02–16; Modul 01 mempertahankan urutan yang telah tervalidasi.
+1. `OrientasiLearningScene.astro` menjadi shell bersama hero dan dua scene Modul 02–16. `TeacherMessageCard.astro` tetap komponen mandiri di luar shell dan di luar panel `details`. Keduanya memakai token dark-slate, kontras tinggi, serta fokus keyboard eksplisit tanpa gradien neon, blur, atau glassmorphism.
+2. Katalog `orientasiInteractiveMaterials.ts` menyimpan data pembelajaran terstruktur. Setiap modul memuat `teacherMessage`, `hero`, tujuan, dan dua scene dengan fakta/detail yang berasal dari Markdown modul terkait.
+3. Renderer membedakan mekanik choice/scenario/checklist dan sequence; umpan balik tinggal pada scene yang dioperasikan, sedangkan sequence menyediakan kontrol naik/turun dan validasi.
+4. State scene hanya berada di DOM selama halaman aktif. Tidak ada API, `localStorage`, XP, atau navigasi pada aktivitas formatif.
+5. Urutan sibling DOM reader Modul 02–16 adalah: `details[data-reference-material]` → `TeacherMessageCard` → hero dan dua scene dalam `OrientasiLearningScene` → area checkpoint `InteractiveKnowledgeCheck`. Modul 01 mempertahankan urutan baseline yang telah tervalidasi.
 
 ## Peta scene bermakna per modul
 
@@ -76,3 +76,13 @@ Seluruh label, deskripsi, dan umpan balik akan dirujukkan ke tujuan/modul Markdo
 
 - Perubahan baru boleh disebut setara dengan Modul 01 setelah struktur, desain, data pembelajaran, test, dan pemeriksaan siswa sah lulus.
 - Handover harus mencatat scene per modul, bukti test, deployment, hasil sesi siswa uji, serta data uji yang perlu dibersihkan sebelum rilis Senin bila ada.
+
+## Hasil verifikasi dan status rilis 2026-08-08
+
+- Commit implementasi yang diverifikasi: `c13ef14`. `npm run test:orientasi` lulus 18/18, `npm run verify:orientasi-parity` menghasilkan `Orientasi PPLG parity guard: PASS`, `npm run build` exit 0, dan `git -c core.whitespace=cr-at-eol diff --check` exit 0.
+- Happy DOM tetap hanya dependency development untuk regression test DOM; status audit residual yang telah dicatat di changelog/handover tetap berlaku dan tidak dinyatakan selesai oleh pekerjaan ini.
+- Metadata project Vercel pada worktree telah dibuat sama persis dengan `.vercel/project.json` root kanonis. Deployment yang dihasilkan adalah `dpl_EiYNktHu2XLAsiHfGVdcDA8sS5Ui` di `https://agunggumelarsaputra-aturbn3yx-agumelars-projects.vercel.app`, tetapi inspect menunjukkan `readyState: BLOCKED` dan alias tidak mencakup `www.agunggumelarsaputra.com`.
+- Alasan resmi Vercel adalah `TEAM_ACCESS_REQUIRED`: author commit harus memiliki akses ke team `agumelar's projects`. Build internal berstatus `READY`, tetapi deployment induk tetap `BLOCKED`; karena itu tidak ada klaim release kanonis.
+- Domain `www` masih menunjuk deployment lama `dpl_FgAixUKU1VJM6wUAP9v2BfRJzidu`. Smoke terhadap baseline lama memberi `/` HTTP 200, `/pembelajaran` guest HTTP 302 ke login, dan POST checkpoint guest HTTP 401; bukti tersebut tidak memvalidasi fitur baru atau route terproteksi.
+- Uji akun siswa sah ditunda sampai deployment fitur `READY` dan beralias kanonis. Tidak ada login, submission, progress, atau XP akun uji yang dimutasi, sehingga tidak ada cleanup test-data saat ini.
+- Untuk membuka status release: perbaiki akses author/team tanpa memalsukan metadata, deploy ulang commit yang direview, inspect sampai `READY` dengan alias `www`, lakukan alur faktual Module 01 dan inspeksi/interaksi Module 02 pada akun sah, logout, lalu catat mutasi dan keputusan cleanup.
