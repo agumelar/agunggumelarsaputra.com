@@ -34,7 +34,7 @@
 
 ## Interfaces
 
-- `getGamifiedQuestForModule(lessonSlug, moduleTitle)` menyediakan `GamifiedQuest` dengan `matchPairs`, `stage2Detective`, `stage3Speed`, dan `xpReward` untuk `InteractiveKnowledgeCheck`.
+- `getGamifiedQuestForModule(lessonSlug, moduleTitle)` menyediakan `GamifiedQuest` dengan `stage1Match.pairs`, `stage2Detective`, `stage3Speed`, dan `xpReward` untuk `InteractiveKnowledgeCheck`.
 - `GeneralInteractiveLkpd` menerima `{ lessonSlug: string; moduleTitle: string; user: any }` dan mengirim `POST /api/submissions/save` dengan `submissionType: 'lkpd'`.
 - `InteractiveReflectionForm` menerima `{ lessonSlug: string; moduleTitle?: string; user: any }` dan mengirim `POST /api/submissions/save` dengan `submissionType: 'reflection'`.
 - `InteractiveKnowledgeCheck` mengirim `POST /api/gamification/claim-checkpoint` dan memancarkan `checkpoint-passed`.
@@ -136,7 +136,7 @@ for (const filename of orientasi.slice(1)) {
   const slug = filename.replace(/\.md$/, '');
   const checkpointStart = checkpoints.indexOf(`'${slug}'`);
   const checkpointBlock = checkpoints.slice(checkpointStart, checkpoints.indexOf('\n  },', checkpointStart));
-  assert.match(checkpointBlock, /matchPairs:/, `${slug} harus memiliki ronde Puzzle Match.`);
+  assert.match(checkpointBlock, /stage1Match:/, `${slug} harus memiliki ronde Puzzle Match.`);
   assert.match(checkpointBlock, /stage2Detective:/, `${slug} harus memiliki ronde Mitos vs Fakta.`);
   assert.match(checkpointBlock, /stage3Speed:/, `${slug} harus memiliki ronde Skenario Cepat.`);
   assert.match(checkpointBlock, /xpReward:/, `${slug} harus memiliki reward XP.`);
@@ -154,7 +154,7 @@ Expected: PASS only when every current record contains all three stages and an X
 For each key from `orientasi-pplg-02-profesi-peluang-karier` through `orientasi-pplg-16-rekap-skill-clinic-refleksi`:
 
 - Set `moduleTitle` to the actual lesson title.
-- Set `matchPairs` to three concepts and functions found in that module's Markdown.
+- Set `stage1Match` with exactly three `pairs` of concepts and functions found in that module's Markdown.
 - Set `stage2Detective` to a true/false industry statement relevant to that meeting.
 - Set `stage3Speed` to three scenario options with one correct decision and explanation.
 - Keep the game mechanics unchanged: three lives, full state reset, checkpoint persistence, and `xpReward` claimed only through `/api/gamification/claim-checkpoint`.
@@ -345,3 +345,20 @@ Expected: Vercel returns a successful production deployment URL for `https://agu
 git add docs/CHANGELOG.md docs/ARCHITECTURE_AND_HANDOVER.md docs/superpowers/specs/2026-08-08-module-parity-design.md docs/superpowers/plans/2026-08-08-orientasi-pplg-module-parity.md
 git commit -m "docs: hand over orientasi module parity release"
 ```
+
+---
+
+### Task 6: Security follow-up — atomic checkpoint reward claim
+
+**Files:**
+- Modify: `src/db/schema.ts`, `src/db/index.ts`
+- Modify: `src/pages/api/gamification/claim-checkpoint.ts`
+- Create: `tests/orientasi-checkpoint-atomicity.test.ts`
+- Modify: parity design, architecture handover, dan changelog
+
+- [x] Tambahkan focused guard terlebih dahulu dan saksikan gagal karena composite uniqueness belum ada (RED).
+- [x] Deklarasikan unique key `(userId, lessonSlug, submissionType)` di Drizzle dan migrasi runtime idempoten yang membersihkan duplicate lama secara deterministik.
+- [x] Ganti `SELECT` → `INSERT` dengan `onConflictDoNothing(...).returning(...)`; award XP hanya bila insert mengembalikan row.
+- [x] Ganti XP read/modify/write dengan atomic upsert/increment.
+- [x] Jalankan focused guard kembali hingga lulus (GREEN).
+- [x] Jalankan suite Orientasi, parity guard, dan build; deploy production; smoke test HTTP 200/401; catat deployment aktual di report release.

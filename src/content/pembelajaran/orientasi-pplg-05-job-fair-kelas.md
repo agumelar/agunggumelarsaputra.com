@@ -70,23 +70,13 @@ Bawalah lembar catatan atau smartphone kalian, dan tanyakan pertanyaan berikut k
 
 ---
 
-## 📝 Lembar Kerja Peserta Didik (LKPD P5)
-
-### Tabel Log Kunjungan Booth Job Fair:
-
-| No | Nama Booth Profesi | Nama Penjaga Booth | Tech Stack Kunci | Wawasan Baru yang Didapatkan | Minat Saya (1-5 ⭐) |
-| :---: | :--- | :--- | :--- | :--- | :---: |
-| 1 | *Contoh: Backend Developer* | *Rian & Siti* | *Node.js, PostgreSQL, Docker* | *Bertanggung jawab menjaga keamanan database agar tidak diretas.* | ⭐⭐⭐⭐⭐ |
-| 2 | | | | | |
-| 3 | | | | | |
-| 4 | | | | | |
-
 ---
 
-## 🧭 Refleksi Pribadi (Pertemuan 5)
+## ⚡ Langkah Selanjutnya: Aktivitas Belajar
 
-Jawablah pertanyaan refleksi berikut di buku kerja atau catatan digital kalian:
-1. **Profesi mana yang paling mengejutkan bagi kalian hari ini? Mengapa?**
-2. **Apakah pilihan profesi impian kalian berubah setelah mendengarkan penjelasan teman di booth lain? Jelaskan alasannya!**
+Gunakan tab di bagian atas modul ini untuk menyelesaikan tahapan belajar kalian:
 
-> 💾 **Petunjuk Simpan:** Simpan catatan LKPD P5 kalian ke folder Google Drive pribadi: `📁 Skill_Passport_RPL/OR-01/P5_JobFair_NIS_Nama.pdf`.
+1. 📖 **Tab 1 (Materi & Checkpoint)**: Pelajari materi lalu tuntaskan kuis checkpoint tiga tahap agar Tab 2 terbuka.
+2. 📝 **Tab 2 (Form LKPD Interaktif)**: Isi dan kirim LKPD secara mandiri; sertakan URL Google Drive portofolio bila diperlukan agar Tab 3 terbuka (+25 XP).
+3. 💭 **Tab 3 (Jurnal Refleksi)**: Tulis dan kirim refleksi mandiri (+15 XP), kemudian klik **“Tandai Selesai & Buka Modul Selanjutnya”** untuk menuntaskan modul.
+4. 🎯 **Tab 4 (Panduan Kriteria Guru)**: Gunakan matriks KKTP untuk memeriksa target karya kalian.

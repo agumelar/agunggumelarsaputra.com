@@ -1,6 +1,6 @@
 # Desain Penyamaan Modul Orientasi PPLG 02–16
 
-> **Status:** Disetujui untuk ditinjau sebelum perencanaan implementasi  
+> **Status:** Diimplementasikan, diverifikasi, dan dideploy ke production
 > **Tanggal:** 2026-08-08  
 > **Acuan utama:** Modul 01 — `orientasi-pplg-01-pengantar-skill-passport`
 
@@ -9,6 +9,8 @@
 Menyamakan pengalaman belajar Modul Orientasi PPLG 02–16 dengan Modul 01 tanpa menghapus materi, tugas, contoh, maupun konteks pedagogis khas masing-masing modul.
 
 ## Ruang lingkup
+
+Katalog aktif dibatasi tepat pada 16 Markdown dalam `CANONICAL_ORIENTASI_SLUGS`. Tiga materi bawaan yang bukan bagian dari Orientasi PPLG—HTML, SQL, dan OOP—dihapus dari koleksi, Quest, dan panduan LKPD pada 2026-08-08. Bila kelak dikembangkan, ketiganya harus menjadi mata pelajaran terpisah dengan kontrak dan security boundary sendiri.
 
 Setiap modul harus mengikuti kontrak pengalaman Modul 01:
 
@@ -55,5 +57,46 @@ Jika dokumen handover belum cukup untuk membuat agen atau sesi berikutnya dapat 
 - Modul 02–16 memberi pengalaman alur inti yang sama dengan Modul 01.
 - Konten dan instruksi belajar unik setiap modul tidak hilang atau berubah secara tidak sengaja.
 - Tidak ada bypass siswa terhadap urutan tab atau gating modul.
+- Direktori konten publik hanya memuat tepat 16 modul kanonik Orientasi PPLG; regression test harus gagal bila materi mata pelajaran lain masuk kembali.
 - Build `npm run build` berhasil.
 - Deployment production berhasil dan perubahan terdokumentasi lengkap untuk handover sesi berikutnya.
+
+## Hasil verifikasi dan deployment (2026-08-08)
+
+### Katalog aktif Orientasi PPLG saja
+
+- Tiga konten bawaan di luar ruang lingkup (`pengenalan-html5-smk`, `dasar-basis-data-sql`, dan `konsep-oop-javascript`) dihapus dari koleksi Markdown, Quest, dan panduan LKPD.
+- Regression test filesystem sekarang mengharuskan `src/content/pembelajaran/` berisi tepat 16 slug `CANONICAL_ORIENTASI_SLUGS`; perubahan yang memasukkan materi mata pelajaran lain akan gagal pada suite Orientasi.
+- Verifikasi final lulus: suite Orientasi 10/10, parity guard PASS, dan Astro build exit 0. Deployment `dpl_HmmyLAphpkcsMXvFcFsiTEVshFUE` READY di `https://agunggumelarsaputra-bzwy6314z-agumelars-projects.vercel.app`, teralias ke production. Smoke beranda/katalog HTTP 200; katalog tidak memuat ketiga materi yang dihapus; checkpoint tanpa sesi HTTP 401.
+
+### Security addendum: trust boundary dan concurrency submission
+
+- Klaim checkpoint harus bersifat exactly-once pada dua sisi sekaligus: row checkpoint dan XP. Unique insert saja tidak cukup karena statement XP yang gagal sesudah insert akan membuat partial commit. Kontrak final memakai satu data-modifying CTE PostgreSQL yang menggabungkan insert conflict-safe dengan XP upsert.
+- Endpoint submission tidak memiliki jalur generik. `getApprovedSubmission()` hanya menyetujui slug dari katalog 16 modul serta tipe `lkpd`/`reflection`, sekaligus menurunkan action dan reward dari server. Enrollment, prasyarat modul, dan urutan checkpoint → LKPD → refleksi tetap diperiksa dari state database.
+- First-submit LKPD/refleksi memakai CTE insert+reward yang sama-sama atomik. Conflict pada request paralel bukan error: request yang kalah melakukan update record pemenang tanpa reward tambahan. Update tetap menjaga grade/feedback dan remedial; row dengan `teacher_score >= 73` dikunci, termasuk bila grade masuk bersamaan dengan update siswa.
+- Input klien yang tidak lagi memiliki otoritas: `tokenId`, `score`, slug nonkanonik, tipe submission lain, dan nilai reward. Existing submission records tidak dimigrasikan atau dihapus oleh patch ini.
+- Guard fokus: `tests/orientasi-checkpoint-atomicity.test.ts` dan `tests/orientasi-submission-security.test.ts`. RED awal 0/4 membuktikan ketiga celah; GREEN 4/4 membuktikan kontrak baru. Suite Orientasi bertambah menjadi 9 tes.
+- Verifikasi clone rilis terisolasi berhasil: suite Orientasi 9/9, parity PASS, dan build exit 0. Deployment masih tertunda karena dua invocation Vercel CLI timeout sebelum mencatat job baru; production masih menjalankan deployment `agunggumelarsaputra-cgcllt7b2-agumelars-projects.vercel.app`. Smoke production lama (public 200, mutation tanpa sesi 401) adalah baseline saja dan harus diulang setelah patch benar-benar dideploy.
+
+### Security addendum: atomisitas reward checkpoint
+
+- Identity submission dibakukan menjadi `(user_id, lesson_slug, submission_type)` dan dipaksakan oleh unique index PostgreSQL, bukan oleh pre-check aplikasi.
+- Klaim checkpoint memakai conflict-safe insert + `RETURNING`; hanya request pemenang yang memperoleh 15 XP. XP ditambahkan dengan atomic upsert untuk mencegah lost update antar-checkpoint.
+- Migrasi runtime mempertahankan baris duplikat lama yang sudah dinilai atau paling baru sebelum membuat index, dengan advisory/table lock agar inisialisasi serverless paralel tetap aman.
+- Duplikat submission historis dibersihkan, tetapi XP historis tidak dikurangi otomatis karena tidak ada reward ledger yang dapat membuktikan XP mana yang berasal dari race lama.
+- Regression contract berada di `tests/orientasi-checkpoint-atomicity.test.ts` dan harus lulus sebelum parity guard/build/deploy.
+- Release final: focused guard 1/1, suite Orientasi 6/6, parity PASS, build exit 0, dan deployment `dpl_7egFohXuhXB4jjVErKuogF3YBJFn` READY/teralias ke `www`. Smoke publik menghasilkan 200 untuk beranda/leaderboard dan 401 untuk checkpoint tanpa sesi.
+
+### Final review fix: server authority dan pelestarian LKPD
+
+- Batas kepercayaan dipindahkan ke server: enrollment aktif, prerequisite, serta checkpoint → LKPD → refleksi → completion dibaca dari database oleh policy bersama. Browser event/localStorage hanya memperbarui UX setelah response sukses.
+- Daftar tepat 16 slug kanonik menjadi sumber navigasi/progress reader dan validasi checkpoint. Endpoint checkpoint menurunkan `quizId` dan reward 15 XP dari policy, bukan payload klien.
+- Tugas Modul 02–16 dirender dari skema terstruktur. Struktur asli Modul 02 (tiga profesi + action plan) dan Modul 12 (dua latihan screenshot CER) menjadi regression fixture eksplisit.
+- Verifikasi wajib kini mencakup `npm run test:orientasi` sebelum guard parity dan build.
+- Final fix deployment `dpl_69TnjsE2Fqc4KCv6f7ZqygUArjQe` berstatus READY di [deployment URL](https://agunggumelarsaputra-g2dztreej-agumelars-projects.vercel.app) dan dialiaskan ke [domain production](https://www.agunggumelarsaputra.com). Smoke test beranda menghasilkan HTTP 200; klaim checkpoint tanpa login ditolak HTTP 401.
+
+- `npm run verify:orientasi-parity` selesai dengan exit code `0` dan keluaran `Orientasi PPLG parity guard: PASS`.
+- `npm run build` selesai dengan exit code `0`; Astro menghasilkan server build dengan adapter `@astrojs/vercel`.
+- Vercel production deployment `dpl_49za4gEgo3PWAY6AiGkk2cUEiug2` READY di [deployment URL](https://agunggumelarsaputra-1l124rpo0-agumelars-projects.vercel.app) dan dialiaskan ke [domain production](https://www.agunggumelarsaputra.com).
+- Pemeriksaan halaman publik pada domain production berhasil: beranda memuat judul, navigasi, hero, dan katalog modul tanpa regresi yang terlihat.
+- Tidak ada sesi siswa uji yang sah pada saat release. Karena itu, pengujian production atas locked-state Modul 02, checkpoint → LKPD → refleksi, `#btn-complete-lesson`, dan terbukanya Modul 03 masih merupakan pekerjaan lanjutan yang harus dilakukan melalui akun siswa terdaftar dan enrollment legitimate—tanpa bypass autentikasi.

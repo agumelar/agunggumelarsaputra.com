@@ -161,6 +161,44 @@ export async function ensureDbInitialized(): Promise<{ success: boolean; message
       try { await sql`ALTER TABLE user_submissions ADD COLUMN IF NOT EXISTS submitted_at TIMESTAMP NOT NULL DEFAULT NOW()`; } catch {}
       try { await sql`ALTER TABLE user_submissions ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP NOT NULL DEFAULT NOW()`; } catch {}
 
+      // Serialize the one-time cleanup so existing duplicate submissions cannot
+      // race the composite unique index creation across serverless instances.
+      // Keep the most valuable/newest row (graded rows win), then enforce the
+      // same identity declared by the Drizzle schema.
+      await sql`
+        DO $checkpoint_atomicity_migration$
+        BEGIN
+          PERFORM pg_advisory_xact_lock(hashtext('user_submissions_user_lesson_type_unique'));
+
+          IF to_regclass('public.user_submissions_user_lesson_type_unique') IS NULL THEN
+            LOCK TABLE user_submissions IN SHARE ROW EXCLUSIVE MODE;
+
+            WITH ranked_submissions AS (
+              SELECT
+                id,
+                ROW_NUMBER() OVER (
+                  PARTITION BY user_id, lesson_slug, submission_type
+                  ORDER BY
+                    (teacher_score IS NOT NULL) DESC,
+                    graded_at DESC NULLS LAST,
+                    updated_at DESC NULLS LAST,
+                    submitted_at DESC NULLS LAST,
+                    id DESC
+                ) AS duplicate_rank
+              FROM user_submissions
+            )
+            DELETE FROM user_submissions AS duplicate
+            USING ranked_submissions
+            WHERE duplicate.id = ranked_submissions.id
+              AND ranked_submissions.duplicate_rank > 1;
+
+            CREATE UNIQUE INDEX IF NOT EXISTS user_submissions_user_lesson_type_unique
+            ON user_submissions (user_id, lesson_slug, submission_type);
+          END IF;
+        END
+        $checkpoint_atomicity_migration$
+      `;
+
       isInitialized = true;
       return true;
     } catch (err) {
@@ -174,4 +212,3 @@ export async function ensureDbInitialized(): Promise<{ success: boolean; message
   const success = await initPromise;
   return { success };
 }
-

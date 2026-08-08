@@ -60,43 +60,13 @@ Rencana minat awal (*Career Interest Draft*) adalah dokumen komitmen pribadi yan
 
 ---
 
-## 📝 Lembar Kerja Peserta Didik (LKPD P6)
-
-Isilah template rencana minat pribadi berikut secara mendalam dan jujur:
-
-```text
-================================================================================
-                    DRAFT RENCANA MINAT AWAL SISWA PPLG
-                           SMK NEGERI 1 RONGGA
-================================================================================
-
-Nama Siswa     : ..............................................................
-Kelas / NIS    : 10 RPL ..... / ...............................................
-Profesi Pilihan: ..............................................................
-
-1. ALASAN MEMILIH PROFESI INI:
-   [Tuliskan alasan personal dan potensi yang kalian rasakan]
-   .............................................................................
-   .............................................................................
-
-2. DAFTAR BAHASA / TOOLS YANG INGIN SAYA KUASAI:
-   • ...........................................................................
-   • ...........................................................................
-   • ...........................................................................
-
-3. TARGET KARYA PERTAMA SAYA DI KELAS 10:
-   [Contoh: Membuat website biodata interaktif / Kalkulator modern]
-   .............................................................................
-
-4. JANJI BELAJAR SAYA (1 KALIMAT MOTIVASI):
-   "..........................................................................."
-```
-
 ---
 
-## 🧭 Refleksi Pribadi (Pertemuan 6)
+## ⚡ Langkah Selanjutnya: Aktivitas Belajar
 
-1. **Apa hambatan terbesar yang kalian bayangkan dalam mencapai rencana karier ini?**
-2. **Siapa teman atau komunitas yang bisa kalian ajak berkolaborasi untuk belajar bersama?**
+Gunakan tab di bagian atas modul ini untuk menyelesaikan tahapan belajar kalian:
 
-> 💾 **Petunjuk Simpan:** Simpan file LKPD P6 dengan format: `📁 Skill_Passport_RPL/OR-01/P6_RencanaMinat_NIS_Nama.pdf`.
+1. 📖 **Tab 1 (Materi & Checkpoint)**: Pelajari materi lalu tuntaskan kuis checkpoint tiga tahap agar Tab 2 terbuka.
+2. 📝 **Tab 2 (Form LKPD Interaktif)**: Isi dan kirim LKPD secara mandiri; sertakan URL Google Drive portofolio bila diperlukan agar Tab 3 terbuka (+25 XP).
+3. 💭 **Tab 3 (Jurnal Refleksi)**: Tulis dan kirim refleksi mandiri (+15 XP), kemudian klik **“Tandai Selesai & Buka Modul Selanjutnya”** untuk menuntaskan modul.
+4. 🎯 **Tab 4 (Panduan Kriteria Guru)**: Gunakan matriks KKTP untuk memeriksa target karya kalian.

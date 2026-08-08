@@ -9,6 +9,53 @@ Format penulisan mengacu pada [Keep a Changelog](https://keepachangelog.com/id/1
 - Opsi Hapus Akun siswa melalui panel Admin (`/admin/users`).
 - Generator PDF Otomatis untuk Rekap Portofolio Skill Passport Siswa.
 
+### 2026-08-08 — Penetapan Katalog Orientasi PPLG Saja
+- Menghapus tiga materi bawaan di luar ruang lingkup Orientasi PPLG: `pengenalan-html5-smk`, `dasar-basis-data-sql`, dan `konsep-oop-javascript`.
+- Menghapus konfigurasi Quest dan panduan LKPD ketiganya, sehingga katalog konten publik, konfigurasi pembelajaran, navigasi, progress, validasi API, serta dokumentasi kini konsisten hanya pada 16 modul kanonik Orientasi PPLG.
+- Menambahkan regression test filesystem yang mewajibkan `src/content/pembelajaran/` memuat tepat 16 Markdown Orientasi PPLG. Materi HTML, SQL, dan OOP dapat ditambahkan kembali kelak sebagai mata pelajaran terpisah dengan kontrak, enrollment, dan policy server tersendiri—bukan sebagai bagian dari Orientasi PPLG.
+- Verifikasi release: `npm run test:orientasi` lulus 10/10, parity guard PASS, dan `npm run build` berhasil. Deployment `dpl_HmmyLAphpkcsMXvFcFsiTEVshFUE` READY di `https://agunggumelarsaputra-bzwy6314z-agumelars-projects.vercel.app` dan teralias ke `https://www.agunggumelarsaputra.com`; smoke beranda/katalog HTTP 200 serta checkpoint tanpa sesi HTTP 401.
+
+### 2026-08-08 — Submission Trust Boundary & Exactly-Once Reward Fix
+- Memperkuat `/api/gamification/claim-checkpoint`: insert checkpoint dan atomic upsert XP kini dijalankan sebagai satu statement PostgreSQL berbasis data-modifying CTE. Error pada award XP akan me-rollback insert checkpoint, sehingga retry tetap dapat menerima reward tepat satu kali.
+- Menambahkan `getApprovedSubmission()` sebagai katalog server untuk submission. Endpoint `/api/submissions/save` sekarang hanya menerima 16 slug Orientasi PPLG kanonik dengan jenis `lkpd` (+25 XP) atau `reflection` (+15 XP); slug/jenis arbitrer, `tokenId`, `score`, dan fallback reward dari klien tidak lagi dipercaya.
+- Submission pertama dan reward XP juga digabung dalam satu statement CTE conflict-safe. Request paralel yang kalah pada unique key beralih ke jalur update idempoten, bukan unique violation HTTP 500, dan tidak memperoleh XP duplikat.
+- Mempertahankan satu record submission per siswa/modul/jenis, isian LKPD/refleksi lama, nilai/feedback guru, penguncian KKM 73, serta alur remedial. Update remedial memakai kondisi database agar penilaian tuntas yang terjadi bersamaan tidak tertimpa.
+- Menambahkan regression guard `tests/orientasi-submission-security.test.ts` dan memperkuat `tests/orientasi-checkpoint-atomicity.test.ts`. Siklus TDD dibuktikan RED 0/4 lalu GREEN 4/4; verifikasi pada clone rilis terisolasi lulus `npm run test:orientasi` 9/9, parity guard PASS, dan Astro build exit 0.
+- Deployment production belum berubah: dua invocation `vercel --prod --yes` berhenti karena timeout lokal setelah 124 dan 304 detik sebelum job baru tercatat. `vercel ls` tetap menampilkan deployment sebelumnya `agunggumelarsaputra-cgcllt7b2-agumelars-projects.vercel.app` sebagai latest READY. Smoke baseline pada production lama: tiga halaman publik HTTP 200 serta POST checkpoint/submission tanpa sesi HTTP 401. Patch wajib dideploy ulang dari clone bersih setelah hambatan CLI selesai.
+
+### 2026-08-08 — Orientasi PPLG Module Parity Release
+- Kontrak pengalaman Modul 01 diterapkan pada seluruh Modul Orientasi PPLG 02–16: checkpoint Quest tiga tahap per modul, LKPD, jurnal refleksi, dan panduan KKTP kini menerima konteks materi masing-masing tanpa mengganti substansi Markdown.
+- Reader bersama mempertahankan gating sekuensial antar-modul, urutan checkpoint → LKPD → refleksi → penyelesaian di `#btn-complete-lesson`, indikator progres 16 pertemuan, serta bypass untuk admin.
+- `AntiCopyPasteGuardian` tetap memblokir paste, drop, `Ctrl/Cmd+V`, dan `Shift+Insert` pada jawaban belajar; identitas siswa dan URL bukti tetap diizinkan untuk ditempel.
+- Verifikasi deterministik berhasil: `npm run verify:orientasi-parity` menghasilkan `Orientasi PPLG parity guard: PASS`, lalu `npm run build` menyelesaikan Astro server build (exit code 0).
+- Production dideploy pada `https://agunggumelarsaputra-1l124rpo0-agumelars-projects.vercel.app` dan dialiaskan ke `https://www.agunggumelarsaputra.com`; pemeriksaan halaman publik tidak menemukan regresi.
+- Batas verifikasi: alur terlindungi Modul 02 (locked state, checkpoint → LKPD → refleksi, tombol selesai, dan unlock Modul 03) belum diuji di production karena tidak tersedia sesi siswa uji yang sah. Uji tersebut harus dilakukan dengan akun siswa dan enrollment yang legitimate.
+
+### 2026-08-08 — Checkpoint Reward Atomicity Security Fix
+- Menutup race condition klaim checkpoint pertama: `user_submissions` kini memiliki unique key komposit `(user_id, lesson_slug, submission_type)`, dan `/api/gamification/claim-checkpoint` memakai `INSERT ... ON CONFLICT DO NOTHING RETURNING` sebagai satu-satunya arbiter reward pertama.
+- XP hanya diberikan ketika insert checkpoint benar-benar menghasilkan baris baru. Mutasi `user_gamification` diubah menjadi atomic upsert/increment agar klaim sah pada checkpoint berbeda tidak mengalami lost update.
+- Bootstrap skema production melakukan migrasi idempoten di bawah advisory lock dan table lock. Bila ada baris duplikat lama, satu baris hasil penilaian guru/versi terbaru dipertahankan sebelum unique index dibuat; koreksi XP historis tidak ditebak karena tabel submission tidak menyediakan ledger reward yang cukup untuk rekonsiliasi kausal.
+- Menambahkan regression test `tests/orientasi-checkpoint-atomicity.test.ts`; siklus TDD diverifikasi RED pada skema lama lalu GREEN setelah patch.
+- Verifikasi final lulus: focused guard 1/1, `npm run test:orientasi` 6/6, parity guard PASS, dan Astro server build exit 0. Deployment `dpl_7egFohXuhXB4jjVErKuogF3YBJFn` READY di `https://agunggumelarsaputra-cgcllt7b2-agumelars-projects.vercel.app` serta teralias ke `https://www.agunggumelarsaputra.com`; beranda dan leaderboard publik HTTP 200, checkpoint tanpa sesi HTTP 401, dan runtime logs tidak memuat error bootstrap skema.
+- Catatan repository: clean checkout saat deployment menemukan import tracked ke `SmartMarkdownWrapper.astro` yang masih untracked pada workspace. Deployment final menyertakan file lokal tersebut untuk mempertahankan perilaku production, tetapi patch keamanan tidak mengambil kepemilikan atau meng-commit file unrelated itu.
+
+### 2026-08-08 — Orientasi PPLG Server Authority & Structured LKPD Fix
+- Memindahkan otorisasi checkpoint → LKPD → refleksi → completion ke policy server bersama. Ketiga endpoint mutasi kini memeriksa login, enrollment aktif, modul prasyarat, submission tahap sebelumnya, dan slug kanonik terhadap state database; `localStorage` hanya menjadi cache tampilan.
+- `/api/gamification/claim-checkpoint` tidak lagi menerima `xpReward`, `quizId`, atau `tokenId` sebagai sumber kebenaran. Slug, ID Quest, token enrollment, dan reward 15 XP diturunkan dari katalog server; guest, database offline, dan slug arbitrer ditolak.
+- Sidebar, denominator progres, prasyarat, serta tautan modul sebelumnya/berikutnya di reader dibatasi tepat pada 16 slug Orientasi PPLG kanonik.
+- Mengganti satu textarea generik dengan skema LKPD terstruktur per Modul 02–16. Modul 02 kembali memiliki tiga profil profesi lengkap serta prioritas/dua langkah aksi; Modul 12 kembali memiliki latihan CER positif dan negatif dengan screenshot evidence terpisah.
+- Menambahkan lima tes perilaku `npm run test:orientasi` serta memperkuat `npm run verify:orientasi-parity` untuk kontrak authority server, katalog kanonik, reward checkpoint, dan struktur LKPD.
+- Verifikasi final lulus (5/5 tes, parity guard PASS, Astro server build exit 0) dan deployment production `dpl_69TnjsE2Fqc4KCv6f7ZqygUArjQe` READY di `https://agunggumelarsaputra-g2dztreej-agumelars-projects.vercel.app`, teralias ke `https://www.agunggumelarsaputra.com`. Smoke test publik mendapat HTTP 200 dan endpoint checkpoint tanpa login mendapat HTTP 401.
+- Batas verifikasi tetap: interaksi lengkap dengan akun siswa/enrollment sah belum tersedia pada sesi ini.
+
+## [2.6.6] - 2026-08-08
+### Added & Enhanced
+- **Sistem Proteksi Integritas Belajar Anti Copy-Paste (`AntiCopyPasteGuardian.astro`):**
+  - **Penonaktifan Paste pada Isian Belajar:** Menonaktifkan fungsi *paste*, *drag-and-drop text*, dan shortcut keyboard (`Ctrl+V`, `Cmd+V`, `Shift+Insert`) pada seluruh `textarea` dan `input` jawaban tugas LKPD, kuis deskriptif, dan jurnal refleksi.
+  - **Animasi & Umpan Balik Visual (*Shake Animation & Toast Warning*):** Menampilkan animasi getar (*shake warning*) pada kolom input yang dicegat beserta notifikasi *toast floating* yang elegan dan informatif: *"Wajib Diketik Mandiri (No Paste) — Untuk mengasah pemahaman konsep dan integritas belajar, isian ini wajib diketik sendiri."*
+  - **Pengecualian Cerdas Kolom Identitas Siswa & URL Bukti:** Mempertahankan kebebasan *copy-paste* khusus pada kolom data identitas siswa (`Nama Lengkap`, `NIS / NISN`, `Kelas`, `Tanggal Pengerjaan`) serta kolom `URL Link Google Drive Portofolio / Repository`.
+  - **Anotasi & Badge Visual:** Menambahkan penanda visual *"📋 Copy-Paste Diperbolehkan"* pada Bagian Identitas dan *"✍️ Wajib Diketik Mandiri (No Copy-Paste)"* pada Bagian LKPD dan Refleksi.
+
 ## [2.6.5] - 2026-08-08
 ### Added & Enhanced
 - **Sistem Pembelajaran Sekuensial & Gating Modul Otomatis (*Sequential Module Progression*):**

@@ -680,17 +680,15 @@ const quest = getGamifiedQuestForModule(lessonSlug, moduleTitle);
             const res = await fetch('/api/gamification/claim-checkpoint', {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ lessonSlug: slug, xpReward: questData.xpReward }),
+              body: JSON.stringify({ lessonSlug: slug }),
             });
             const data = await res.json();
-            if (data.success) {
-              localStorage.setItem(`ags_checkpoint_${slug}`, 'true');
-              window.dispatchEvent(new CustomEvent('checkpoint-passed', { detail: { lessonSlug: slug } }));
-              window.dispatchEvent(new CustomEvent('refresh-live-score'));
-            }
-          } catch (e) {
+            if (!res.ok || !data.success) throw new Error(data.error || 'Checkpoint ditolak server.');
             localStorage.setItem(`ags_checkpoint_${slug}`, 'true');
             window.dispatchEvent(new CustomEvent('checkpoint-passed', { detail: { lessonSlug: slug } }));
+            window.dispatchEvent(new CustomEvent('refresh-live-score'));
+          } catch (e) {
+            alert(e instanceof Error ? e.message : 'Checkpoint gagal disimpan. Silakan coba lagi.');
           }
 
           // Show Victory Screen

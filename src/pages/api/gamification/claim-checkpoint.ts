@@ -1,84 +1,97 @@
 import type { APIRoute } from 'astro';
-import { db, isDbConfigured, ensureDbInitialized } from '../../../db';
-import { userSubmissions, userGamification } from '../../../db/schema';
-import { eq, and } from 'drizzle-orm';
+import { sql as neonSql, isDbConfigured, ensureDbInitialized } from '../../../db';
+import { authorizeOrientasiAction, getApprovedCheckpoint } from '../../../utils/orientasiPplgPolicy.ts';
+import { getOrientasiServerState } from '../../../utils/orientasiPplgServer.ts';
 
 export const POST: APIRoute = async ({ request, locals }) => {
   if (!locals.user) {
-    return new Response(JSON.stringify({ 
-      success: true, 
-      guest: true, 
-      xpEarned: 10, 
-      message: 'Checkpoint berhasil diselesaikan (Mode Tamu).' 
-    }), { status: 200 });
+    return new Response(JSON.stringify({ error: 'Harap masuk (login) untuk mencatat checkpoint.' }), { status: 401 });
   }
 
-  if (!isDbConfigured()) {
-    return new Response(JSON.stringify({ 
-      success: true, 
-      offline: true, 
-      xpEarned: 10, 
-      message: 'Checkpoint tercatat secara lokal.' 
-    }), { status: 200 });
+  if (!neonSql || !isDbConfigured()) {
+    return new Response(JSON.stringify({ error: 'Database belum terhubung di server.' }), { status: 503 });
   }
 
   try {
     await ensureDbInitialized();
     const userId = locals.user.userId;
-    const body = await request.json();
-    const { lessonSlug, quizId, xpReward = 10, tokenId } = body;
+    const { lessonSlug } = await request.json();
+    const checkpoint = getApprovedCheckpoint(lessonSlug);
+    if (!checkpoint) return new Response(JSON.stringify({ error: 'Slug checkpoint Orientasi PPLG tidak valid.' }), { status: 400 });
 
-    if (!lessonSlug) {
-      return new Response(JSON.stringify({ error: 'Slug modul wajib disertakan.' }), { status: 400 });
+    const serverState = await getOrientasiServerState(userId, checkpoint.lessonSlug);
+    const authorization = authorizeOrientasiAction({
+      lessonSlug: checkpoint.lessonSlug,
+      action: 'checkpoint',
+      role: locals.user.role,
+      ...serverState,
+    });
+    if (!authorization.allowed) {
+      return new Response(JSON.stringify({ error: authorization.error }), { status: authorization.status });
     }
 
-    // Cek apakah checkpoint modul ini sudah pernah di-claim oleh user
-    const [existing] = await db.select()
-      .from(userSubmissions)
-      .where(and(
-        eq(userSubmissions.userId, userId),
-        eq(userSubmissions.lessonSlug, lessonSlug),
-        eq(userSubmissions.submissionType, 'checkpoint')
-      ))
-      .limit(1);
+    const checkpointPayload = JSON.stringify({
+      quizId: checkpoint.quizId,
+      passed: true,
+      autoGraded: true,
+      timestamp: new Date().toISOString(),
+    });
 
-    let xpEarned = 0;
-    let isFirstTime = false;
+    // One PostgreSQL statement is the transaction boundary. If the XP upsert
+    // fails, the winning checkpoint insert is rolled back as part of the same
+    // statement, so a retry can still receive the reward exactly once.
+    const insertedRows = await neonSql`
+      WITH inserted_checkpoint AS (
+        INSERT INTO user_submissions (
+          user_id,
+          token_id,
+          lesson_slug,
+          submission_type,
+          form_data,
+          score,
+          teacher_score,
+          teacher_level,
+          teacher_feedback,
+          graded_at,
+          status
+        )
+        VALUES (
+          ${userId},
+          ${serverState.enrollmentTokenId},
+          ${checkpoint.lessonSlug},
+          'checkpoint',
+          ${checkpointPayload},
+          100,
+          100,
+          'Level 2',
+          'Selesai otomatis via Gamified Checkpoint Quest',
+          NOW(),
+          'verified'
+        )
+        ON CONFLICT (user_id, lesson_slug, submission_type) DO NOTHING
+        RETURNING id
+      ),
+      rewarded_checkpoint AS (
+        INSERT INTO user_gamification (user_id, xp, level, last_active_date)
+        SELECT
+          ${userId},
+          ${checkpoint.xpReward},
+          LEAST(5, FLOOR(${checkpoint.xpReward} / 100.0)::int + 1),
+          NOW()
+        FROM inserted_checkpoint
+        ON CONFLICT (user_id) DO UPDATE SET
+          xp = user_gamification.xp + EXCLUDED.xp,
+          level = LEAST(5, FLOOR((user_gamification.xp + EXCLUDED.xp) / 100.0)::int + 1),
+          last_active_date = NOW()
+        RETURNING user_id
+      )
+      SELECT id AS submission_id FROM inserted_checkpoint
+    `;
 
-    if (!existing) {
-      isFirstTime = true;
-      xpEarned = Number(xpReward) || 10;
+    const inserted = insertedRows[0];
 
-      await db.insert(userSubmissions).values({
-        userId,
-        tokenId: tokenId ? Number(tokenId) : null,
-        lessonSlug,
-        submissionType: 'checkpoint',
-        formData: JSON.stringify({ quizId, passed: true, autoGraded: true, timestamp: new Date().toISOString() }),
-        score: 100,
-        teacherScore: 100,
-        teacherLevel: 2,
-        teacherFeedback: 'Selesai otomatis via Gamified Checkpoint Quest',
-        gradedAt: new Date(),
-        status: 'verified',
-      });
-
-      // Update XP & Level
-      const [gam] = await db.select().from(userGamification).where(eq(userGamification.userId, userId)).limit(1);
-      if (gam) {
-        const newXp = gam.xp + xpEarned;
-        const newLevel = Math.min(5, Math.floor(newXp / 100) + 1);
-        await db.update(userGamification)
-          .set({ xp: newXp, level: newLevel, lastActiveDate: new Date() })
-          .where(eq(userGamification.userId, userId));
-      } else {
-        await db.insert(userGamification).values({
-          userId,
-          xp: xpEarned,
-          level: 1,
-        });
-      }
-    }
+    const isFirstTime = Boolean(inserted);
+    const xpEarned = inserted ? checkpoint.xpReward : 0;
 
     return new Response(JSON.stringify({
       success: true,
