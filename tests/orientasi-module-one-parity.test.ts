@@ -40,15 +40,20 @@ test('reader keeps Module 01 intact and couples the Module 02–16 reference-to-
     /\{isModul1 && \([\s\S]*data-reference-material[\s\S]*InteractiveMaterialP1/,
   );
 
-  const module02Branch = readerSource.match(
-    /\{isOrientasiModule && !isModul1 && \(([\s\S]*?)\)\}\s*<div class="space-y-4 pt-2" id="checkpoint-challenge-area">\s*<InteractiveKnowledgeCheck\b/,
-  )?.[1];
-  assert.ok(module02Branch, 'Reader must expose one coupled Module 02–16 branch ending at the checkpoint boundary.');
   assert.match(
-    module02Branch,
+    readerSource,
+    /\{isModul2 && \([\s\S]*data-reference-material[\s\S]*InteractiveMaterialP2/,
+  );
+
+  const orientasiBranch = readerSource.match(
+    /\{isOrientasiModule && !isModul1 && !isModul2 && \(([\s\S]*?)\)\}\s*<div class="space-y-4 pt-2" id="checkpoint-challenge-area">\s*<InteractiveKnowledgeCheck\b/,
+  )?.[1];
+  assert.ok(orientasiBranch, 'Reader must expose one coupled Orientasi module branch ending at the checkpoint boundary.');
+  assert.match(
+    orientasiBranch,
     /<details\s+data-reference-material\b[\s\S]*?<Content\s*\/>[\s\S]*?<\/details>\s*<TeacherMessageCard\s+lessonSlug=\{lessonSlug\}\s+teacherMessage=\{orientasiMaterial!\.teacherMessage\}\s*\/>\s*<OrientasiLearningScene\s+lessonSlug=\{lessonSlug\}\s+moduleTitle=\{entry\.data\.title\}\s+moduleDuration=\{entry\.data\.duration\}\s*\/>\s*<\/>\s*$/,
   );
-  assert.doesNotMatch(module02Branch, /SmartMarkdownWrapper|InteractiveModuleMaterial/);
+  assert.doesNotMatch(orientasiBranch, /SmartMarkdownWrapper|InteractiveModuleMaterial/);
   assert.doesNotMatch(learningSceneSource, /TeacherMessageCard|data-teacher-message/);
 });
 

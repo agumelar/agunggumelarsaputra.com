@@ -67,16 +67,18 @@ test('reader mounts canonical Module 02–16 activities while preserving Module 
 
   assert.match(source, /import TeacherMessageCard from '..\/..\/components\/modul\/TeacherMessageCard\.astro';/);
   assert.match(source, /import OrientasiLearningScene from '..\/..\/components\/modul\/OrientasiLearningScene\.astro';/);
+  assert.match(source, /import InteractiveMaterialP2 from '..\/..\/components\/modul\/InteractiveMaterialP2\.astro';/);
   assert.match(
     source,
-    /\{isOrientasiModule && !isModul1 && \([\s\S]*data-reference-material[\s\S]*TeacherMessageCard[\s\S]*OrientasiLearningScene[\s\S]*InteractiveKnowledgeCheck/,
+    /\{isOrientasiModule && !isModul1 && !isModul2 && \([\s\S]*data-reference-material[\s\S]*TeacherMessageCard[\s\S]*OrientasiLearningScene/,
   );
   assert.match(source, /TeacherMessageCard\s+lessonSlug=\{lessonSlug\}\s+teacherMessage=\{orientasiMaterial!\.teacherMessage\}/);
   assert.match(source, /OrientasiLearningScene[\s\S]*moduleDuration=\{entry\.data\.duration\}/);
   assert.match(source, /\{isModul1 && \([\s\S]*data-reference-material[\s\S]*InteractiveMaterialP1/);
+  assert.match(source, /\{isModul2 && \([\s\S]*data-reference-material[\s\S]*InteractiveMaterialP2/);
 
   const referenceSummaries = [...source.matchAll(/<summary class="([^"]+)"/g)].map((match) => match[1]);
-  assert.equal(referenceSummaries.length, 2);
+  assert.equal(referenceSummaries.length, 3);
   for (const className of referenceSummaries) {
     assert.match(className, /focus-visible:outline-amber-400/);
     assert.match(className, /focus-visible:outline-offset-4/);

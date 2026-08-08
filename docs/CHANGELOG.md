@@ -8,6 +8,17 @@ Format penulisan mengacu pada [Keep a Changelog](https://keepachangelog.com/id/1
 ## [Unreleased] - Sesi Mendatang
 - Opsi Hapus Akun siswa melalui panel Admin (`/admin/users`).
 - Generator PDF Otomatis untuk Rekap Portofolio Skill Passport Siswa.
+- Rollout materi interaktif berstandar Modul 01 untuk Modul 03 s.d. Modul 16.
+
+### 2026-08-08 — Standarisasi & Peluncuran Materi Interaktif Kaya Modul 02 (Profesi & Sinergi Tim PPLG)
+- Mengintegrasikan materi ajar presentasi (`Media_Ajar_Pertemuan_2_Profesi_PPLG.pptx`) ke dalam komponen pembelajaran interaktif kaya `InteractiveMaterialP2.astro` untuk Modul 02 (`/pembelajaran/orientasi-pplg-02-profesi-peluang-karier`).
+- Fitur Interaktif Modul 02:
+  1. **Apersepsi Warm-Up Riddles**: 3 teka-teki "Siapakah Aku?" (UI/UX Designer, Backend Developer, Product Manager) dengan toggle interaktif pengungkapan jawaban.
+  2. **8-Role Interactive Grid & Live Inspector**: Kartu interaktif 8 profesi utama PPLG (Frontend, Backend, Mobile, UI/UX, Game, Data, DevOps, QA) dilengkapi Live Inspector untuk melihat analogi nyata, tugas utama, tech stack industri, kisaran gaji, dan contoh karya portofolio.
+  3. **Simulator Sinergi Tim (Flash Sale 12.12 / War Tiket Konser)**: Stepper interaktif 6 tahap alur kerja lintas peran dari Product Manager hingga DevOps.
+  4. **Simulasi Krisis Proyek ("What-If Scenario")**: Eksplorasi konsekuensi jika satu peran dihilangkan dalam tim digital.
+  5. **Paritas Struktur Modul 01**: Menghadirkan *Bacaan Rujukan Silabus & Catatan Kurikulum Lengkap*, `TeacherMessageCard`, serta integrasi mulus dengan kuis checkpoint 3 nyawa.
+- Verifikasi lokal lulus 22/22 unit tests (`npm run test:orientasi`), Astro server build exit 0 (`npm run build`), dan deployment kanonis berhasil live di production `https://agunggumelarsaputra.com`.
 
 ### 2026-08-08 — Rilis Produksi & Uji Siswa Orientasi PPLG
 - Memperbaiki identitas Git lokal ke `agumelarsaputra@gmail.com`, akun GitHub pemilik `agumelar`, lalu membuat commit metadata `fa5f653` agar kebijakan author pada Vercel Hobby dapat memverifikasi deployment tanpa upgrade paket.
