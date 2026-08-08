@@ -29,7 +29,7 @@ type InteractiveMaterialCatalog = Partial<Record<OrientasiSlug, InteractiveMater
 
 const item = (label: string, detail: string, feedback: string): InteractiveActivityItem => ({ label, detail, feedback });
 
-const ORIENTASI_INTERACTIVE_MATERIALS = {
+const ORIENTASI_INTERACTIVE_MATERIALS: InteractiveMaterialCatalog = {
   'orientasi-pplg-02-profesi-peluang-karier': {
     slug: 'orientasi-pplg-02-profesi-peluang-karier', eyebrow: 'OR-01 · Profesi PPLG', title: 'Profesi dan Sinergi Tim Produk', summary: 'Kenali delapan peran yang membuat produk digital berjalan.',
     activities: [
@@ -135,7 +135,7 @@ const ORIENTASI_INTERACTIVE_MATERIALS = {
       { id: 'or16-commitment', kind: 'scenario', title: 'Tentukan komitmen berikutnya', instruction: 'Pilih tindak lanjut berdasarkan evidence dan refleksi.', items: [item('Mind map belum rapi', 'Perbaiki hierarki dan keterbacaan evidence OR-01.', 'Komitmen perlu menunjuk karya yang nyata.'), item('CER masih lemah', 'Latih satu claim dengan screenshot dan reasoning tiap minggu.', 'Rutinitas kecil memperkuat analisis.'), item('Minat frontend', 'Bangun mini proyek HTML/CSS sebagai langkah semester genap.', 'Hubungkan minat dengan produk yang dapat ditunjukkan.'), item('Butuh feedback', 'Minta satu teman meninjau portofolio sebelum revisi.', 'Kolaborasi mempercepat perbaikan.'), item('Target baru', 'Tetapkan skill dan bukti capaian dengan tenggat.', 'Komitmen terukur lebih mudah diwujudkan.')], feedback: 'Komitmen terbaik berangkat dari refleksi dan menghasilkan bukti kemajuan.' }
     ]
   }
-} satisfies InteractiveMaterialCatalog;
+};
 
 export function getOrientasiInteractiveMaterial(slug: OrientasiSlug): InteractiveMaterial {
   const material = ORIENTASI_INTERACTIVE_MATERIALS[slug];
