@@ -9,6 +9,13 @@ Format penulisan mengacu pada [Keep a Changelog](https://keepachangelog.com/id/1
 - Opsi Hapus Akun siswa melalui panel Admin (`/admin/users`).
 - Generator PDF Otomatis untuk Rekap Portofolio Skill Passport Siswa.
 
+### 2026-08-08 — Rilis Produksi & Uji Siswa Orientasi PPLG
+- Memperbaiki identitas Git lokal ke `agumelarsaputra@gmail.com`, akun GitHub pemilik `agumelar`, lalu membuat commit metadata `fa5f653` agar kebijakan author pada Vercel Hobby dapat memverifikasi deployment tanpa upgrade paket.
+- Deployment kanonis `dpl_Dvfrd3yHx6z8SQNmsK65Yd3WgzWa` berstatus `READY` di `https://agunggumelarsaputra-kssax1kpq-agumelars-projects.vercel.app` dan sudah beralias ke `https://www.agunggumelarsaputra.com`.
+- Menambahkan hardening `formHydrationGuard`: respons draft server yang terlambat tidak boleh mengganti isian yang telah mulai diedit siswa pada LKPD maupun jurnal refleksi. Regression test Happy DOM memeriksa input yang sudah diedit tetap dipertahankan; verifikasi checkout bersih lulus 22/22 tes Orientasi, parity guard PASS, dan Astro build exit 0.
+- Uji production memakai akun siswa sah yang diizinkan pemilik. Checkpoint Modul 01, LKPD berlabel **Uji rilis Codex 2026-08-08**, jurnal refleksi, serta completion Modul 01 tersimpan; reward yang tercatat sesuai tahapan dan Modul 02 terbuka melalui alur server. Data uji tersebut disengaja dan tidak dibersihkan karena aplikasi belum dirilis.
+- Inspeksi Modul 02 setelah unlock mengonfirmasi urutan pengalaman: **Bacaan Rujukan** → `Pesan Guru Pengampu RPL` sebagai sibling di luar bacaan → hero berdurasi → dua aktivitas kontekstual. Interaksi `Frontend Developer` memberi feedback lokal tanpa memicu progres.
+
 ### 2026-08-08 — Final Fix Paritas Renderer Aktif Modul 02–16 — Release BLOCKED
 - Menambahkan durasi frontmatter sebagai prop wajib bertipe string dan badge hero yang terlihat pada `OrientasiLearningScene`; reader kini meneruskan `entry.data.duration` tanpa mengubah policy, gating, Quest, LKPD, refleksi, atau XP.
 - Memindahkan regression guard inti dari renderer lama yang tidak dipakai ke markup nyata `OrientasiLearningScene`. Harness mengompilasi komponen Astro aktif, merender HTML server, lalu memeriksa label kontrol spesifik item, state awal `aria-pressed`, live region lokal, kontrol sequence, serta ketiadaan API, storage, XP, navigasi, dan perilaku progres.
