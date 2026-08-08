@@ -1,0 +1,339 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import { db, isDbConfigured, ensureDbInitialized } from '../../db';
+import { users, userGamification } from '../../db/schema';
+import { eq, desc } from 'drizzle-orm';
+
+const user = Astro.locals.user;
+if (!user || user.role !== 'admin') {
+  return Astro.redirect('/login?redirect=/admin/proyektor-leaderboard');
+}
+
+let initialStudents: any[] = [];
+if (isDbConfigured()) {
+  try {
+    await ensureDbInitialized();
+    initialStudents = await db.select({
+      id: users.id,
+      name: users.name,
+      studentClass: users.studentClass,
+      avatarUrl: users.avatarUrl,
+      xp: userGamification.xp,
+      level: userGamification.level,
+      streakDays: userGamification.streakDays,
+    })
+    .from(userGamification)
+    .innerJoin(users, eq(userGamification.userId, users.id))
+    .where(eq(users.role, 'student'))
+    .orderBy(desc(userGamification.xp))
+    .limit(30);
+  } catch (e) {
+    console.error('Error fetching initial projector leaderboard:', e);
+  }
+}
+---
+
+<BaseLayout title="Live Classroom Scoreboard — Layar Proyektor" description="Papan Skor Interaktif Realtime untuk Proyektor Kelas PPLG SMKN 1 Rongga">
+  <div class="min-h-screen bg-[#090d16] text-foreground p-4 md:p-8 flex flex-col justify-between">
+    
+    <!-- Top Bar: Header & Controls -->
+    <header class="space-y-4 max-w-7xl mx-auto w-full">
+      <div class="flex flex-wrap items-center justify-between gap-4 p-5 rounded-2xl bg-[#111827]/90 border border-white/10 shadow-2xl backdrop-blur-md">
+        
+        <!-- Identity -->
+        <div class="flex items-center gap-3.5">
+          <div class="w-12 h-12 rounded-2xl bg-gradient-to-br from-amber-500/20 to-primary/20 border border-amber-500/30 flex items-center justify-center text-2xl shadow-inner">
+            🏆
+          </div>
+          <div>
+            <div class="flex items-center gap-2">
+              <h1 class="text-xl md:text-2xl font-black text-white tracking-tight flex items-center gap-2 font-mono">
+                LIVE SCOREBOARD KELAS
+              </h1>
+              <span class="relative flex h-2.5 w-2.5">
+                <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                <span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500"></span>
+              </span>
+            </div>
+            <p class="text-xs text-slate-400 font-medium">
+              Konsentrasi Keahlian PPLG • SMK Negeri 1 Rongga • Guru: <strong class="text-white">Agung Gumelar Saputra, S.Tr.T.</strong>
+            </p>
+          </div>
+        </div>
+
+        <!-- Controls -->
+        <div class="flex items-center gap-3">
+          <!-- Class Filter Dropdown -->
+          <div class="flex items-center gap-1.5 bg-[#1e293b] p-1.5 rounded-xl border border-white/10 text-xs font-medium">
+            <span class="text-slate-400 pl-2">Kelas:</span>
+            <select id="class-filter" class="bg-transparent text-white font-bold pr-2 focus:outline-none cursor-pointer">
+              <option value="Semua" class="bg-[#1e293b] text-white">Semua Kelas</option>
+              <option value="10 RPL 1" class="bg-[#1e293b] text-white">10 RPL 1</option>
+              <option value="10 RPL 2" class="bg-[#1e293b] text-white">10 RPL 2</option>
+            </select>
+          </div>
+
+          <!-- Sound Toggle Button -->
+          <button 
+            type="button" 
+            id="sound-toggle-btn"
+            class="px-3.5 py-2 rounded-xl bg-[#1e293b] hover:bg-[#334155] border border-white/10 text-xs font-semibold text-slate-200 transition-colors flex items-center gap-1.5"
+            title="Efek Suara Saat Skor Naik"
+          >
+            <span id="sound-icon">🔊</span>
+            <span id="sound-label">Suara Aktif</span>
+          </button>
+
+          <!-- Fullscreen Toggle Button -->
+          <button 
+            type="button" 
+            id="fullscreen-btn"
+            class="px-4 py-2 rounded-xl bg-primary hover:bg-primary/90 text-primary-foreground text-xs font-bold transition-all flex items-center gap-1.5 shadow-lg shadow-primary/20"
+          >
+            <span>⛶</span>
+            <span>Layar Penuh (F11)</span>
+          </button>
+
+          <a href="/admin" class="px-3 py-2 rounded-xl bg-[#1e293b] hover:bg-[#334155] text-slate-300 text-xs font-semibold border border-white/10 transition-colors">
+            Kembali ke Admin
+          </a>
+        </div>
+      </div>
+    </header>
+
+    <!-- Main Content: Podium & Score List -->
+    <main class="max-w-7xl mx-auto w-full my-6 flex-1 space-y-6">
+      
+      <!-- Top 3 Champions Podium -->
+      <section id="podium-section" class="grid grid-cols-1 md:grid-cols-3 gap-5 items-end pt-4">
+        <!-- Will be populated by JS for Top 3 -->
+      </section>
+
+      <!-- Ranked Table List (Rank 4 to 20) -->
+      <section class="rounded-2xl bg-[#111827]/90 border border-white/10 shadow-xl overflow-hidden backdrop-blur-md">
+        <div class="p-4 border-b border-white/10 flex items-center justify-between bg-white/[0.02]">
+          <div class="flex items-center gap-2 font-mono text-xs font-bold text-slate-300 uppercase tracking-wider">
+            <span>⚡</span>
+            <span>Peringkat Peserta Kelas Lainnya</span>
+          </div>
+          <div class="text-xs font-mono text-slate-400" id="last-updated-text">
+            Sinkronisasi otomatis setiap 5 detik...
+          </div>
+        </div>
+
+        <div class="overflow-x-auto">
+          <table class="w-full text-left text-xs border-collapse">
+            <thead>
+              <tr class="border-b border-white/10 bg-[#1e293b]/50 text-slate-400 font-mono">
+                <th class="py-3 px-4 w-16 text-center">Posisi</th>
+                <th class="py-3 px-4">Nama Siswa</th>
+                <th class="py-3 px-4 w-32">Kelas</th>
+                <th class="py-3 px-4 w-28 text-center">Level</th>
+                <th class="py-3 px-4 w-36 text-right">Total XP</th>
+              </tr>
+            </thead>
+            <tbody id="leaderboard-table-body" class="divide-y divide-white/5">
+              <!-- Populated by JS -->
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+    </main>
+
+    <!-- Footer Status Bar -->
+    <footer class="max-w-7xl mx-auto w-full text-center text-xs text-slate-500 font-mono py-2 border-t border-white/10 flex flex-wrap items-center justify-between gap-2">
+      <div>SMKN 1 Rongga • Gamified Learning Hub v2.5.2</div>
+      <div id="live-pulse-indicator" class="flex items-center gap-2 text-emerald-400">
+        <span class="w-2 h-2 rounded-full bg-emerald-500 animate-ping"></span>
+        <span>Koneksi Realtime Aktif</span>
+      </div>
+    </footer>
+
+  </div>
+
+  <script>
+    let soundEnabled = true;
+    let previousScores: Record<number, number> = {};
+
+    function playLiveChime() {
+      if (!soundEnabled) return;
+      try {
+        const AudioContext = window.AudioContext || (window as any).webkitAudioContext;
+        if (!AudioContext) return;
+        const ctx = new AudioContext();
+        const now = ctx.currentTime;
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+
+        osc.type = 'triangle';
+        osc.frequency.setValueAtTime(587.33, now); // D5
+        osc.frequency.setValueAtTime(880, now + 0.1); // A5
+        osc.frequency.setValueAtTime(1174.66, now + 0.2); // D6
+
+        gain.gain.setValueAtTime(0.2, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.5);
+
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+
+        osc.start(now);
+        osc.stop(now + 0.5);
+      } catch (e) {}
+    }
+
+    async function updateProjectorBoard() {
+      const classSelect = document.getElementById('class-filter') as HTMLSelectElement;
+      const selectedClass = classSelect ? classSelect.value : 'Semua';
+      const podiumSection = document.getElementById('podium-section');
+      const tableBody = document.getElementById('leaderboard-table-body');
+      const lastUpdatedText = document.getElementById('last-updated-text');
+
+      try {
+        const query = selectedClass !== 'Semua' ? `?class=${encodeURIComponent(selectedClass)}&limit=30` : '?limit=30';
+        const res = await fetch(`/api/leaderboard${query}`);
+        if (!res.ok) return;
+
+        const data = await res.json();
+        if (!data.success || !data.leaderboard) return;
+
+        const students = data.leaderboard;
+
+        // Check if any student gained XP to trigger sound effect
+        let scoreChanged = false;
+        students.forEach((s: any) => {
+          if (previousScores[s.id] !== undefined && s.xp > previousScores[s.id]) {
+            scoreChanged = true;
+          }
+          previousScores[s.id] = s.xp;
+        });
+
+        if (scoreChanged) {
+          playLiveChime();
+        }
+
+        // Render Top 3 Podium
+        if (podiumSection) {
+          podiumSection.innerHTML = '';
+          const top1 = students[0];
+          const top2 = students[1];
+          const top3 = students[2];
+
+          // Order on screen: 2 (Silver), 1 (Gold - Center highest), 3 (Bronze)
+          const podiumOrder = [
+            { student: top2, rank: 2, label: 'JUARA 2', icon: '🥈', color: 'border-slate-300/40 bg-gradient-to-t from-slate-800/80 to-slate-900/90 text-slate-200', height: 'h-64' },
+            { student: top1, rank: 1, label: 'JUARA 1 (LEADER)', icon: '👑', color: 'border-amber-400/60 bg-gradient-to-t from-amber-950/40 via-amber-900/30 to-[#111827] text-amber-300 shadow-2xl shadow-amber-500/10', height: 'h-76' },
+            { student: top3, rank: 3, label: 'JUARA 3', icon: '🥉', color: 'border-amber-700/40 bg-gradient-to-t from-amber-950/40 to-slate-900/90 text-amber-500', height: 'h-56' },
+          ];
+
+          podiumOrder.forEach((item) => {
+            const s = item.student;
+            const card = document.createElement('div');
+            card.className = `p-6 rounded-3xl border ${item.color} flex flex-col justify-between text-center relative overflow-hidden transition-all duration-500 ${item.height}`;
+
+            if (s) {
+              card.innerHTML = `
+                <div class="space-y-1">
+                  <div class="text-3xl">${item.icon}</div>
+                  <div class="text-[11px] font-mono font-black uppercase tracking-wider opacity-80">${item.label}</div>
+                  <h2 class="text-base md:text-lg font-extrabold text-white truncate px-2 pt-1">${s.name}</h2>
+                  <span class="inline-block px-2.5 py-0.5 rounded-full bg-white/10 text-[11px] font-mono text-slate-300 font-semibold">${s.studentClass}</span>
+                </div>
+                <div class="space-y-1 pt-3 border-t border-white/10">
+                  <div class="text-2xl md:text-3xl font-black font-mono text-amber-400 tracking-tight flex items-center justify-center gap-1">
+                    <span>⚡</span>
+                    <span>${s.xp}</span>
+                    <span class="text-xs font-medium text-slate-400">XP</span>
+                  </div>
+                  <div class="text-[10px] font-mono text-slate-400 font-bold">Level ${s.level} Master</div>
+                </div>
+              `;
+            } else {
+              card.innerHTML = `
+                <div class="m-auto text-slate-600 space-y-1">
+                  <div class="text-2xl opacity-40">${item.icon}</div>
+                  <div class="text-xs font-mono font-bold">${item.label}</div>
+                  <div class="text-[11px] italic opacity-60">Belum Terisi</div>
+                </div>
+              `;
+            }
+            podiumSection.appendChild(card);
+          });
+        }
+
+        // Render Table (Rank 4 to end)
+        if (tableBody) {
+          tableBody.innerHTML = '';
+          const restStudents = students.slice(3);
+
+          if (restStudents.length === 0) {
+            tableBody.innerHTML = `
+              <tr>
+                <td colspan="5" class="py-6 text-center text-slate-500 text-xs italic">
+                  Belum ada peserta tambahan pada daftar kelas ini.
+                </td>
+              </tr>
+            `;
+          } else {
+            restStudents.forEach((s: any) => {
+              const row = document.createElement('tr');
+              row.className = 'hover:bg-white/[0.02] transition-colors';
+              row.innerHTML = `
+                <td class="py-3 px-4 text-center font-mono font-bold text-slate-400">#${s.rank}</td>
+                <td class="py-3 px-4 font-bold text-white">${s.name}</td>
+                <td class="py-3 px-4 font-mono text-slate-300">${s.studentClass}</td>
+                <td class="py-3 px-4 text-center">
+                  <span class="px-2 py-0.5 rounded bg-primary/20 text-primary font-mono font-bold text-[10px]">Lvl ${s.level}</span>
+                </td>
+                <td class="py-3 px-4 text-right font-mono font-bold text-amber-400 text-sm">
+                  ⚡ ${s.xp} XP
+                </td>
+              `;
+              tableBody.appendChild(row);
+            });
+          }
+        }
+
+        if (lastUpdatedText) {
+          const now = new Date();
+          lastUpdatedText.textContent = `Terakhir diperbarui: ${now.toLocaleTimeString('id-ID')}`;
+        }
+
+      } catch (e) {
+        console.error('Error polling projector leaderboard:', e);
+      }
+    }
+
+    // Sound toggle listener
+    const soundBtn = document.getElementById('sound-toggle-btn');
+    soundBtn?.addEventListener('click', () => {
+      soundEnabled = !soundEnabled;
+      const icon = document.getElementById('sound-icon');
+      const label = document.getElementById('sound-label');
+      if (icon && label) {
+        icon.textContent = soundEnabled ? '🔊' : '🔇';
+        label.textContent = soundEnabled ? 'Suara Aktif' : 'Suara Mati';
+      }
+    });
+
+    // Fullscreen toggle listener
+    const fsBtn = document.getElementById('fullscreen-btn');
+    fsBtn?.addEventListener('click', () => {
+      if (!document.fullscreenElement) {
+        document.documentElement.requestFullscreen().catch(err => {
+          console.error(`Error enabling fullscreen: ${err.message}`);
+        });
+      } else {
+        document.exitFullscreen();
+      }
+    });
+
+    // Class filter listener
+    const classSelect = document.getElementById('class-filter');
+    classSelect?.addEventListener('change', updateProjectorBoard);
+
+    // Run immediately and poll every 5 seconds
+    updateProjectorBoard();
+    setInterval(updateProjectorBoard, 5000);
+  </script>
+</BaseLayout>

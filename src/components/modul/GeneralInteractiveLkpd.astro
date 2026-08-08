@@ -416,7 +416,10 @@ const { lessonSlug, moduleTitle, user } = Astro.props;
           genStatusEl.className = 'text-[11px] font-mono px-2 py-1 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 rounded border border-emerald-500/20 font-semibold';
           genStatusEl.textContent = isDraft ? '💾 Draf Tersimpan' : '✅ LKPD Terkumpul (+25 XP)';
         }
-        alert(data.message || 'Jawaban LKPD berhasil disimpan!');
+        localStorage.setItem(`ags_lkpd_${genSlug}`, 'true');
+        window.dispatchEvent(new CustomEvent('lkpd-submitted', { detail: { lessonSlug: genSlug } }));
+        window.dispatchEvent(new CustomEvent('refresh-live-score'));
+        alert(data.message || 'Jawaban LKPD berhasil disimpan! Tab Jurnal Refleksi kini terbuka.');
       } else {
         alert(data.error || 'Gagal menyimpan LKPD.');
       }

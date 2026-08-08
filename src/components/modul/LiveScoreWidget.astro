@@ -1,0 +1,151 @@
+---
+interface Props {
+  initialClass?: string;
+}
+
+const { initialClass = 'Semua Kelas' } = Astro.props;
+---
+
+<div class="p-4 rounded-2xl bg-card border border-border space-y-3.5 shadow-sm live-score-widget" id="live-score-widget">
+  <!-- Widget Header -->
+  <div class="flex items-center justify-between border-b border-border pb-2.5">
+    <div class="flex items-center gap-2">
+      <span class="relative flex h-2 w-2">
+        <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+        <span class="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+      </span>
+      <h3 class="text-xs font-bold text-foreground uppercase tracking-wider font-mono flex items-center gap-1.5">
+        <span>🏆</span>
+        <span>Live Scoreboard</span>
+      </h3>
+    </div>
+    <span class="text-[10px] font-mono text-primary font-bold px-1.5 py-0.5 rounded bg-primary/10 border border-primary/20" id="live-widget-class-badge">
+      {initialClass}
+    </span>
+  </div>
+
+  <!-- Loading State -->
+  <div id="live-widget-loading" class="py-4 text-center space-y-1.5">
+    <div class="w-4 h-4 border-2 border-primary border-t-transparent rounded-full animate-spin mx-auto"></div>
+    <p class="text-[10px] text-muted-foreground font-mono">Memuat peringkat live...</p>
+  </div>
+
+  <!-- Leaderboard List -->
+  <div id="live-widget-content" class="hidden space-y-1.5 max-h-[220px] overflow-y-auto pr-1">
+    <!-- Populated by JS -->
+  </div>
+
+  <!-- Current User Rank Footer -->
+  <div id="live-widget-user-footer" class="hidden pt-2.5 border-t border-border">
+    <!-- Populated by JS -->
+  </div>
+
+  <!-- Fullscreen / Detail Link -->
+  <div class="pt-1 flex items-center justify-between text-[11px]">
+    <a href="/dashboard/leaderboard" class="text-muted-foreground hover:text-primary transition-colors flex items-center gap-1 font-medium">
+      <span>Lihat Lengkap</span>
+      <span>→</span>
+    </a>
+    <a href="/admin/proyektor-leaderboard" target="_blank" class="text-[10px] font-mono text-cyan-600 dark:text-cyan-400 hover:underline flex items-center gap-1">
+      <span>📺 Layar Proyektor</span>
+    </a>
+  </div>
+</div>
+
+<script>
+  async function fetchLiveLeaderboard() {
+    const widget = document.getElementById('live-score-widget');
+    if (!widget) return;
+
+    const loadingEl = document.getElementById('live-widget-loading');
+    const contentEl = document.getElementById('live-widget-content');
+    const footerEl = document.getElementById('live-widget-user-footer');
+    const classBadge = document.getElementById('live-widget-class-badge');
+
+    try {
+      const activeClass = localStorage.getItem('ags_active_target_class') || '';
+      const queryParam = activeClass && activeClass !== 'Semua Kelas' ? `?class=${encodeURIComponent(activeClass)}&limit=5` : '?limit=5';
+      
+      const res = await fetch(`/api/leaderboard${queryParam}`);
+      if (!res.ok) return;
+
+      const data = await res.json();
+      if (!data.success || !data.leaderboard) return;
+
+      if (classBadge && activeClass && activeClass !== 'Semua Kelas') {
+        classBadge.textContent = activeClass;
+      }
+
+      if (loadingEl) loadingEl.classList.add('hidden');
+      if (contentEl) {
+        contentEl.classList.remove('hidden');
+        contentEl.innerHTML = '';
+
+        if (data.leaderboard.length === 0) {
+          contentEl.innerHTML = `
+            <div class="py-3 text-center text-xs text-muted-foreground">
+              Belum ada skor tercatat di kelas ini.
+            </div>
+          `;
+        } else {
+          data.leaderboard.forEach((user: any) => {
+            const rankIcon = user.rank === 1 ? '🥇' : user.rank === 2 ? '🥈' : user.rank === 3 ? '🥉' : `#${user.rank}`;
+            const isTop3 = user.rank <= 3;
+            const isCurrent = user.isCurrentUser;
+
+            const itemEl = document.createElement('div');
+            itemEl.className = `p-2 rounded-xl text-xs flex items-center justify-between gap-2 transition-all ${
+              isCurrent 
+                ? 'bg-primary/15 border border-primary/30 font-bold text-foreground' 
+                : isTop3 
+                  ? 'bg-secondary/40 border border-border text-foreground' 
+                  : 'text-muted-foreground hover:bg-secondary/20'
+            }`;
+
+            itemEl.innerHTML = `
+              <div class="flex items-center gap-2 truncate">
+                <span class="w-5 text-center font-mono text-[11px] font-extrabold shrink-0 ${
+                  user.rank === 1 ? 'text-amber-400' : user.rank === 2 ? 'text-slate-300' : user.rank === 3 ? 'text-amber-600' : 'text-muted-foreground'
+                }">${rankIcon}</span>
+                <span class="truncate ${isCurrent ? 'text-primary' : ''}">${user.name}</span>
+              </div>
+              <div class="flex items-center gap-1 font-mono text-[11px] font-bold text-amber-500 shrink-0">
+                <span>⚡</span>
+                <span>${user.xp} XP</span>
+              </div>
+            `;
+            contentEl.appendChild(itemEl);
+          });
+        }
+      }
+
+      if (footerEl && data.currentUserRank) {
+        footerEl.classList.remove('hidden');
+        footerEl.innerHTML = `
+          <div class="p-2 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-between text-xs">
+            <span class="text-muted-foreground font-medium">Peringkat Anda:</span>
+            <span class="font-mono font-bold text-primary flex items-center gap-1.5">
+              <span>Posisi #${data.currentUserRank.rank}</span>
+              <span>•</span>
+              <span>${data.currentUserRank.xp} XP</span>
+            </span>
+          </div>
+        `;
+      }
+    } catch (e) {
+      console.error('Error updating live leaderboard widget:', e);
+    }
+  }
+
+  // Initial fetch
+  fetchLiveLeaderboard();
+
+  // Polling every 15 seconds
+  const interval = setInterval(fetchLiveLeaderboard, 15000);
+
+  // Listen to local checkpoint & submission triggers
+  window.addEventListener('refresh-live-score', fetchLiveLeaderboard);
+  window.addEventListener('checkpoint-passed', () => {
+    setTimeout(fetchLiveLeaderboard, 800);
+  });
+</script>

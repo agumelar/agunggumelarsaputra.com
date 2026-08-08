@@ -7,6 +7,10 @@ import GeneralInteractiveLkpd from '../../components/modul/GeneralInteractiveLkp
 import InteractiveReflectionForm from '../../components/modul/InteractiveReflectionForm.astro';
 import KktpGuideCard from '../../components/modul/KktpGuideCard.astro';
 import InteractiveKnowledgeCheck from '../../components/modul/InteractiveKnowledgeCheck.astro';
+import LiveScoreWidget from '../../components/modul/LiveScoreWidget.astro';
+import { db, isDbConfigured, ensureDbInitialized } from '../../db';
+import { userSubmissions } from '../../db/schema';
+import { eq, and } from 'drizzle-orm';
 
 const { slug } = Astro.params;
 const allModules = await getCollection('pembelajaran');
@@ -21,10 +25,36 @@ const { Content } = await render(entry);
 const sortedSidebarModules = allModules.sort((a, b) => a.data.order - b.data.order);
 const isModul1 = (entry.id || entry.slug) === 'orientasi-pplg-01-pengantar-skill-passport';
 const lessonSlug = entry.id || entry.slug;
+
+// Fetch submission & gate states from database
+let hasPassedCheckpoint = false;
+let hasSubmittedLkpd = false;
+let hasSubmittedReflection = false;
+
+if (user && isDbConfigured()) {
+  try {
+    await ensureDbInitialized();
+    const existingSubs = await db.select({
+      submissionType: userSubmissions.submissionType,
+      status: userSubmissions.status,
+    })
+    .from(userSubmissions)
+    .where(and(
+      eq(userSubmissions.userId, user.userId),
+      eq(userSubmissions.lessonSlug, lessonSlug)
+    ));
+
+    hasSubmittedLkpd = existingSubs.some(s => s.submissionType === 'lkpd');
+    hasSubmittedReflection = existingSubs.some(s => s.submissionType === 'reflection');
+    hasPassedCheckpoint = existingSubs.some(s => s.submissionType === 'checkpoint') || hasSubmittedLkpd;
+  } catch (e) {
+    console.error('Error fetching student progression states:', e);
+  }
+}
 ---
 
 <BaseLayout title={entry.data.title} description={entry.data.description}>
-  <div class="container-main py-8" id="module-container" data-slug={lessonSlug}>
+  <div class="container-main py-8" id="module-container" data-slug={lessonSlug} data-init-checkpoint={hasPassedCheckpoint ? "true" : "false"} data-init-lkpd={hasSubmittedLkpd ? "true" : "false"} data-init-reflection={hasSubmittedReflection ? "true" : "false"}>
     
     <!-- Module Header Banner & Gamification Bar -->
     <div class="p-6 md:p-8 rounded-2xl bg-card border border-border mb-8 space-y-4 shadow-sm relative overflow-hidden">
@@ -65,8 +95,9 @@ const lessonSlug = entry.id || entry.slug;
         </div>
       )}
 
-      <!-- Gamified Module Tabs Navigation -->
+      <!-- Sequential Gamified Module Tabs Navigation -->
       <div class="pt-4 border-t border-border flex flex-wrap gap-2" id="module-tab-nav">
+        <!-- Tab 1: Materi (Selalu Terbuka) -->
         <button 
           type="button" 
           data-tab="materi"
@@ -76,26 +107,31 @@ const lessonSlug = entry.id || entry.slug;
           <span>1. Materi & Visual</span>
         </button>
 
+        <!-- Tab 2: LKPD (Gated by Checkpoint) -->
         <button 
           type="button" 
           data-tab="lkpd"
-          class="module-tab-btn px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 border"
+          id="tab-btn-lkpd"
+          class={`module-tab-btn px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 border ${!hasPassedCheckpoint ? 'tab-locked opacity-75' : ''}`}
         >
-          <span>📝</span>
+          <span id="tab-icon-lkpd">{hasPassedCheckpoint ? '📝' : '🔒'}</span>
           <span>2. Form LKPD Interaktif</span>
           <span class="px-1.5 py-0.2 rounded bg-amber-500/20 text-amber-600 dark:text-amber-400 text-[10px] font-mono">+25 XP</span>
         </button>
 
+        <!-- Tab 3: Refleksi (Gated by LKPD) -->
         <button 
           type="button" 
           data-tab="refleksi"
-          class="module-tab-btn px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 border"
+          id="tab-btn-refleksi"
+          class={`module-tab-btn px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 border ${!hasSubmittedLkpd ? 'tab-locked opacity-75' : ''}`}
         >
-          <span>💭</span>
+          <span id="tab-icon-refleksi">{hasSubmittedLkpd ? '💭' : '🔒'}</span>
           <span>3. Jurnal Refleksi</span>
           <span class="px-1.5 py-0.2 rounded bg-purple-500/20 text-purple-600 dark:text-purple-400 text-[10px] font-mono">+15 XP</span>
         </button>
 
+        <!-- Tab 4: KKTP (Reference) -->
         <button 
           type="button" 
           data-tab="kktp"
@@ -105,20 +141,34 @@ const lessonSlug = entry.id || entry.slug;
           <span>4. Panduan Kriteria Guru</span>
         </button>
       </div>
+
+      <!-- Locked Warning Toast / Alert Bar -->
+      <div id="tab-lock-toast" class="hidden p-3 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-700 dark:text-amber-300 text-xs font-medium flex items-center justify-between animate-shake">
+        <div class="flex items-center gap-2">
+          <span>🔒</span>
+          <span id="tab-lock-message">Selesaikan tantangan kuis checkpoint di Tab Materi terlebih dahulu untuk membuka Form LKPD.</span>
+        </div>
+        <button type="button" id="close-lock-toast" class="text-xs font-bold px-2 py-0.5 rounded hover:bg-amber-500/20">✕</button>
+      </div>
     </div>
 
     <!-- Layout: Sidebar + Main Content -->
     <div class="grid grid-cols-1 lg:grid-cols-4 gap-8" id="module-content-area">
       
-      <!-- Sticky Sidebar Navigation -->
-      <aside class="lg:col-span-1 space-y-4">
+      <!-- Sticky Sidebar Navigation & Live Scoreboard -->
+      <aside class="lg:col-span-1 space-y-5">
+        
+        <!-- Live Class Score Widget -->
+        <LiveScoreWidget initialClass="Semua Kelas" />
+
+        <!-- Silabus Navigation Card -->
         <div class="sticky top-24 p-4 rounded-2xl bg-card border border-border space-y-3.5 shadow-sm">
           <div class="flex items-center justify-between border-b border-border pb-2.5">
             <h3 class="text-xs font-bold text-foreground uppercase tracking-wider font-mono">Silabus Modul RPL</h3>
             <span class="text-[10px] text-primary font-mono font-bold">Sprint 1 & 2</span>
           </div>
 
-          <nav class="space-y-1 text-sm max-h-[65vh] overflow-y-auto pr-1">
+          <nav class="space-y-1 text-sm max-h-[50vh] overflow-y-auto pr-1">
             {sortedSidebarModules.map((mod) => {
               const modSlug = mod.id || mod.slug;
               const currentSlug = entry.id || entry.slug;
@@ -149,6 +199,7 @@ const lessonSlug = entry.id || entry.slug;
             </a>
           </div>
         </div>
+
       </aside>
 
       <!-- Main Content Area with Tab Panels -->
@@ -185,47 +236,13 @@ const lessonSlug = entry.id || entry.slug;
             </div>
           )}
 
-          <!-- Micro Knowledge Check if Modul 1 -->
-          {isModul1 && (
-            <div class="space-y-4">
-              <InteractiveKnowledgeCheck 
-                id="check-1"
-                question="Mengapa sistem Skill Passport di RPL SMKN 1 Rongga berfokus pada pengumpulan Evidence (Bukti Karya Nyata) ketimbang sekadar nilai ujian angka?"
-                options={[
-                  { 
-                    label: "Karena di industri software, portofolio dan kode nyata yang dibuat adalah bukti kompetensi utama yang dilihat oleh recruiter/klien.", 
-                    isCorrect: true, 
-                    explanation: "Tepat sekali! Rekam jejak karya nyata (portfolio) membuktikan kemampuan praktis problem solving dan engineering di dunia kerja." 
-                  },
-                  { 
-                    label: "Hanya untuk memenuhi formalitas kurikulum agar terlihat banyak tugas.", 
-                    isCorrect: false, 
-                    explanation: "Bukan formalitas, melainkan pembiasaan standar industri berbasis unjuk kerja nyata." 
-                  },
-                  { 
-                    label: "Karena siswa RPL dilarang mendapatkan nilai angka di sekolah.", 
-                    isCorrect: false, 
-                    explanation: "Nilai tetap ada, namun evidence portofolio menjadi validasi substansi ketercapaian kompetensi." 
-                  }
-                ]}
-                xpReward={5}
-              />
-            </div>
-          )}
-
-          <!-- Quick Navigation to Next Tab -->
-          <div class="p-6 rounded-2xl bg-secondary/30 border border-border flex flex-col sm:flex-row items-center justify-between gap-4">
-            <div class="space-y-0.5 text-center sm:text-left">
-              <h3 class="text-sm font-bold text-foreground">Sudah Selesai Mempelajari Materi?</h3>
-              <p class="text-xs text-muted-foreground">Lanjutkan ke tahap pengerjaan LKPD Interaktif untuk mengklaim reward XP.</p>
-            </div>
-            <button 
-              type="button" 
-              data-switch-tab="lkpd"
-              class="btn btn-primary text-xs font-semibold px-5 py-2.5 rounded-xl shrink-0"
-            >
-              Lanjut ke Form LKPD →
-            </button>
+          <!-- Unified Gamified Knowledge Checkpoint Challenge (Di Paling Bawah Materi) -->
+          <div class="space-y-4 pt-2" id="checkpoint-challenge-area">
+            <InteractiveKnowledgeCheck 
+              lessonSlug={lessonSlug}
+              moduleTitle={entry.data.title}
+              isCompleted={hasPassedCheckpoint}
+            />
           </div>
         </section>
 
@@ -244,7 +261,7 @@ const lessonSlug = entry.id || entry.slug;
           <div class="p-6 rounded-2xl bg-secondary/30 border border-border flex flex-col sm:flex-row items-center justify-between gap-4">
             <div class="space-y-0.5 text-center sm:text-left">
               <h3 class="text-sm font-bold text-foreground">Selesai Mengisi LKPD?</h3>
-              <p class="text-xs text-muted-foreground">Lengkapi jurnal refleksi pembelajaran untuk mengunci pemahaman kalian.</p>
+              <p class="text-xs text-muted-foreground">Simpan jawaban di atas untuk membuka Tab 3 (Jurnal Refleksi) dan mengunci pemahaman kalian.</p>
             </div>
             <button 
               type="button" 
@@ -337,6 +354,9 @@ const lessonSlug = entry.id || entry.slug;
       color: var(--primary);
       box-shadow: 0 1px 2px rgba(0,0,0,0.05);
     }
+    .tab-locked {
+      cursor: not-allowed;
+    }
   </style>
 
   <script>
@@ -347,10 +367,82 @@ const lessonSlug = entry.id || entry.slug;
     const tabBtns = document.querySelectorAll('.module-tab-btn');
     const tabPanels = document.querySelectorAll('.tab-panel');
     const btnComplete = document.getElementById('btn-complete-lesson');
+    
+    // Gating Elements
+    const tabBtnLkpd = document.getElementById('tab-btn-lkpd');
+    const tabIconLkpd = document.getElementById('tab-icon-lkpd');
+    const tabBtnRefleksi = document.getElementById('tab-btn-refleksi');
+    const tabIconRefleksi = document.getElementById('tab-icon-refleksi');
+    const lockToast = document.getElementById('tab-lock-toast');
+    const lockMessage = document.getElementById('tab-lock-message');
+    const closeLockToast = document.getElementById('close-lock-toast');
 
-    // Universal tab switcher function
+    // Progression state tracking
+    let isCheckpointPassed = container?.getAttribute('data-init-checkpoint') === 'true' || 
+                             localStorage.getItem(`ags_checkpoint_${slug}`) === 'true';
+    let isLkpdSubmitted = container?.getAttribute('data-init-lkpd') === 'true' || 
+                          localStorage.getItem(`ags_lkpd_${slug}`) === 'true';
+    let isReflectionSubmitted = container?.getAttribute('data-init-reflection') === 'true' || 
+                                localStorage.getItem(`ags_reflection_${slug}`) === 'true';
+
+    // Show toast message when clicking locked tab
+    function showLockWarning(msg: string) {
+      if (lockToast && lockMessage) {
+        lockMessage.textContent = msg;
+        lockToast.classList.remove('hidden');
+        setTimeout(() => {
+          lockToast.classList.add('hidden');
+        }, 5000);
+      }
+    }
+
+    closeLockToast?.addEventListener('click', () => {
+      lockToast?.classList.add('hidden');
+    });
+
+    // Update UI unlock states
+    function updateTabLockVisuals() {
+      if (isCheckpointPassed) {
+        tabBtnLkpd?.classList.remove('tab-locked', 'opacity-75');
+        if (tabIconLkpd) tabIconLkpd.textContent = '📝';
+      } else {
+        tabBtnLkpd?.classList.add('tab-locked', 'opacity-75');
+        if (tabIconLkpd) tabIconLkpd.textContent = '🔒';
+      }
+
+      if (isLkpdSubmitted) {
+        tabBtnRefleksi?.classList.remove('tab-locked', 'opacity-75');
+        if (tabIconRefleksi) tabIconRefleksi.textContent = '💭';
+      } else {
+        tabBtnRefleksi?.classList.add('tab-locked', 'opacity-75');
+        if (tabIconRefleksi) tabIconRefleksi.textContent = '🔒';
+      }
+    }
+
+    updateTabLockVisuals();
+
+    // Universal tab switcher function with gating validation
     function switchTab(targetTab: string) {
       if (!targetTab) return;
+
+      // Validate Gating Rules
+      if (targetTab === 'lkpd' && !isCheckpointPassed) {
+        showLockWarning('🔒 Selesaikan kuis checkpoint di Tab Materi terlebih dahulu untuk membuka Form LKPD.');
+        // Smooth scroll to checkpoint area
+        const checkpointArea = document.getElementById('checkpoint-challenge-area');
+        if (checkpointArea) {
+          checkpointArea.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+        return;
+      }
+
+      if (targetTab === 'refleksi' && !isLkpdSubmitted) {
+        showLockWarning('🔒 Lengkapi dan simpan data Form LKPD terlebih dahulu untuk membuka Jurnal Refleksi.');
+        return;
+      }
+
+      // Hide toast if allowed
+      lockToast?.classList.add('hidden');
 
       // Update button active state
       tabBtns.forEach((btn) => {
@@ -402,6 +494,20 @@ const lessonSlug = entry.id || entry.slug;
       }
     });
 
+    // Listen to Checkpoint Passed event
+    window.addEventListener('checkpoint-passed', () => {
+      isCheckpointPassed = true;
+      localStorage.setItem(`ags_checkpoint_${slug}`, 'true');
+      updateTabLockVisuals();
+    });
+
+    // Listen to LKPD submitted event (or storage event)
+    window.addEventListener('lkpd-submitted', () => {
+      isLkpdSubmitted = true;
+      localStorage.setItem(`ags_lkpd_${slug}`, 'true');
+      updateTabLockVisuals();
+    });
+
     // Check hash on page load (e.g. #lkpd or #refleksi)
     const initialHash = window.location.hash.replace('#', '');
     if (initialHash && ['materi', 'lkpd', 'refleksi', 'kktp'].includes(initialHash)) {
@@ -425,6 +531,7 @@ const lessonSlug = entry.id || entry.slug;
         const data = await res.json();
         if (data.success) {
           btnComplete.textContent = `🎉 Progres Diperbarui (+${data.xpEarned} XP)`;
+          window.dispatchEvent(new CustomEvent('refresh-live-score'));
         } else {
           btnComplete.textContent = '🎉 Modul Selesai!';
         }

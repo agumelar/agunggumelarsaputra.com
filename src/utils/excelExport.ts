@@ -502,6 +502,35 @@ export async function generateLkpdSubmissionsExcel(submissions: any[]): Promise<
     rowIdx++;
   });
 
+  // Spacing before signature
+  rowIdx += 2;
+
+  // Tanda Tangan Guru Pengampu LKPD
+  const signDateStr = `Bandung Barat, ${formatIndonesianDate(new Date())}`;
+  worksheet.getCell(`F${rowIdx}`).value = signDateStr;
+  worksheet.getCell(`F${rowIdx}`).font = { name: 'Arial', size: 9.5, color: { argb: textDark } };
+  worksheet.getCell(`F${rowIdx}`).alignment = { horizontal: 'center' };
+  worksheet.mergeCells(`F${rowIdx}:H${rowIdx}`);
+
+  rowIdx++;
+  worksheet.getCell(`F${rowIdx}`).value = 'Guru Pengampu Mata Pelajaran PPLG,';
+  worksheet.getCell(`F${rowIdx}`).font = { name: 'Arial', size: 9.5, bold: true, color: { argb: textDark } };
+  worksheet.getCell(`F${rowIdx}`).alignment = { horizontal: 'center' };
+  worksheet.mergeCells(`F${rowIdx}:H${rowIdx}`);
+
+  rowIdx += 4;
+
+  worksheet.getCell(`F${rowIdx}`).value = 'Agung Gumelar Saputra, S.Tr.T.';
+  worksheet.getCell(`F${rowIdx}`).font = { name: 'Arial', size: 10, bold: true, underline: true, color: { argb: textDark } };
+  worksheet.getCell(`F${rowIdx}`).alignment = { horizontal: 'center' };
+  worksheet.mergeCells(`F${rowIdx}:H${rowIdx}`);
+
+  rowIdx++;
+  worksheet.getCell(`F${rowIdx}`).value = 'NIP. — / Guru Produktif PPLG SMKN 1 Rongga';
+  worksheet.getCell(`F${rowIdx}`).font = { name: 'Arial', size: 9, color: { argb: textMuted } };
+  worksheet.getCell(`F${rowIdx}`).alignment = { horizontal: 'center' };
+  worksheet.mergeCells(`F${rowIdx}:H${rowIdx}`);
+
   worksheet.getColumn(1).width = 6;
   worksheet.getColumn(2).width = 28;
   worksheet.getColumn(3).width = 12;
@@ -618,6 +647,35 @@ export async function generateReflectionsExcel(reflections: any[]): Promise<Buff
 
     rowIdx++;
   });
+
+  // Spacing before signature
+  rowIdx += 2;
+
+  // Tanda Tangan Guru Pengampu Refleksi
+  const signDateStr = `Bandung Barat, ${formatIndonesianDate(new Date())}`;
+  worksheet.getCell(`H${rowIdx}`).value = signDateStr;
+  worksheet.getCell(`H${rowIdx}`).font = { name: 'Arial', size: 9.5, color: { argb: textDark } };
+  worksheet.getCell(`H${rowIdx}`).alignment = { horizontal: 'center' };
+  worksheet.mergeCells(`H${rowIdx}:J${rowIdx}`);
+
+  rowIdx++;
+  worksheet.getCell(`H${rowIdx}`).value = 'Guru Pengampu Mata Pelajaran PPLG,';
+  worksheet.getCell(`H${rowIdx}`).font = { name: 'Arial', size: 9.5, bold: true, color: { argb: textDark } };
+  worksheet.getCell(`H${rowIdx}`).alignment = { horizontal: 'center' };
+  worksheet.mergeCells(`H${rowIdx}:J${rowIdx}`);
+
+  rowIdx += 4;
+
+  worksheet.getCell(`H${rowIdx}`).value = 'Agung Gumelar Saputra, S.Tr.T.';
+  worksheet.getCell(`H${rowIdx}`).font = { name: 'Arial', size: 10, bold: true, underline: true, color: { argb: textDark } };
+  worksheet.getCell(`H${rowIdx}`).alignment = { horizontal: 'center' };
+  worksheet.mergeCells(`H${rowIdx}:J${rowIdx}`);
+
+  rowIdx++;
+  worksheet.getCell(`H${rowIdx}`).value = 'NIP. — / Guru Produktif PPLG SMKN 1 Rongga';
+  worksheet.getCell(`H${rowIdx}`).font = { name: 'Arial', size: 9, color: { argb: textMuted } };
+  worksheet.getCell(`H${rowIdx}`).alignment = { horizontal: 'center' };
+  worksheet.mergeCells(`H${rowIdx}:J${rowIdx}`);
 
   worksheet.getColumn(1).width = 6;
   worksheet.getColumn(2).width = 24;

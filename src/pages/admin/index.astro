@@ -150,8 +150,8 @@ for (const ex of allExamLogs) {
   }
 }
 
-// 6. Metrics Calculations
-const lkpdSubmissions = allSubmissions.filter(s => s.submissionType !== 'reflection');
+// 6. Metrics Calculations (Checkpoint is automated & excluded from manual grading queue)
+const lkpdSubmissions = allSubmissions.filter(s => s.submissionType === 'lkpd');
 const reflectionSubmissions = allSubmissions.filter(s => s.submissionType === 'reflection');
 
 const totalLkpd = lkpdSubmissions.length;
@@ -193,6 +193,10 @@ const passRate = totalExamsTaken > 0 ? Math.round((passingExams / totalExamsTake
       </div>
 
       <div class="flex flex-wrap items-center gap-2 flex-shrink-0">
+        <a href="/admin/proyektor-leaderboard" target="_blank" class="btn btn-sm bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-black font-extrabold rounded-lg shadow-md flex items-center gap-1.5 animate-pulse">
+          <span>📺</span>
+          <span>Layar Proyektor Live Score</span>
+        </a>
         <a href="#tokens" class="btn btn-sm bg-cyan-600 hover:bg-cyan-500 text-white font-semibold rounded-lg shadow-sm">
           🎟️ Token ({allTokens.length})
         </a>

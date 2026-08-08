@@ -10,6 +10,62 @@ Format penulisan mengacu pada [Keep a Changelog](https://keepachangelog.com/id/1
 - Opsi Hapus Akun siswa melalui panel Admin (`/admin/users`).
 - Generator PDF Otomatis untuk Rekap Portofolio Skill Passport Siswa.
 
+## [2.6.3] - 2026-08-08
+### Enhanced
+- **Standardisasi Ekspor Dokumen Rekap Excel Guru Profesional (`src/utils/excelExport.ts`):**
+  - Menyempurnakan ketiga format generator ekspor Excel (`Rekap Nilai Sesi / Token`, `Rekap Penilaian LKPD`, dan `Rekap Jurnal Refleksi`):
+    - **Kop Surat Institusi Resmi:** Pemerintah Daerah Provinsi Jawa Barat, Dinas Pendidikan Cabang Dinas Wilayah VII, SMK Negeri 1 Rongga - Konsentrasi Keahlian Rekayasa Perangkat Lunak.
+    - **Blok Pengesahan & Tanda Tangan Guru:** Kolom tanda tangan resmi lengkap dengan titimangsa (Bandung Barat), nama guru pengampu (*Agung Gumelar Saputra, S.Tr.T.*), dan jabatan fungsional.
+    - **Tingkat Keterbacaan Tinggi (*High-Craft Layout*):** Penataan lebar kolom proporsional (*auto-fit*), *Zebra striping*, pemisahan *Executive Summary* statistik kelas, *freeze pane* pada header tabel, dan pewarnaan status kelulusan (KKM 73 Kompeten / Remedial) yang nyaman dibaca dan siap cetak (*Print-Ready*).
+
+## [2.6.2] - 2026-08-08
+### Fixed
+- **Pembersihan & Reset Total State Gamifikasi Mini-Game Checkpoint (`InteractiveKnowledgeCheck.astro`):**
+  - Memperbaiki fungsi `resetGame()` saat nyawa habis (*Game Over*) atau saat tombol *Coba Lagi / Mainkan Ulang Quest* ditekan.
+  - Membersihkan semua timer aktif (`clearAllTimeouts`) untuk mencegah perpindahan ronde yang bocor/overlap saat game diulang.
+  - Me-reset total seluruh status DOM kartu pasangan (menghilangkan border/bg jawaban lama, mengaktifkan kembali tombol `disabled: false`, mengembalikan ikon anak panah/centang semula, dan mengacak kembali posisi kolom kanan).
+  - Me-reset tombol Mitos/Fakta Ronde 2 dan Opsi Soal Ronde 3 beserta kotak penjelasan feedback agar kembali ke kondisi awal yang bersih.
+
+## [2.6.1] - 2026-08-08
+### Added
+- **Gamifikasi Mini-Game Checkpoint 3-Stage Quest (*Quizizz / Interactive Puzzle Experience*):**
+  - Mengubah gerbang checkpoint menjadi **Tantangan Bertingkat 3 Ronde Interaktif**:
+    1. **Ronde 1: 🧩 Puzzle Match Kartu Konsep** — Siswa mencocokkan 3 pasangan kartu konsep & fungsi praktis dengan animasi match hijau berkilau dan sound synthesizer arpeggio.
+    2. **Ronde 2: 🕵️ Detektif Mitos vs Fakta Industri** — Siswa menganalisis studi kasus industri untuk membedakan fakta kompetensi dengan mitos keliru.
+    3. **Ronde 3: 🚀 Tantangan Skenario Cepat (Speed Challenge)** — Soal situasional industri dengan efek streak combo (`🔥 Combo x2`, `🔥 Combo x3`).
+  - **Sistem 3 Hati Nyawa (`❤️❤️❤️`):** Siswa memiliki 3 nyawa per sesi game dengan opsi instant retry jika nyawa habis.
+  - **100% Otomatisasi Sistem (Tanpa Beban Penilaian Guru):** Checkpoint divalidasi dan dinilai 100% instan oleh sistem game (+15 XP) serta membuka gembok Tab LKPD secara mandiri tanpa pernah masuk ke antrean tugas manual guru.
+
+### Fixed
+- **Filter Tabel Evaluasi LKPD Guru di Panel Admin (`/admin`):**
+  - Memperbaiki query filter `lkpdSubmissions` agar secara eksklusif hanya menampilkan kiriman bertipe `lkpd`, sehingga status otomatis checkpoint tidak lagi mengotori antrean penilaian guru.
+
+---
+
+## [2.6.0] - 2026-08-08
+### Added
+- **Gamifikasi Checkpoint & Sistem Gating Tab Berurutan (*Sequential Gated Tabs*):**
+  - Mengganti tombol navigasi materi sederhana dengan **Gerbang Kuis Checkpoint Interaktif** (`InteractiveKnowledgeCheck.astro`) yang divalidasi secara konseptual di setiap modul pembelajaran (Modul 1 s/d 16).
+  - Alur belajar bertingkat linier (*Linear Mastery Progression*):
+    1. **Tab 1: Materi & Visual** (Terbuka bebas untuk dipelajari).
+    2. **Tab 2: Form LKPD Interaktif** (Terkunci 🔒, baru terbuka 🔓 setelah kuis checkpoint dijawab dengan benar).
+    3. **Tab 3: Jurnal Refleksi** (Terkunci 🔒, baru terbuka 🔓 setelah LKPD disimpan/dikumpulkan).
+    4. **Tab 4: Panduan Kriteria Guru** (Rubrik KKTP).
+  - Peringatan interaktif (*Animated Toast / Shake Alert*) jika siswa mencoba melompati tab sebelum menyelesaikan syarat gerbang.
+  - Efek audio sintesis Web Audio API (chime positif) dan animasi konfeti visual saat menyelesaikan tantangan kuis checkpoint.
+- **Papan Skor Langsung (*Classroom Live Scoreboard & Projector Mode*):**
+  - **Live Score Widget (`LiveScoreWidget.astro`):** Widget papan peringkat *real-time* di sidebar modul yang menampilkan podium Top 3 dan posisi peringkat siswa saat ini dengan polling otomatis setiap 15 detik serta *instant refresh* saat checkpoint/LKPD diselesaikan.
+  - **Layar Proyektor Kelas Fullscreen (`/admin/proyektor-leaderboard`):**
+    - Halaman tampilan proyektor ruang kelas beresolusi tinggi dengan tema dark slate berdaya kontras tinggi (`#090d16`, `#111827`).
+    - Podium 3 Juara (🥇 Juara 1 Gold, 🥈 Juara 2 Silver, 🥉 Juara 3 Bronze) berukuran besar dan tabel peringkat realtime peserta lainnya.
+    - Filter Kelas (Semua Kelas, 10 RPL 1, 10 RPL 2), toggle suara lonceng saat poin siswa bertambah, dan tombol Layar Penuh (F11).
+    - Polling snapy tiap 5 detik untuk menghidupkan suasana kompetisi belajar yang seru dan cair di dalam kelas.
+  - **Endpoint API Gamifikasi Baru:**
+    - `/api/gamification/claim-checkpoint`: Klaim reward +10 XP dan pencatatan verifikasi gerbang checkpoint.
+    - `/api/leaderboard`: Peningkatan endpoint leaderboard dengan filter kelas dan identifikasi user rank saat ini.
+
+---
+
 ## [2.5.1] - 2026-08-08
 ### Changed
 - **Penyempurnaan Tata Letak Modul Reader (`src/pages/pembelajaran/[...slug].astro`):**
