@@ -60,27 +60,13 @@ Pada pertemuan ini, kalian akan belajar teknik **CER (Claim, Evidence, Reasoning
 
 ---
 
-## 📝 Lembar Kerja Peserta Didik (LKPD P12)
-
-Lengkapilah Komponen 4 dan 5 untuk aplikasi yang kalian teliti dengan menyertakan minimal **2 Screenshot Ber-Anotasi**:
-
-### 1. Bukti Visual 1: Analisis UI / UX Positif (Kelebihan)
-- **Letak Screenshot:** *(Sisipkan gambar screenshot dengan panah hijau penunjuk elemen)*
-- **Claim:** ................................................................................
-- **Evidence:** .............................................................................
-- **Reasoning:** ............................................................................
-
-### 2. Bukti Visual 2: Analisis UI / UX Negatif (Kendala / Kekurangan)
-- **Letak Screenshot:** *(Sisipkan gambar screenshot dengan kotak merah penunjuk masalah)*
-- **Claim:** ................................................................................
-- **Evidence:** .............................................................................
-- **Reasoning:** ............................................................................
-
 ---
 
-## 🧭 Refleksi Pribadi (Pertemuan 12)
+## ⚡ Langkah Selanjutnya: Aktivitas Belajar
 
-1. **Mengapa penambahan panah dan teks penjelas pada screenshot membuat laporan analisis kalian terlihat jauh lebih meyakinkan?**
-2. **Bagaimana perasaan kalian setelah berhasil menemukan bug/kendala ergonomi pada aplikasi buatan perusahaan besar?**
+Gunakan tab di bagian atas modul ini untuk menyelesaikan tahapan belajar kalian:
 
-> 💾 **Petunjuk Simpan:** Simpan LKPD P12 dengan format: `📁 Skill_Passport_RPL/OR-02/P12_AnalisisVisual_NIS_Nama.pdf`.
+1. 📖 **Tab 1 (Materi & Checkpoint)**: Pelajari materi lalu tuntaskan kuis checkpoint tiga tahap agar Tab 2 terbuka.
+2. 📝 **Tab 2 (Form LKPD Interaktif)**: Isi dan kirim LKPD secara mandiri; sertakan URL Google Drive portofolio bila diperlukan agar Tab 3 terbuka (+25 XP).
+3. 💭 **Tab 3 (Jurnal Refleksi)**: Tulis dan kirim refleksi mandiri (+15 XP), kemudian klik **“Tandai Selesai & Buka Modul Selanjutnya”** untuk menuntaskan modul.
+4. 🎯 **Tab 4 (Panduan Kriteria Guru)**: Gunakan matriks KKTP untuk memeriksa target karya kalian.

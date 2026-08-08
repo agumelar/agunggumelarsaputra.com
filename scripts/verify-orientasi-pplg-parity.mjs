@@ -47,4 +47,12 @@ for (const filename of orientasi.slice(1)) {
   assert.match(checkpointBlock, /xpReward:/, `${slug} harus memiliki reward XP.`);
 }
 
+for (const filename of orientasi.slice(1)) {
+  const source = await readFile(resolve(contentDirectory, filename), 'utf8');
+  for (const field of ['title:', 'description:', 'category:', 'order:', 'duration:', 'tags:']) {
+    assert.ok(source.includes(field), `${filename} tidak memiliki frontmatter ${field}`);
+  }
+  assert.match(source, /Langkah Selanjutnya|Aktivitas Belajar/, `${filename} harus memandu aktivitas lanjutan siswa.`);
+}
+
 console.log('Orientasi PPLG parity guard: PASS');

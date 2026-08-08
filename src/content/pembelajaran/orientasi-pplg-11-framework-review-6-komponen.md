@@ -61,32 +61,13 @@ Pada pertemuan ini, kalian akan menetapkan **Satu Aplikasi Utama** yang akan kal
 
 ---
 
-## 📝 Lembar Kerja Peserta Didik (LKPD P11)
-
-Mulailah mengisi draf review untuk 3 komponen pertama dari aplikasi pilihan kalian:
-
-### 1. Identitas Produk Digital
-- **Nama Aplikasi / Website:** ................................................................
-- **Platform:** (Android / iOS / Web / Desktop)
-- **Nama Perusahaan / Pengembang:** ............................................................
-- **Tahun Rilis / Versi Saat Ini:** ...........................................................
-
-### 2. Target Pengguna & Problem Statement
-- **Siapa Target Pengguna Utamanya?** *(Contoh: Pelajar SMA/SMK, Ibu Rumah Tangga, Driver)*
-- **Masalah Nyata Apa yang Coba Diselesaikan?**  
-  *(Contoh: Memudahkan siswa mencari latihan soal ujian tanpa harus membeli buku cetak yang mahal)*
-
-### 3. Fungsionalitas & Fitur Kunci
-Sebutkan minimal 3 fitur utama dan jelaskan kegunaannya:
-1. **Fitur A:** ................................................................................
-2. **Fitur B:** ................................................................................
-3. **Fitur C:** ................................................................................
-
 ---
 
-## 🧭 Refleksi Pribadi (Pertemuan 11)
+## ⚡ Langkah Selanjutnya: Aktivitas Belajar
 
-1. **Mengapa penting bagi seorang programmer untuk memahami siapa target pengguna aplikasinya sebelum mulai menulis baris kode?**
-2. **Dari komponen 1 s.d 3 di atas, bagian mana yang paling menantang untuk dianalisis?**
+Gunakan tab di bagian atas modul ini untuk menyelesaikan tahapan belajar kalian:
 
-> 💾 **Petunjuk Simpan:** Simpan file draf awal ini dengan format: `📁 Skill_Passport_RPL/OR-02/P11_DraftReviewAwal_NIS_Nama.pdf`.
+1. 📖 **Tab 1 (Materi & Checkpoint)**: Pelajari materi lalu tuntaskan kuis checkpoint tiga tahap agar Tab 2 terbuka.
+2. 📝 **Tab 2 (Form LKPD Interaktif)**: Isi dan kirim LKPD secara mandiri; sertakan URL Google Drive portofolio bila diperlukan agar Tab 3 terbuka (+25 XP).
+3. 💭 **Tab 3 (Jurnal Refleksi)**: Tulis dan kirim refleksi mandiri (+15 XP), kemudian klik **“Tandai Selesai & Buka Modul Selanjutnya”** untuk menuntaskan modul.
+4. 🎯 **Tab 4 (Panduan Kriteria Guru)**: Gunakan matriks KKTP untuk memeriksa target karya kalian.

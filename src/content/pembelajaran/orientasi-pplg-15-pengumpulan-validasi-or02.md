@@ -51,19 +51,13 @@ Ikuti langkah-langkah pengumpulan berikut secara disiplin:
 
 ---
 
-## 📝 Lembar Kerja Peserta Didik (LKPD P15)
-
-Lakukan verifikasi integritas file sebelum validasi dimulai:
-
-- [ ] File PDF berhasil di-download dan dibuka tanpa meminta izin login (*Access Denied*).
-- [ ] Semua gambar screenshot di dalam dokumen terlihat tajam dan tidak buram.
-- [ ] Data nama penyusun, NIS, dan kelas tercantum dengan benar di halaman judul.
-
 ---
 
-## 🧭 Refleksi Pribadi (Pertemuan 15)
+## ⚡ Langkah Selanjutnya: Aktivitas Belajar
 
-1. **Apakah dokumen review yang kalian hasilkan hari ini sudah membuktikan bahwa kalian mampu berpikir seperti seorang Software Analyst profesional?**
-2. **Skill baru apa yang paling kalian rasakan berkembang pesat sepanjang 7 pertemuan Sprint 2 ini?**
+Gunakan tab di bagian atas modul ini untuk menyelesaikan tahapan belajar kalian:
 
-> 💾 **Status Portofolio:** Selamat! Bukti karya OR-02 kalian siap dinilai oleh Pak Agung dan dicatat pada lembar verifikasi resmi Skill Passport.
+1. 📖 **Tab 1 (Materi & Checkpoint)**: Pelajari materi lalu tuntaskan kuis checkpoint tiga tahap agar Tab 2 terbuka.
+2. 📝 **Tab 2 (Form LKPD Interaktif)**: Isi dan kirim LKPD secara mandiri; sertakan URL Google Drive portofolio bila diperlukan agar Tab 3 terbuka (+25 XP).
+3. 💭 **Tab 3 (Jurnal Refleksi)**: Tulis dan kirim refleksi mandiri (+15 XP), kemudian klik **“Tandai Selesai & Buka Modul Selanjutnya”** untuk menuntaskan modul.
+4. 🎯 **Tab 4 (Panduan Kriteria Guru)**: Gunakan matriks KKTP untuk memeriksa target karya kalian.

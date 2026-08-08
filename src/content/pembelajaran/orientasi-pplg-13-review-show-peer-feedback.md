@@ -53,29 +53,13 @@ jelas menunjukkan masalah alur pembayaran."                               perban
 
 ---
 
-## 📝 Lembar Kerja Peserta Didik (LKPD P13)
-
-### Tabel Log Peer Feedback yang Diterima Siswa:
-
-| No | Nama Teman Pengulas | 1 Apresiasi Positif yang Diberikan | 1 Saran Perbaikan yang Diberikan | Tindakan Revisi Saya |
-| :---: | :--- | :--- | :--- | :--- |
-| 1 | *Contoh: Budi Santoso* | *Analisis UI sangat detail dan teratur.* | *Saran solusi untuk developer masih terlalu umum.* | *Akan menambahkan contoh perubahan layout tombol.* |
-| 2 | | | | |
-| 3 | | | | |
-
 ---
 
-## 🏆 Penghargaan Sesi: "Best Reviewer & Best Critic"
+## ⚡ Langkah Selanjutnya: Aktivitas Belajar
 
-Di akhir sesi, kelas akan memilih secara demokratis:
-- **Best Presentation:** Siswa dengan penyampaian paling komunikatif dan percaya diri.
-- **Most Constructive Critic:** Siswa yang memberikan masukan paling detail, santun, dan bermanfaat bagi temannya.
+Gunakan tab di bagian atas modul ini untuk menyelesaikan tahapan belajar kalian:
 
----
-
-## 🧭 Refleksi Pribadi (Pertemuan 13)
-
-1. **Bagaimana perasaan kalian saat karya kalian dikomentari oleh rekan sejawat?**
-2. **Apa 1 masukan paling berharga yang kalian peroleh hari ini yang akan langsung kalian terapkan pada revisi final?**
-
-> 💾 **Petunjuk Simpan:** Simpan LKPD P13 dengan format: `📁 Skill_Passport_RPL/OR-02/P13_PeerFeedback_NIS_Nama.pdf`.
+1. 📖 **Tab 1 (Materi & Checkpoint)**: Pelajari materi lalu tuntaskan kuis checkpoint tiga tahap agar Tab 2 terbuka.
+2. 📝 **Tab 2 (Form LKPD Interaktif)**: Isi dan kirim LKPD secara mandiri; sertakan URL Google Drive portofolio bila diperlukan agar Tab 3 terbuka (+25 XP).
+3. 💭 **Tab 3 (Jurnal Refleksi)**: Tulis dan kirim refleksi mandiri (+15 XP), kemudian klik **“Tandai Selesai & Buka Modul Selanjutnya”** untuk menuntaskan modul.
+4. 🎯 **Tab 4 (Panduan Kriteria Guru)**: Gunakan matriks KKTP untuk memeriksa target karya kalian.

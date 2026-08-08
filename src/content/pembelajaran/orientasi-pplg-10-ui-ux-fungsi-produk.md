@@ -58,31 +58,13 @@ Pada pertemuan ini, kalian akan belajar membedah tiga komponen utama software: *
 
 ---
 
-## 📝 Lembar Kerja Peserta Didik (LKPD P10)
-
-Pilihlah **2 Aplikasi Sejenis** dalam industri yang sama (Contoh: *Spotify vs YouTube Music*, atau *Ruangguru vs Zenius*, atau *Gojek vs Maxim*):
-
-### Tabel Komparasi Head-to-Head:
-
-| Parameter Komparasi | Produk A: [Nama App 1] | Produk B: [Nama App 2] | Pemenang & Alasan Teknis |
-| :--- | :--- | :--- | :--- |
-| **1. Aspek UI (Tampilan)**<br>• Warna & Kontras<br>• Keterbacaan Font | | | 🏆 **[Nama App]**<br>*Alasan:* |
-| **2. Aspek UX (Pengalaman)**<br>• Kemudahan Navigasi<br>• Kecepatan Alur | | | 🏆 **[Nama App]**<br>*Alasan:* |
-| **3. Aspek Fungsi Utama**<br>• Kelengkapan Fitur<br>• Kestabilan Sistem | | | 🏆 **[Nama App]**<br>*Alasan:* |
-
 ---
 
-## 🎨 Aktivitas Kelas: "UI Critic & Redesign Idea"
+## ⚡ Langkah Selanjutnya: Aktivitas Belajar
 
-Pilihlah salah satu elemen UI dari aplikasi di atas yang menurut kalian paling buruk (misalnya: tulisan abu-abu di background hitam yang sulit dibaca, atau tombol yang terlalu kecil untuk jempol).
-1. Deskripsikan masalah visualnya.
-2. Usulkan 1 perubahan desain yang konkret dan logis!
+Gunakan tab di bagian atas modul ini untuk menyelesaikan tahapan belajar kalian:
 
----
-
-## 🧭 Refleksi Pribadi (Pertemuan 10)
-
-1. **Menurut kalian, mana yang lebih fatal bagi kelangsungan bisnis startup: UI yang jelek atau UX yang membingungkan? Mengapa?**
-2. **Ciri utama produk digital yang benar-benar berkualitas menurut saya adalah...**
-
-> 💾 **Petunjuk Simpan:** Simpan LKPD P10 dengan format: `📁 Skill_Passport_RPL/OR-02/P10_KomparasiUIUX_NIS_Nama.pdf`.
+1. 📖 **Tab 1 (Materi & Checkpoint)**: Pelajari materi lalu tuntaskan kuis checkpoint tiga tahap agar Tab 2 terbuka.
+2. 📝 **Tab 2 (Form LKPD Interaktif)**: Isi dan kirim LKPD secara mandiri; sertakan URL Google Drive portofolio bila diperlukan agar Tab 3 terbuka (+25 XP).
+3. 💭 **Tab 3 (Jurnal Refleksi)**: Tulis dan kirim refleksi mandiri (+15 XP), kemudian klik **“Tandai Selesai & Buka Modul Selanjutnya”** untuk menuntaskan modul.
+4. 🎯 **Tab 4 (Panduan Kriteria Guru)**: Gunakan matriks KKTP untuk memeriksa target karya kalian.

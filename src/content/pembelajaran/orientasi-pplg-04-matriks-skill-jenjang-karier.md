@@ -1,19 +1,19 @@
 ---
-title: "Matriks Skill, Kurikulum RPL, & Jenjang Karier PPLG"
-description: "Membedah Hard Skills vs Soft Skills, menghubungkan mata pelajaran RPL Kelas 10-12 dengan industri, serta memahami tangga jenjang karier IT."
+title: "Matriks Skill, Kurikulum PPLG, & Jenjang Karier"
+description: "Membedah Hard Skills vs Soft Skills, menghubungkan mata pelajaran Pengembangan Perangkat Lunak dan Gim (PPLG) Kelas 10-12 dengan industri, serta memahami tangga jenjang karier IT."
 category: "Orientasi PPLG (OR-01)"
 level: "Pemula"
 order: 4
 duration: "2 JP (90 Menit)"
-tags: ["Matriks Skill", "Hard Skill", "Soft Skill", "Jenjang Karier", "Kurikulum RPL", "OR-01"]
+tags: ["Matriks Skill", "Hard Skill", "Soft Skill", "Jenjang Karier", "Kurikulum PPLG", "OR-01"]
 teacherTip: "Tekankan kepada siswa bahwa kemampuan teknis (coding) hanya membuka pintu wawancara, tetapi soft skill (komunikasi & integritas) yang menentukan keberlanjutan karier mereka di industri."
 ---
 
-# Matriks Skill, Kurikulum RPL, & Jenjang Karier PPLG
+# Matriks Skill, Kurikulum PPLG, & Jenjang Karier
 
 Banyak pemula mengira bahwa menjadi programmer yang sukses hanya butuh jago menghafal sintaks bahasa pemrograman. Faktanya, hasil riset industri IT global membuktikan bahwa **kombinasi seimbang antara Hard Skills (kemampuan teknis) dan Soft Skills (keterampilan interpersonal & karakter)** adalah kunci utama keberhasilan seorang pengembang software.
 
-Modul ini akan memandu kalian memetakan keterampilan apa saja yang dibutuhkan industri, bagaimana kurikulum RPL di SMKN 1 Rongga mempersiapkannya, serta tahapan tangga karier dari seorang *Junior Developer* hingga *Chief Technology Officer (CTO)*.
+Modul ini akan memandu kalian memetakan keterampilan apa saja yang dibutuhkan industri, bagaimana kurikulum Pengembangan Perangkat Lunak dan Gim (PPLG) di SMKN 1 Rongga mempersiapkannya, serta tahapan tangga karier dari seorang *Junior Developer* hingga *Chief Technology Officer (CTO)*.
 
 ---
 
@@ -32,7 +32,7 @@ Modul ini akan memandu kalian memetakan keterampilan apa saja yang dibutuhkan in
 ## 🎯 Tujuan Pembelajaran
 
 1. **Membedakan Hard Skills & Soft Skills**: Siswa dapat mengkategorikan keterampilan teknis dan non-teknis yang esensial di bidang PPLG.
-2. **Memetakan Mata Pelajaran RPL**: Siswa memahami fungsi mata pelajaran di kelas 10, 11, dan 12 sebagai anak tangga menuju karier impian.
+2. **Memetakan Mata Pelajaran PPLG**: Siswa memahami fungsi mata pelajaran di kelas 10, 11, dan 12 sebagai anak tangga menuju karier impian.
 3. **Memahami Tangga Jenjang Karier IT**: Siswa mampu mengidentifikasi tanggung jawab dari level *Intern*, *Junior*, *Mid-level*, *Senior*, hingga *Lead Engineer*.
 4. **Melakukan Analisis Kebutuhan Loker (Job Vacancy)**: Siswa mampu membaca dan membedah kualifikasi lowongan kerja nyata di industri.
 
@@ -57,9 +57,9 @@ Modul ini akan memandu kalian memetakan keterampilan apa saja yang dibutuhkan in
 
 ---
 
-### 1. Keterkaitan Mata Pelajaran RPL SMKN 1 Rongga dengan Industri
+### 1. Keterkaitan Mata Pelajaran PPLG SMKN 1 Rongga dengan Industri
 
-Kurikulum Kejuruan RPL dirancang bertahap agar kalian memiliki pondasi yang kuat:
+Kurikulum Pengembangan Perangkat Lunak dan Gim (PPLG) dirancang bertahap agar kalian memiliki pondasi yang kuat:
 
 | Tingkat | Mata Pelajaran / Konsentrasi | Output Keterampilan yang Dibangun |
 | :--- | :--- | :--- |
@@ -98,57 +98,16 @@ Pada pertemuan ini, kalian akan melakukan simulasi **Job Fair Kelas**:
 
 ---
 
-## 📝 Lembar Kerja Peserta Didik (LKPD P4)
-
-### A. Identitas Peserta Didik
-- **Nama Lengkap**: ............................................................................
-- **NIS / Kelas**: ..................................................... / [ ] 10 RPL 1 [ ] 10 RPL 2 [ ] 10 RPL 3 [ ] 10 RPL 4
-- **Tanggal**: ............................................................................
-- **Kode Skill**: **OR-01** (Pertemuan 4 & 5)
-
 ---
 
-### B. Aktivitas 1: Analisis Lowongan Kerja Nyata
-Carilah 1 contoh lowongan kerja bidang PPLG di situs pencari kerja (*LinkedIn, Glints, Jobstreet, atau Kalibrr*), lalu bedah kualifikasinya:
+## ⚡ Langkah Selanjutnya: Aktivitas Belajar
 
-1. **Posisi Jabatan**: ................................................................................................................
-2. **Nama Perusahaan & Lokasi**: ............................................................................................
-3. **Hard Skills Teknis yang Disyaratkan**:
-   - Bahasa Pemrograman: ....................................................................................................
-   - Framework / Database / Tools: ....................................................................................
-4. **Soft Skills yang Diminta**:
-   - ...........................................................................................................................................
-   - ...........................................................................................................................................
-5. **Jenjang Karier Posisi Tersebut**: [ ] Intern &nbsp;&nbsp; [ ] Junior &nbsp;&nbsp; [ ] Mid-Level &nbsp;&nbsp; [ ] Senior
+Gunakan tab di bagian atas modul ini untuk menyelesaikan tahapan belajar kalian:
 
----
-
-### C. Aktivitas 2: Gap Analysis (Analisis Kesenjangan Diri)
-
-| Kebutuhan Lowongan Kerja | Kondisi Saya Saat Ini (Kelas 10) | Rencana Belajar Saya di SMK |
-| :--- | :--- | :--- |
-| *Contoh: Menguasai Git & GitHub* | *Belum pernah menggunakan Git* | *Mempelajari perintah dasar Git di semester 1 & mengunggah kode ke GitHub* |
-| ............................................................ | ............................................................ | ............................................................ |
-| ............................................................ | ............................................................ | ............................................................ |
-
----
-
-## ✅ Checklist KKTP P4 & P5
-
-| No | Indikator KKTP | Sudah (Ya) | Belum |
-| :---: | :--- | :---: | :---: |
-| 1 | Mampu membedakan 3 contoh Hard Skill dan 3 contoh Soft Skill bidang PPLG. | [ ] | [ ] |
-| 2 | Mengetahui alur mata pelajaran RPL dari kelas 10 hingga kelas 12. | [ ] | [ ] |
-| 3 | Telah melakukan riset lowongan kerja nyata dan menyelesaikan LKPD P4. | [ ] | [ ] |
-
----
-
-## 💭 Jurnal Refleksi Pembelajaran Mendalam
-
-1. **Soft skill apa yang saat ini menurutmu sudah cukup baik ada pada dirimu? Dan soft skill apa yang paling perlu kamu latih di SMK?**
-   > *Jawaban:* ........................................................................................................................................
-2. **Setelah melihat jenjang karier IT dari Junior hingga CTO, apa target kariermu 5 tahun setelah lulus dari SMK Negeri 1 Rongga?**
-   > *Jawaban:* ........................................................................................................................................
+1. 📖 **Tab 1 (Materi & Checkpoint)**: Pelajari materi lalu tuntaskan kuis checkpoint tiga tahap agar Tab 2 terbuka.
+2. 📝 **Tab 2 (Form LKPD Interaktif)**: Isi dan kirim LKPD secara mandiri; sertakan URL Google Drive portofolio bila diperlukan agar Tab 3 terbuka (+25 XP).
+3. 💭 **Tab 3 (Jurnal Refleksi)**: Tulis dan kirim refleksi mandiri (+15 XP), kemudian klik **“Tandai Selesai & Buka Modul Selanjutnya”** untuk menuntaskan modul.
+4. 🎯 **Tab 4 (Panduan Kriteria Guru)**: Gunakan matriks KKTP untuk memeriksa target karya kalian.
 
 ---
 

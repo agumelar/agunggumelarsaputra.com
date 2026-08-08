@@ -57,21 +57,13 @@ Data, DevOps, Game Dev).            • Jalur karier & rentang gaji        menja
 
 ---
 
-## 📝 Lembar Kerja Peserta Didik (LKPD P7)
-
-### Checklist Mandiri Pembuatan Mind Map:
-
-- [ ] Mind map memuat minimal 5 profesi PPLG yang berbeda.
-- [ ] Setiap profesi memiliki penjelasan deskripsi tugas yang jelas.
-- [ ] Setiap profesi mencantumkan minimal 3 teknologi/tools yang digunakan.
-- [ ] Ada penanda visual yang jelas untuk profesi yang menjadi minat pribadi saya.
-- [ ] Tata letak rapi, keterbacaan teks tinggi (*legible*), dan penggunaan warna harmonis.
-
 ---
 
-## 🧭 Refleksi Pribadi (Pertemuan 7)
+## ⚡ Langkah Selanjutnya: Aktivitas Belajar
 
-1. **Bagian mana dari pembuatan Mind Map ini yang paling mengasah daya kreativitas kalian?**
-2. **Apakah struktur visual ini membantu kalian melihat bagaimana para programmer bekerja sama di dunia nyata?**
+Gunakan tab di bagian atas modul ini untuk menyelesaikan tahapan belajar kalian:
 
-> 💾 **Petunjuk Simpan:** Ekspor hasil gambar/scan menjadi PDF dengan format: `📁 Skill_Passport_RPL/OR-01/P7_DraftMindMap_NIS_Nama.pdf`.
+1. 📖 **Tab 1 (Materi & Checkpoint)**: Pelajari materi lalu tuntaskan kuis checkpoint tiga tahap agar Tab 2 terbuka.
+2. 📝 **Tab 2 (Form LKPD Interaktif)**: Isi dan kirim LKPD secara mandiri; sertakan URL Google Drive portofolio bila diperlukan agar Tab 3 terbuka (+25 XP).
+3. 💭 **Tab 3 (Jurnal Refleksi)**: Tulis dan kirim refleksi mandiri (+15 XP), kemudian klik **“Tandai Selesai & Buka Modul Selanjutnya”** untuk menuntaskan modul.
+4. 🎯 **Tab 4 (Panduan Kriteria Guru)**: Gunakan matriks KKTP untuk memeriksa target karya kalian.

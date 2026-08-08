@@ -74,21 +74,13 @@ Susunlah dokumen PDF kalian mengikuti urutan bab standar berikut:
 
 ---
 
-## 📝 Lembar Kerja Peserta Didik (LKPD P14)
-
-### Checklist Mandiri Kesiapan Draf Final:
-
-- [ ] Seluruh 6 komponen review terisi lengkap dan tidak ada kalimat yang terpotong.
-- [ ] Terdapat minimal 2 screenshot otentik yang dilengkapi kotak atau panah anotasi.
-- [ ] Saran perbaikan pada Bab V bersifat realistis dan teknis, bukan sekadar opini umum.
-- [ ] Cover laporan memuat identitas nama lengkap, NIS, dan kelas dengan benar.
-- [ ] File sudah diekspor ke format PDF dengan nama: `[NIS]_[NamaLengkap]_OR-02_ReviewAplikasi.pdf`.
-
 ---
 
-## 🧭 Refleksi Pribadi (Pertemuan 14)
+## ⚡ Langkah Selanjutnya: Aktivitas Belajar
 
-1. **Bagian mana dari laporan ini yang menurut kalian paling bernilai untuk ditunjukkan kepada calon industri atau perguruan tinggi kelak?**
-2. **Apa kebiasaan baik dalam menyusun dokumen teknis yang kalian pelajari hari ini?**
+Gunakan tab di bagian atas modul ini untuk menyelesaikan tahapan belajar kalian:
 
-> 💾 **Petunjuk Simpan:** Simpan draf final di Google Drive: `📁 Skill_Passport_RPL/OR-02/[NIS]_[Nama]_OR-02_ReviewAplikasi.pdf`.
+1. 📖 **Tab 1 (Materi & Checkpoint)**: Pelajari materi lalu tuntaskan kuis checkpoint tiga tahap agar Tab 2 terbuka.
+2. 📝 **Tab 2 (Form LKPD Interaktif)**: Isi dan kirim LKPD secara mandiri; sertakan URL Google Drive portofolio bila diperlukan agar Tab 3 terbuka (+25 XP).
+3. 💭 **Tab 3 (Jurnal Refleksi)**: Tulis dan kirim refleksi mandiri (+15 XP), kemudian klik **“Tandai Selesai & Buka Modul Selanjutnya”** untuk menuntaskan modul.
+4. 🎯 **Tab 4 (Panduan Kriteria Guru)**: Gunakan matriks KKTP untuk memeriksa target karya kalian.

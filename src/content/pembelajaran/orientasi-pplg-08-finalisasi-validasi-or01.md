@@ -50,18 +50,13 @@ Pastikan kedua file kalian dinamai sesuai format resmi berikut sebelum diunggah:
 
 ---
 
-## 📝 Lembar Kerja Peserta Didik (LKPD P8)
-
-Lakukan pemeriksaan mandiri (*Pre-Flight Checklist*) sebelum mengumpulkan link ke guru:
-
-- [ ] File Mind Map sudah diekspor ke format PDF resolusi tinggi (tidak buram saat di-zoom).
-- [ ] File Rencana Minat sudah ditandatangani/dilengkapi identitas lengkap.
-- [ ] Pengaturan berbagi Google Drive disetel ke: **"Anyone on the internet with this link can view"** (Siapa saja yang memiliki tautan dapat melihat).
-- [ ] Tautan sudah dicoba dibuka melalui *Private/Incognito Window* browser dan berhasil tampil tanpa login.
-
 ---
 
-## 🧭 Refleksi Akhir Sprint 1
+## ⚡ Langkah Selanjutnya: Aktivitas Belajar
 
-Tuliskan 1 kalimat kesimpulan pencapaian kalian:
-> *"Setelah menyelesaikan Sprint 1 (OR-01), saya menyadari bahwa dunia Rekayasa Perangkat Lunak adalah..."*
+Gunakan tab di bagian atas modul ini untuk menyelesaikan tahapan belajar kalian:
+
+1. 📖 **Tab 1 (Materi & Checkpoint)**: Pelajari materi lalu tuntaskan kuis checkpoint tiga tahap agar Tab 2 terbuka.
+2. 📝 **Tab 2 (Form LKPD Interaktif)**: Isi dan kirim LKPD secara mandiri; sertakan URL Google Drive portofolio bila diperlukan agar Tab 3 terbuka (+25 XP).
+3. 💭 **Tab 3 (Jurnal Refleksi)**: Tulis dan kirim refleksi mandiri (+15 XP), kemudian klik **“Tandai Selesai & Buka Modul Selanjutnya”** untuk menuntaskan modul.
+4. 🎯 **Tab 4 (Panduan Kriteria Guru)**: Gunakan matriks KKTP untuk memeriksa target karya kalian.

@@ -135,56 +135,16 @@ Kalian ingin membuat fitur **"Beli Tiket Konser Online"**:
 
 ---
 
-## 📝 Lembar Kerja Peserta Didik (LKPD P2)
-
-### A. Identitas Peserta Didik
-- **Nama Siswa**: ............................................................................
-- **NIS / NISN**: ............................................................................
-- **Kelas**: [ ] 10 RPL 1 &nbsp;&nbsp; [ ] 10 RPL 2 &nbsp;&nbsp; [ ] 10 RPL 3 &nbsp;&nbsp; [ ] 10 RPL 4
-- **Tanggal Pelaksanaan**: ............................................................................
-- **Kode Skill Passport**: **OR-01** (Pertemuan 2)
-
 ---
 
-### B. Aktivitas: Riset Mandiri 3 Profesi Pilihan (Evidence OR-01)
-Pilihlah **3 Profesi PPLG** yang paling membuat kalian penasaran atau ingin kalian tekuni. Lakukan riset singkat melalui internet/buku, kemudian lengkapi tabel berikut:
+## ⚡ Langkah Selanjutnya: Aktivitas Belajar
 
-| No | Nama Profesi Pilihan | Tugas & Tanggung Jawab Utama | Bahasa / Tools yang Wajib Dipelajari | Alasan Mengapa Kamu Tertarik |
-| :---: | :--- | :--- | :--- | :--- |
-| 1 | ................................. | ................................................................... | ................................................................... | ................................................................... |
-| 2 | ................................. | ................................................................... | ................................................................... | ................................................................... |
-| 3 | ................................. | ................................................................... | ................................................................... | ................................................................... |
+Gunakan tab di bagian atas modul ini untuk menyelesaikan tahapan belajar kalian:
 
----
-
-### C. Pemetaan Rencana Belajar Awal
-1. Dari 3 profesi pilihan di atas, jika harus memilih satu saat ini, **profesi nomor berapa yang menjadi PRIORITAS UTAMA kamu?**
-   > *Jawaban:* ................................................................................................................................
-2. Tuliskan **2 langkah konkret yang dapat kamu lakukan minggu ini** untuk mulai mempelajari dasar-dasar profesi tersebut!
-   - Langkah 1: ............................................................................................................................
-   - Langkah 2: ............................................................................................................................
-
----
-
-## ✅ Checklist Ketercapaian KKTP (Self-Assessment)
-
-| No | Indikator KKTP | Sudah (Ya) | Belum | Catatan Perbaikan |
-| :---: | :--- | :---: | :---: | :--- |
-| 1 | Saya dapat membedakan peran Frontend, Backend, dan Mobile Developer. | [ ] | [ ] | ........................................ |
-| 2 | Saya memahami perbedaan mendasar antara UI Designer dan UX Designer. | [ ] | [ ] | ........................................ |
-| 3 | Saya telah melengkapi Tabel Eksplorasi 3 Profesi pada LKPD P2. | [ ] | [ ] | ........................................ |
-| 4 | File LKPD telah disimpan ke folder `OR-01_Wawasan_Dunia_Kerja` di Google Drive. | [ ] | [ ] | ........................................ |
-
----
-
-## 💭 Jurnal Refleksi Pembelajaran Mendalam
-
-1. **Profesi apa yang sebelumnya belum pernah kamu ketahui, tetapi setelah belajar hari ini ternyata sangat penting di dunia IT?**
-   > *Jawaban:* ........................................................................................................................................
-2. **Keterampilan apa yang menurutmu paling menantang untuk dipelajari dari profesi impianmu?**
-   > *Jawaban:* ........................................................................................................................................
-3. **Bagaimana perasaanmu setelah mengetahui bahwa dalam membuat aplikasi kita harus bekerja secara tim (*teamwork*)?**
-   > *Jawaban:* ........................................................................................................................................
+1. 📖 **Tab 1 (Materi & Checkpoint)**: Pelajari materi lalu tuntaskan kuis checkpoint tiga tahap agar Tab 2 terbuka.
+2. 📝 **Tab 2 (Form LKPD Interaktif)**: Isi dan kirim LKPD secara mandiri; sertakan URL Google Drive portofolio bila diperlukan agar Tab 3 terbuka (+25 XP).
+3. 💭 **Tab 3 (Jurnal Refleksi)**: Tulis dan kirim refleksi mandiri (+15 XP), kemudian klik **“Tandai Selesai & Buka Modul Selanjutnya”** untuk menuntaskan modul.
+4. 🎯 **Tab 4 (Panduan Kriteria Guru)**: Gunakan matriks KKTP untuk memeriksa target karya kalian.
 
 ---
 

@@ -89,7 +89,7 @@ Kelas / NIS : 10 RPL ..... / ...................................................
    • ...........................................................................
    • ...........................................................................
 
-4. SATU KATA / KALIMAT YANG MENGGAMBARKAN SEMESTER 1 KALIAN DI JURUSAN RPL:
+4. SATU KATA / KALIMAT YANG MENGGAMBARKAN SEMESTER 1 KALIAN DI KONSENTRASI KEAHLIAN RPL:
    "..........................................................................."
 ```
 
@@ -100,3 +100,14 @@ Kelas / NIS : 10 RPL ..... / ...................................................
 Selamat atas perjuangan kalian! Pada Semester Genap mendatang, kita akan mulai bersentuhan langsung dengan baris kode program (*coding* nyata), logika algoritma komputer, dan perancangan website interaktif pertama kalian.
 
 Tetap jaga semangat belajar, rasa ingin tahu yang tinggi, dan integritas sebagai calon *Software Engineer* Indonesia masa depan! 🎉💻
+
+---
+
+## ⚡ Langkah Selanjutnya: Aktivitas Belajar
+
+Gunakan tab di bagian atas modul ini untuk menyelesaikan tahapan belajar kalian:
+
+1. 📖 **Tab 1 (Materi & Checkpoint)**: Pelajari materi lalu tuntaskan kuis checkpoint tiga tahap agar Tab 2 terbuka.
+2. 📝 **Tab 2 (Form LKPD Interaktif)**: Isi dan kirim LKPD secara mandiri; sertakan URL Google Drive portofolio bila diperlukan agar Tab 3 terbuka (+25 XP).
+3. 💭 **Tab 3 (Jurnal Refleksi)**: Tulis dan kirim refleksi mandiri (+15 XP), kemudian klik **“Tandai Selesai & Buka Modul Selanjutnya”** untuk menuntaskan modul.
+4. 🎯 **Tab 4 (Panduan Kriteria Guru)**: Gunakan matriks KKTP untuk memeriksa target karya kalian.

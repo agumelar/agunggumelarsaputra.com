@@ -125,59 +125,16 @@ Dunia industri perangkat lunak memiliki lingkungan kerja yang sangat dinamis dan
 
 ---
 
-## 📝 Lembar Kerja Peserta Didik (LKPD P3)
-
-### A. Identitas Peserta Didik
-- **Nama Siswa**: ............................................................................
-- **NIS / Kelas**: ..................................................... / [ ] 10 RPL 1 [ ] 10 RPL 2 [ ] 10 RPL 3 [ ] 10 RPL 4
-- **Tanggal**: ............................................................................
-- **Kode Skill**: **OR-01** (Pertemuan 3)
-
 ---
 
-### B. Aktivitas 1: Analisis Kasus Ekosistem Kerja
-Bacalah skenario kasus berikut, lalu tentukan ekosistem kerja mana yang paling tepat:
+## ⚡ Langkah Selanjutnya: Aktivitas Belajar
 
-1. **Kasus A**: *"Rian adalah programmer yang sangat suka mencoba teknologi baru, tidak suka pakaian formal, dan ingin membuat aplikasi inovasi kecerdasan buatan untuk membantu petani cabai."*
-   - Ekosistem yang paling tepat: ....................................................................................
-   - Alasan: ...................................................................................................................................
-2. **Kasus B**: *"Siti adalah programmer yang sangat rapi, menyukai ketenangan jam kerja kantor dari pukul 08.00-17.00, serta menginginkan asuransi dan gaji tetap yang terjamin setiap bulan."*
-   - Ekosistem yang paling tepat: ....................................................................................
-   - Alasan: ...................................................................................................................................
+Gunakan tab di bagian atas modul ini untuk menyelesaikan tahapan belajar kalian:
 
----
-
-### C. Aktivitas 2: Rencana Jalur Karier Pasca SMK
-Jika kalian lulus dari SMK Negeri 1 Rongga 3 tahun mendatang, **ekosistem mana yang ingin kalian masuki pertama kali? Jelaskan alasan dan persiapan yang harus kalian mulai dari sekarang!**
-
-> **Pilihan Ekosistem Saya:** ...........................................................................................................
-> 
-> **Alasan & Target 3 Tahun ke Depan:**  
-> .............................................................................................................................................................  
-> .............................................................................................................................................................  
-> 
-> **Keahlian yang Harus Saya Bangun dari Kelas 10:**  
-> 1. ........................................................................................................................................................  
-> 2. ........................................................................................................................................................  
-
----
-
-## ✅ Checklist KKTP P3
-
-| No | Indikator KKTP | Sudah (Ya) | Belum |
-| :---: | :--- | :---: | :---: |
-| 1 | Mampu membedakan perbedaan mendasar budaya kerja Startup dan Software House. | [ ] | [ ] |
-| 2 | Mampu menyebutkan kelebihan dan tantangan bekerja sebagai Freelance programmer. | [ ] | [ ] |
-| 3 | Telah melengkapi LKPD P3 dan menyimpannya di folder Google Drive. | [ ] | [ ] |
-
----
-
-## 💭 Jurnal Refleksi Pembelajaran Mendalam
-
-1. **Bagaimana pandanganmu tentang sistem kerja *Remote Work* (bekerja dari rumah/desa untuk perusahaan di kota/luar negeri)? Apakah kamu tertarik?**
-   > *Jawaban:* ........................................................................................................................................
-2. **Satu hal paling berharga yang saya sadari tentang dunia industri hari ini adalah:**
-   > *Jawaban:* ........................................................................................................................................
+1. 📖 **Tab 1 (Materi & Checkpoint)**: Pelajari materi lalu tuntaskan kuis checkpoint tiga tahap agar Tab 2 terbuka.
+2. 📝 **Tab 2 (Form LKPD Interaktif)**: Isi dan kirim LKPD secara mandiri; sertakan URL Google Drive portofolio bila diperlukan agar Tab 3 terbuka (+25 XP).
+3. 💭 **Tab 3 (Jurnal Refleksi)**: Tulis dan kirim refleksi mandiri (+15 XP), kemudian klik **“Tandai Selesai & Buka Modul Selanjutnya”** untuk menuntaskan modul.
+4. 🎯 **Tab 4 (Panduan Kriteria Guru)**: Gunakan matriks KKTP untuk memeriksa target karya kalian.
 
 ---
 
