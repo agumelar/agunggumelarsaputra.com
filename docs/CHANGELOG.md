@@ -9,6 +9,11 @@ Format penulisan mengacu pada [Keep a Changelog](https://keepachangelog.com/id/1
 - Opsi Hapus Akun siswa melalui panel Admin (`/admin/users`).
 - Generator PDF Otomatis untuk Rekap Portofolio Skill Passport Siswa.
 
+### 2026-08-08 — Penetapan Katalog Orientasi PPLG Saja
+- Menghapus tiga materi bawaan di luar ruang lingkup Orientasi PPLG: `pengenalan-html5-smk`, `dasar-basis-data-sql`, dan `konsep-oop-javascript`.
+- Menghapus konfigurasi Quest dan panduan LKPD ketiganya, sehingga katalog konten publik, konfigurasi pembelajaran, navigasi, progress, validasi API, serta dokumentasi kini konsisten hanya pada 16 modul kanonik Orientasi PPLG.
+- Menambahkan regression test filesystem yang mewajibkan `src/content/pembelajaran/` memuat tepat 16 Markdown Orientasi PPLG. Materi HTML, SQL, dan OOP dapat ditambahkan kembali kelak sebagai mata pelajaran terpisah dengan kontrak, enrollment, dan policy server tersendiri—bukan sebagai bagian dari Orientasi PPLG.
+
 ### 2026-08-08 — Submission Trust Boundary & Exactly-Once Reward Fix
 - Memperkuat `/api/gamification/claim-checkpoint`: insert checkpoint dan atomic upsert XP kini dijalankan sebagai satu statement PostgreSQL berbasis data-modifying CTE. Error pada award XP akan me-rollback insert checkpoint, sehingga retry tetap dapat menerima reward tepat satu kali.
 - Menambahkan `getApprovedSubmission()` sebagai katalog server untuk submission. Endpoint `/api/submissions/save` sekarang hanya menerima 16 slug Orientasi PPLG kanonik dengan jenis `lkpd` (+25 XP) atau `reflection` (+15 XP); slug/jenis arbitrer, `tokenId`, `score`, dan fallback reward dari klien tidak lagi dipercaya.

@@ -3,7 +3,7 @@
 > **Proyek:** `agunggumelarsaputra.com`  
 > **Pemilik:** Agung Gumelar Saputra, S.Tr.T.  
 > **Versi:** 2.1 (Fullstack Learning Hub & Vercel SSR)  
-> **Terakhir Diperbarui:** 2026-08-07  
+> **Terakhir Diperbarui:** 2026-08-08
 
 ---
 
@@ -141,7 +141,7 @@ Mencatat pengumpulan lembar kerja (LKPD & Refleksi) siswa beserta nilai dan cata
 
 ## 4. Standar Penulisan & Arsitektur Modul Pembelajaran (`[...slug].astro`)
 
-Semua modul pembelajaran diletakkan di `src/content/pembelajaran/*.md` dan dirender secara interaktif melalui `src/pages/pembelajaran/[...slug].astro`.
+Ruang lingkup katalog aktif saat ini adalah **tepat 16 modul kanonik Orientasi PPLG** di `src/content/pembelajaran/*.md`, yang dirender melalui `src/pages/pembelajaran/[...slug].astro`. Materi bawaan HTML, SQL, dan OOP telah dihapus atas keputusan pemilik; jangan menambahkan kembali materi lintas mata pelajaran ke koleksi ini tanpa desain mata pelajaran, enrollment, policy server, dan dokumentasi terpisah.
 
 ### 4.1 Format Frontmatter Standar:
 ```yaml
@@ -176,6 +176,8 @@ tags: ["PPLG", "Kurikulum Merdeka", "Skill Passport", "Kelas 10"]
 **Sumber kebenaran.** `orientasi-pplg-01-pengantar-skill-passport` adalah acuan perilaku dan mutu untuk seluruh modul Orientasi PPLG. Keputusan ruang lingkup dan kontrak yang disetujui dicatat di `docs/superpowers/specs/2026-08-08-module-parity-design.md`; keduanya wajib dibaca sebelum menambah atau mengubah Modul 02–16.
 
 **Kontrak bersama yang tidak boleh diputus.** Reader `src/pages/pembelajaran/[...slug].astro` memasang `InteractiveKnowledgeCheck`, `GeneralInteractiveLkpd`, `InteractiveReflectionForm`, `KktpGuideCard`, `LiveScoreWidget`, dan `AntiCopyPasteGuardian`. Daftar `CANONICAL_ORIENTASI_SLUGS` di `src/utils/orientasiPplgPolicy.ts` adalah sumber kebenaran tunggal untuk 16 modul, sidebar, progress denominator, prerequisite, previous, dan next. State awal dari server diteruskan melalui `data-init-checkpoint`, `data-init-lkpd`, dan `data-init-reflection`; nilai `ags_checkpoint_*`, `ags_lkpd_*`, dan `ags_reflection_*` di `localStorage` hanya cache tampilan dan dilarang menjadi bukti otorisasi. `InteractiveKnowledgeCheck` mengklaim reward melalui `POST /api/gamification/claim-checkpoint` lalu memancarkan `checkpoint-passed`; listener reader membuka LKPD. `GeneralInteractiveLkpd` menyimpan `submissionType: 'lkpd'` melalui `POST /api/submissions/save` lalu memancarkan `lkpd-submitted`; listener reader membuka refleksi. Refleksi menyimpan `submissionType: 'reflection'` ke endpoint yang sama. Hanya `#btn-complete-lesson` di panel refleksi yang boleh memanggil `POST /api/progress/complete-lesson` dan mengaktifkan navigasi modul berikutnya.
+
+**Batas katalog yang dipaksakan.** Selain `CANONICAL_ORIENTASI_SLUGS`, tidak ada Markdown aktif, Quest, atau panduan LKPD yang boleh dipublikasikan melalui alur Orientasi. `tests/orientasi-canonical-modules.test.ts` memeriksa isi direktori konten secara langsung untuk mencegah materi lintas mata pelajaran masuk kembali tanpa disengaja. Bila HTML, SQL, atau OOP dikembangkan pada masa depan, jadikan masing-masing mata pelajaran terpisah—jangan memperluas policy Orientasi yang hanya menerima 16 slug ini.
 
 **Integritas dan akses.** `authorizeOrientasiAction` dan `getOrientasiServerState` wajib dipanggil oleh endpoint checkpoint, submission, dan completion. Policy memeriksa slug kanonik, enrollment aktif/tidak kedaluwarsa, modul prasyarat, dan urutan submission dari database; admin hanya memperoleh bypass enrollment/prasyarat untuk inspeksi, bukan bypass urutan tahap aksi. `getApprovedCheckpoint` menurunkan Quest ID dan reward 15 XP di server. Reader menggunakan `isCurrentModuleLocked` sebagai proteksi UX, tetapi endpoint tetap menjadi batas keamanan final. `AntiCopyPasteGuardian` memblokir paste, drop, `Ctrl/Cmd+V`, dan `Shift+Insert` pada jawaban pembelajaran. Pengecualian dibatasi oleh allowlist eksplisit identitas dan URL evidence yang benar-benar dirender, termasuk URL lowongan/screenshot evidence terstruktur.
 

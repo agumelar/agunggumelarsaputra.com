@@ -1,6 +1,6 @@
 # Desain Penyamaan Modul Orientasi PPLG 02–16
 
-> **Status:** Diimplementasikan, diverifikasi, dan dideploy ke production
+> **Status:** Diimplementasikan dan diverifikasi; deployment perubahan terbaru harus dicatat setelah Vercel membuat job baru
 > **Tanggal:** 2026-08-08  
 > **Acuan utama:** Modul 01 — `orientasi-pplg-01-pengantar-skill-passport`
 
@@ -9,6 +9,8 @@
 Menyamakan pengalaman belajar Modul Orientasi PPLG 02–16 dengan Modul 01 tanpa menghapus materi, tugas, contoh, maupun konteks pedagogis khas masing-masing modul.
 
 ## Ruang lingkup
+
+Katalog aktif dibatasi tepat pada 16 Markdown dalam `CANONICAL_ORIENTASI_SLUGS`. Tiga materi bawaan yang bukan bagian dari Orientasi PPLG—HTML, SQL, dan OOP—dihapus dari koleksi, Quest, dan panduan LKPD pada 2026-08-08. Bila kelak dikembangkan, ketiganya harus menjadi mata pelajaran terpisah dengan kontrak dan security boundary sendiri.
 
 Setiap modul harus mengikuti kontrak pengalaman Modul 01:
 
@@ -55,6 +57,7 @@ Jika dokumen handover belum cukup untuk membuat agen atau sesi berikutnya dapat 
 - Modul 02–16 memberi pengalaman alur inti yang sama dengan Modul 01.
 - Konten dan instruksi belajar unik setiap modul tidak hilang atau berubah secara tidak sengaja.
 - Tidak ada bypass siswa terhadap urutan tab atau gating modul.
+- Direktori konten publik hanya memuat tepat 16 modul kanonik Orientasi PPLG; regression test harus gagal bila materi mata pelajaran lain masuk kembali.
 - Build `npm run build` berhasil.
 - Deployment production berhasil dan perubahan terdokumentasi lengkap untuk handover sesi berikutnya.
 
