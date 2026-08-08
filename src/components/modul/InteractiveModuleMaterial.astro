@@ -1,0 +1,129 @@
+---
+import { getOrientasiInteractiveMaterial } from '../../utils/orientasiInteractiveMaterials.ts';
+import { getSequencePresentationItems } from '../../utils/interactiveModuleMaterialBehavior.ts';
+import type { OrientasiSlug } from '../../utils/orientasiPplgPolicy.ts';
+
+interface Props {
+  lessonSlug: OrientasiSlug;
+  moduleTitle: string;
+}
+
+const kindLabels = {
+  explore: 'Eksplorasi',
+  scenario: 'Pilih skenario',
+  sequence: 'Susun urutan',
+  checklist: 'Daftar cek',
+} as const;
+
+const { lessonSlug, moduleTitle } = Astro.props;
+const material = getOrientasiInteractiveMaterial(lessonSlug);
+---
+
+<section id="interactive-module-material" class="interactive-material" aria-labelledby="interactive-material-title">
+  <header class="interactive-material__header">
+    <p class="interactive-material__eyebrow">{material.eyebrow}</p>
+    <h2 id="interactive-material-title">{material.title}</h2>
+    <p>{material.summary}</p>
+    <p class="interactive-material__module">Aktivitas untuk: {moduleTitle}</p>
+  </header>
+
+  <div class="interactive-material__feedback" aria-live="polite" role="status"></div>
+
+  <div class="interactive-material__cards">
+    {material.activities.map((activity) => (
+      <article class="interactive-material__card" data-activity-id={activity.id}>
+        <p class="interactive-material__kind">{kindLabels[activity.kind]}</p>
+        <h3>{activity.title}</h3>
+        <p>{activity.instruction}</p>
+
+        {activity.kind === 'sequence' ? (
+          <div class="interactive-material__sequence" data-sequence data-correct-order={JSON.stringify(activity.correctOrder)}>
+            <ol class="interactive-material__sequence-list" data-sequence-list aria-label={`Urutan untuk ${activity.title}`}>
+              {getSequencePresentationItems(activity).map((item) => (
+                <li class="interactive-material__sequence-item" data-sequence-item data-item-label={item.label}>
+                  <div>
+                    <strong>{item.label}</strong>
+                    <p class="interactive-material__item-detail">{item.detail}</p>
+                  </div>
+                  <div class="interactive-material__sequence-controls" aria-label={`Kontrol urutan ${item.label}`}>
+                    <button type="button" data-sequence-action="up" aria-label={`Pindahkan ${item.label} ke atas`}>Naik</button>
+                    <button type="button" data-sequence-action="down" aria-label={`Pindahkan ${item.label} ke bawah`}>Turun</button>
+                  </div>
+                </li>
+              ))}
+            </ol>
+            <button type="button" class="interactive-material__validate-sequence">Periksa urutan</button>
+          </div>
+        ) : (
+          <div class="interactive-material__choices" aria-label={activity.title}>
+            {activity.items.map((item) => (
+              <div class="interactive-material__item">
+                <button
+                  type="button"
+                  class="interactive-material__choice"
+                  data-kind={activity.kind}
+                  data-label={item.label}
+                  data-detail={item.detail}
+                  data-feedback={item.feedback}
+                  aria-pressed="false"
+                >
+                  {item.label}
+                </button>
+                <p class="interactive-material__item-detail">{item.detail}</p>
+              </div>
+            ))}
+          </div>
+        )}
+
+        <p class="interactive-material__activity-feedback" hidden>{activity.feedback}</p>
+      </article>
+    ))}
+  </div>
+</section>
+
+<script>
+  import { initializeInteractiveModuleMaterial } from '../../utils/interactiveModuleMaterialBehavior.ts';
+
+  const root = document.querySelector<HTMLElement>('#interactive-module-material');
+  if (root) initializeInteractiveModuleMaterial(root);
+</script>
+
+<style>
+  .interactive-material {
+    margin-top: 2rem;
+    padding: 1.25rem;
+    color: #f3f4f6;
+    background: #111827;
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    border-radius: 0.75rem;
+  }
+
+  .interactive-material__header h2,
+  .interactive-material__card h3 { margin: 0; }
+  .interactive-material__header p { color: #d1d5db; }
+  .interactive-material__eyebrow,
+  .interactive-material__kind { color: #93c5fd; font: 600 0.75rem/1.4 "JetBrains Mono", monospace; letter-spacing: 0.06em; text-transform: uppercase; }
+  .interactive-material__module { font-size: 0.9rem; }
+  .interactive-material__feedback { min-height: 1.5rem; margin: 1rem 0; padding: 0.75rem; color: #e5e7eb; background: #090d16; border-left: 3px solid #60a5fa; }
+  .interactive-material__cards { display: grid; gap: 1rem; }
+  .interactive-material__card { padding: 1rem; background: #0f172a; border: 1px solid rgba(255, 255, 255, 0.12); border-radius: 0.5rem; }
+  .interactive-material__choices { display: grid; gap: 0.75rem; margin-top: 0.875rem; }
+  .interactive-material__item { padding: 0.75rem; background: #111827; border: 1px solid #475569; border-radius: 0.375rem; }
+  .interactive-material__choice,
+  .interactive-material__sequence-controls button,
+  .interactive-material__validate-sequence { padding: 0.55rem 0.75rem; color: #f3f4f6; cursor: pointer; background: #1f2937; border: 1px solid #64748b; border-radius: 0.375rem; }
+  .interactive-material__choice:hover,
+  .interactive-material__choice[aria-pressed="true"],
+  .interactive-material__sequence-controls button:hover,
+  .interactive-material__validate-sequence:hover { background: #1e3a5f; border-color: #93c5fd; }
+  .interactive-material__choice:focus-visible,
+  .interactive-material__sequence-controls button:focus-visible,
+  .interactive-material__validate-sequence:focus-visible { outline: 3px solid #fbbf24; outline-offset: 3px; }
+  .interactive-material__item-detail,
+  .interactive-material__activity-feedback { margin: 0.5rem 0 0; color: #d1d5db; }
+  .interactive-material__sequence { margin-top: 1rem; }
+  .interactive-material__sequence-list { display: grid; gap: 0.75rem; padding-left: 1.75rem; }
+  .interactive-material__sequence-item { padding: 0.75rem; background: #111827; border: 1px solid #475569; border-radius: 0.375rem; }
+  .interactive-material__sequence-controls { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 0.75rem; }
+  .interactive-material__validate-sequence { margin-top: 0.75rem; }
+</style>

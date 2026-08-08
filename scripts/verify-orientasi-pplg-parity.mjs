@@ -6,6 +6,8 @@ import { fileURLToPath } from 'node:url';
 const root = resolve(fileURLToPath(new URL('..', import.meta.url)));
 const contentDirectory = resolve(root, 'src/content/pembelajaran');
 const reader = await readFile(resolve(root, 'src/pages/pembelajaran/[...slug].astro'), 'utf8');
+const interactiveRenderer = await readFile(resolve(root, 'src/components/modul/InteractiveModuleMaterial.astro'), 'utf8');
+const interactiveBehavior = await readFile(resolve(root, 'src/utils/interactiveModuleMaterialBehavior.ts'), 'utf8');
 const checkpoints = await readFile(resolve(root, 'src/utils/moduleCheckpoints.ts'), 'utf8');
 const lkpd = await readFile(resolve(root, 'src/components/modul/GeneralInteractiveLkpd.astro'), 'utf8');
 const antiCopyPasteGuardian = await readFile(resolve(root, 'src/components/modul/AntiCopyPasteGuardian.astro'), 'utf8');
@@ -13,7 +15,25 @@ const checkpointRoute = await readFile(resolve(root, 'src/pages/api/gamification
 const submissionRoute = await readFile(resolve(root, 'src/pages/api/submissions/save.ts'), 'utf8');
 const completionRoute = await readFile(resolve(root, 'src/pages/api/progress/complete-lesson.ts'), 'utf8');
 const { CANONICAL_ORIENTASI_SLUGS, getApprovedCheckpoint } = await import('../src/utils/orientasiPplgPolicy.ts');
+const { getOrientasiInteractiveMaterial } = await import('../src/utils/orientasiInteractiveMaterials.ts');
 const { getOrientasiLkpdSchema } = await import('../src/utils/orientasiLkpdSchemas.ts');
+const expectedInteractiveActivityKinds = new Map([
+  ['orientasi-pplg-02-profesi-peluang-karier', ['explore', 'sequence']],
+  ['orientasi-pplg-03-ekosistem-industri-pplg', ['explore', 'scenario']],
+  ['orientasi-pplg-04-matriks-skill-jenjang-karier', ['explore', 'sequence']],
+  ['orientasi-pplg-05-job-fair-kelas', ['checklist', 'scenario']],
+  ['orientasi-pplg-06-rencana-minat-awal', ['checklist', 'scenario']],
+  ['orientasi-pplg-07-mind-map-profesi-pplg', ['explore', 'checklist']],
+  ['orientasi-pplg-08-finalisasi-validasi-or01', ['checklist', 'sequence']],
+  ['orientasi-pplg-09-app-audit-produk-digital', ['explore', 'scenario']],
+  ['orientasi-pplg-10-ui-ux-fungsi-produk', ['explore', 'scenario']],
+  ['orientasi-pplg-11-framework-review-6-komponen', ['explore', 'sequence']],
+  ['orientasi-pplg-12-latihan-analisis-anotasi-visual', ['explore', 'scenario']],
+  ['orientasi-pplg-13-review-show-peer-feedback', ['scenario', 'sequence']],
+  ['orientasi-pplg-14-finalisasi-dokumen-review', ['checklist', 'scenario']],
+  ['orientasi-pplg-15-pengumpulan-validasi-or02', ['checklist', 'sequence']],
+  ['orientasi-pplg-16-rekap-skill-clinic-refleksi', ['explore', 'scenario']],
+]);
 const files = await readdir(contentDirectory);
 const orientasi = files
   .filter((name) => /^orientasi-pplg-(0[1-9]|1[0-6])-.*\.md$/.test(name))
@@ -23,6 +43,8 @@ assert.equal(orientasi.length, 16, 'Harus ada tepat 16 Markdown Modul Orientasi 
 assert.deepEqual(orientasi.map((name) => name.replace(/\.md$/, '')), CANONICAL_ORIENTASI_SLUGS, 'Markdown Orientasi harus sama persis dengan katalog kanonik.');
 assert.match(reader, /<InteractiveKnowledgeCheck/, 'Reader harus memasang checkpoint bersama.');
 assert.match(reader, /<GeneralInteractiveLkpd/, 'Reader harus memasang LKPD generik untuk Modul 02–16.');
+assert.match(reader, /import InteractiveModuleMaterial from '..\/..\/components\/modul\/InteractiveModuleMaterial\.astro';/, 'Reader harus mengimpor renderer materi interaktif Modul 02–16.');
+assert.match(reader, /\{isOrientasiModule && !isModul1 && \(\s*<>\s*<InteractiveModuleMaterial\s+lessonSlug=\{lessonSlug\}\s+moduleTitle=\{entry\.data\.title\}\s+\/>[\s\S]*?<details[\s\S]*?Bacaan Rujukan & Materi Lengkap[\s\S]*?<Content \/>[\s\S]*?<\/details>\s*<\/>\s*\)\}/, 'Reader harus memasang renderer dan Markdown referensi hanya dalam cabang Modul 02–16 Orientasi.');
 assert.match(reader, /<InteractiveReflectionForm[\s\S]*moduleTitle=\{entry\.data\.title\}/, 'Refleksi harus menerima judul modul.');
 assert.match(reader, /id="btn-complete-lesson"/, 'Reader harus menyediakan tombol tuntas.');
 assert.match(reader, /<section id="panel-refleksi"[\s\S]*id="btn-complete-lesson"/, 'Tombol tuntas hanya berada di panel refleksi.');
@@ -55,6 +77,33 @@ assert.equal(getApprovedCheckpoint('slug-arbitrer'), null, 'Slug arbitrer harus 
 assert.equal(getApprovedCheckpoint(CANONICAL_ORIENTASI_SLUGS[1]).xpReward, 15, 'Reward checkpoint harus berasal dari policy server.');
 assert.equal(getOrientasiLkpdSchema(CANONICAL_ORIENTASI_SLUGS[1]).sections[0].fields.length, 12, 'Modul 02 harus mempertahankan tabel tiga profesi.');
 assert.equal(getOrientasiLkpdSchema(CANONICAL_ORIENTASI_SLUGS[11]).sections.length, 2, 'Modul 12 harus mempertahankan dua latihan CER screenshot.');
+
+assert.deepEqual([...expectedInteractiveActivityKinds.keys()], CANONICAL_ORIENTASI_SLUGS.slice(1), 'Katalog aktivitas harus mencakup tepat Modul 02–16 kanonik.');
+for (const slug of CANONICAL_ORIENTASI_SLUGS.slice(1)) {
+  const material = getOrientasiInteractiveMaterial(slug);
+  assert.equal(material.activities.length, 2, `${slug} harus memiliki tepat dua aktivitas interaktif.`);
+  assert.deepEqual(material.activities.map((activity) => activity.kind), expectedInteractiveActivityKinds.get(slug), `${slug} harus mempertahankan pasangan jenis aktivitas.`);
+  assert.equal(new Set(material.activities.map((activity) => activity.id)).size, 2, `${slug} harus memiliki id aktivitas unik.`);
+  for (const activity of material.activities) {
+    assert.ok(activity.id.trim() && activity.title.trim() && activity.instruction.trim() && activity.feedback.trim(), `${slug} harus memiliki data aktivitas non-kosong.`);
+    assert.ok(activity.items.length > 0, `${slug} harus memiliki item aktivitas.`);
+    assert.equal(new Set(activity.items.map((item) => item.label)).size, activity.items.length, `${slug} harus memiliki label item unik.`);
+    for (const item of activity.items) {
+      assert.ok(item.label.trim() && item.detail.trim() && item.feedback.trim(), `${slug} harus memiliki item lengkap.`);
+    }
+    if (activity.kind === 'sequence') {
+      assert.deepEqual(activity.correctOrder, activity.items.map((item) => item.label), `${slug} harus menyimpan urutan jawaban eksplisit.`);
+    }
+  }
+}
+assert.match(interactiveRenderer, /aria-pressed="false"/, 'Renderer harus memberi state awal aria-pressed false.');
+assert.match(interactiveRenderer, /interactive-material__item-detail">\{item\.detail\}/, 'Renderer harus menampilkan detail setiap item.');
+assert.match(interactiveRenderer, /data-correct-order/, 'Renderer urutan harus menerima urutan jawaban eksplisit.');
+assert.match(interactiveRenderer, /data-sequence-action="up"[\s\S]*data-sequence-action="down"/, 'Renderer urutan harus memiliki kontrol pindah keyboard-accessible.');
+assert.match(interactiveRenderer, /getSequencePresentationItems\(activity\)/, 'Renderer urutan harus menyajikan item dalam urutan latihan yang dikonfigurasi.');
+assert.match(interactiveRenderer, /Periksa urutan[\s\S]*initializeInteractiveModuleMaterial/, 'Renderer urutan harus memasang perilaku validasi lokal.');
+assert.match(interactiveBehavior, /Urutan sudah tepat[\s\S]*Urutan belum tepat/, 'Perilaku urutan harus memvalidasi jawaban dengan umpan balik jelas.');
+assert.match(interactiveRenderer, /explore: 'Eksplorasi'[\s\S]*scenario: 'Pilih skenario'[\s\S]*sequence: 'Susun urutan'[\s\S]*checklist: 'Daftar cek'/, 'Label setiap jenis aktivitas harus dilokalkan.');
 
 for (const filename of orientasi.slice(1)) {
   const slug = filename.replace(/\.md$/, '');

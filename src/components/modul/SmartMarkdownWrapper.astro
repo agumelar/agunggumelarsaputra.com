@@ -1,0 +1,248 @@
+---
+// src/components/modul/SmartMarkdownWrapper.astro
+---
+
+<div class="smart-markdown-container">
+  <article class="prose prose-invert max-w-none prose-p:text-muted-foreground prose-a:text-primary hover:prose-a:text-primary/80 prose-img:rounded-xl prose-img:border prose-img:border-border">
+    <slot />
+  </article>
+</div>
+
+<script>
+  // Client-side parser to transform standard markdown into premium UI cards
+  document.addEventListener('DOMContentLoaded', () => {
+    const container = document.querySelector('.smart-markdown-container article');
+    if (!container) return;
+
+    const children = Array.from(container.children);
+
+    // 0. Extract H1 and intro paragraphs to build a Hero Banner
+    let h1Element = null;
+    let introElements = [];
+    let firstH2Index = children.findIndex(c => c.tagName.toLowerCase() === 'h2');
+    if (firstH2Index === -1) firstH2Index = children.length;
+
+    for (let i = 0; i < firstH2Index; i++) {
+      const child = children[i];
+      if (child.tagName.toLowerCase() === 'h1') {
+        h1Element = child;
+      } else if (child.tagName.toLowerCase() === 'p') {
+        introElements.push(child);
+      }
+    }
+
+    if (h1Element) {
+      const heroBanner = document.createElement('div');
+      heroBanner.className = 'relative overflow-hidden rounded-3xl bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 border border-border p-6 md:p-10 text-foreground shadow-lg mb-8 mt-2';
+      heroBanner.innerHTML = `
+        <div class="absolute -right-10 -top-10 w-48 h-48 bg-primary/10 rounded-full blur-3xl pointer-events-none"></div>
+        <div class="relative z-10 space-y-4">
+          <h1 class="text-2xl md:text-3xl lg:text-4xl font-extrabold tracking-tight text-white leading-tight">
+            ${h1Element.innerHTML}
+          </h1>
+          <div class="text-sm md:text-base text-slate-300 max-w-3xl leading-relaxed space-y-4 hero-intro">
+          </div>
+        </div>
+      `;
+
+      const introContainer = heroBanner.querySelector('.hero-intro');
+      introElements.forEach(p => {
+        p.className = 'm-0';
+        introContainer.appendChild(p);
+      });
+
+      h1Element.remove();
+      // insert after the accordion (if accordion exists, we handle it below)
+      // for now, just put it at the top, we will move it later if needed
+      container.insertBefore(heroBanner, container.firstChild);
+    }
+
+    // 1. Group content by H2 into beautiful Cards
+    let currentWrapper: HTMLElement | null = null;
+
+    children.forEach((child) => {
+      if (child.tagName.toLowerCase() === 'h2') {
+        // Create new card wrapper
+        currentWrapper = document.createElement('div');
+        currentWrapper.className = 'card p-6 md:p-8 rounded-3xl border border-border bg-card shadow-sm space-y-6 mb-8 transform transition-all';
+
+        // Style the H2
+        child.className = 'text-xl md:text-2xl font-extrabold text-foreground tracking-tight border-b border-border pb-4 mt-0 mb-6 flex items-center gap-3';
+
+        // Add decorative icon based on text
+        const icon = document.createElement('span');
+        icon.className = 'text-primary bg-primary/10 w-10 h-10 flex items-center justify-center rounded-xl text-lg shrink-0';
+        icon.innerHTML = '✨'; // default
+
+        const textContent = child.textContent?.toLowerCase() || '';
+        if (textContent.includes('tujuan')) {
+          icon.innerHTML = '🎯';
+          currentWrapper.setAttribute('data-type', 'syllabus');
+        }
+        else if (textContent.includes('materi')) icon.innerHTML = '📖';
+        else if (textContent.includes('langkah')) icon.innerHTML = '⚡';
+        else if (textContent.includes('identitas')) {
+          icon.innerHTML = '📌';
+          currentWrapper.setAttribute('data-type', 'syllabus');
+        }
+        else if (textContent.includes('studi kasus')) icon.innerHTML = '🔄';
+
+        const textSpan = document.createElement('span');
+        textSpan.innerHTML = child.innerHTML;
+
+        child.innerHTML = '';
+        child.appendChild(icon);
+        child.appendChild(textSpan);
+
+        container.insertBefore(currentWrapper, child);
+        currentWrapper.appendChild(child);
+      } else if (currentWrapper) {
+        currentWrapper.appendChild(child);
+      }
+    });
+
+    // 1.5. Group Syllabus cards (Identitas, Tujuan) into an Accordion at the top
+    const syllabusCards = container.querySelectorAll('.card[data-type="syllabus"]');
+    if (syllabusCards.length > 0) {
+      const details = document.createElement('details');
+      details.className = 'group p-4 sm:p-5 rounded-2xl bg-secondary/30 border border-border/80 hover:border-border transition-all shadow-sm mb-8';
+
+      const summary = document.createElement('summary');
+      summary.className = 'cursor-pointer font-bold text-xs sm:text-sm text-foreground flex items-center justify-between list-none select-none outline-none';
+      summary.innerHTML = `
+        <span class="flex items-center gap-2">
+          <span class="text-base">📜</span>
+          <span>Bacaan Rujukan Silabus & Catatan Kurikulum Lengkap</span>
+        </span>
+        <span class="group-open:rotate-180 transition-transform duration-200 text-muted-foreground text-xs font-mono">▼</span>
+      `;
+
+      const detailsContent = document.createElement('div');
+      detailsContent.className = 'pt-6 border-t border-border mt-3.5 space-y-6';
+
+      // Move syllabus cards inside the details
+      syllabusCards.forEach(card => {
+        card.classList.remove('mb-8'); // adjust margin
+        detailsContent.appendChild(card);
+      });
+
+      details.appendChild(summary);
+      details.appendChild(detailsContent);
+
+      // Insert at the very top of the article (before the hero banner)
+      container.insertBefore(details, container.firstChild);
+    }
+
+    // 2. Style H3 as sub-section headers
+    const h3s = container.querySelectorAll('h3');
+    h3s.forEach(h3 => {
+      h3.className = 'text-lg font-bold text-foreground tracking-tight mt-8 mb-4 flex items-center gap-2.5';
+      const indicator = document.createElement('span');
+      indicator.className = 'w-1.5 h-6 bg-primary rounded-full inline-block shrink-0';
+      h3.insertBefore(indicator, h3.firstChild);
+    });
+
+    // 3. Style UL/LI into grid items if inside a card
+    const uls = container.querySelectorAll('ul');
+    uls.forEach(ul => {
+      ul.className = 'grid grid-cols-1 md:grid-cols-2 gap-4 my-6 pl-0 list-none';
+      const lis = ul.querySelectorAll(':scope > li');
+      lis.forEach(li => {
+        li.className = 'p-5 rounded-2xl bg-secondary/30 border border-border flex flex-col gap-2 hover:border-primary/50 transition-colors shadow-sm text-sm text-muted-foreground leading-relaxed relative overflow-hidden group';
+
+        // highlight bold texts
+        const bolds = li.querySelectorAll('strong');
+        bolds.forEach(b => {
+          b.className = 'text-primary font-bold';
+        });
+
+        // Add subtle accent hover effect
+        const accent = document.createElement('div');
+        accent.className = 'absolute top-0 left-0 w-1 h-full bg-primary transform -translate-x-full group-hover:translate-x-0 transition-transform';
+        li.appendChild(accent);
+      });
+    });
+
+    // 4. Style OL/LI slightly differently (Step by step)
+    const ols = container.querySelectorAll('ol');
+    ols.forEach(ol => {
+      ol.className = 'space-y-4 my-6 pl-0 list-none counter-reset-step';
+      let stepCount = 1;
+      const lis = ol.querySelectorAll(':scope > li');
+      lis.forEach(li => {
+        li.className = 'p-5 rounded-2xl bg-card border border-border flex items-start gap-4 hover:bg-secondary/10 transition-colors text-sm text-muted-foreground leading-relaxed';
+
+        const badge = document.createElement('div');
+        badge.className = 'w-8 h-8 rounded-full bg-primary/10 text-primary flex items-center justify-center font-mono font-bold text-sm shrink-0';
+        badge.textContent = stepCount.toString();
+
+        // highlight bold texts
+        const bolds = li.querySelectorAll('strong');
+        bolds.forEach(b => {
+          b.className = 'text-foreground font-bold';
+        });
+
+        li.insertBefore(badge, li.firstChild);
+        stepCount++;
+      });
+    });
+
+    // 5. Style Blockquotes as Teacher Notes
+    const blockquotes = container.querySelectorAll('blockquote');
+    blockquotes.forEach(bq => {
+      bq.className = 'p-6 rounded-2xl bg-secondary/40 border border-primary/20 flex flex-col sm:flex-row items-start gap-4 not-prose my-8 shadow-sm';
+
+      const icon = document.createElement('div');
+      icon.className = 'w-12 h-12 rounded-2xl bg-primary/20 text-primary flex items-center justify-center text-2xl shrink-0 border border-primary/30 shadow-inner';
+      icon.innerHTML = '💡';
+
+      const contentWrapper = document.createElement('div');
+      contentWrapper.className = 'space-y-2 text-sm w-full';
+
+      const title = document.createElement('div');
+      title.className = 'font-bold text-foreground text-sm uppercase tracking-wider font-mono';
+      title.textContent = 'Insight & Analogi';
+
+      const text = document.createElement('div');
+      text.className = 'text-muted-foreground leading-relaxed text-sm';
+      text.innerHTML = bq.innerHTML;
+
+      // Clean up internal p tags margin
+      const ps = text.querySelectorAll('p');
+      ps.forEach(p => p.className = 'm-0');
+
+      contentWrapper.appendChild(title);
+      contentWrapper.appendChild(text);
+
+      bq.innerHTML = '';
+      bq.appendChild(icon);
+      bq.appendChild(contentWrapper);
+    });
+
+    // 6. Style Tables
+    const tables = container.querySelectorAll('table');
+    tables.forEach(table => {
+      const wrapper = document.createElement('div');
+      wrapper.className = 'overflow-x-auto rounded-2xl border border-border my-6 bg-card';
+      table.parentNode?.insertBefore(wrapper, table);
+      wrapper.appendChild(table);
+      table.className = 'w-full text-sm text-left border-collapse';
+
+      const ths = table.querySelectorAll('th');
+      ths.forEach(th => th.className = 'bg-secondary/80 p-4 font-bold text-foreground border-b border-border whitespace-nowrap');
+
+      const tds = table.querySelectorAll('td');
+      tds.forEach(td => td.className = 'p-4 border-b border-border/50 text-muted-foreground group-hover:text-foreground transition-colors');
+
+      const trs = table.querySelectorAll('tbody tr');
+      trs.forEach(tr => tr.className = 'hover:bg-secondary/30 transition-colors group');
+    });
+
+    // 7. Code blocks & inline code
+    const inlineCodes = container.querySelectorAll('p code, li code');
+    inlineCodes.forEach(code => {
+      code.className = 'px-1.5 py-0.5 rounded bg-primary/10 text-primary font-mono text-xs font-bold border border-primary/20';
+    });
+
+  });
+</script>
