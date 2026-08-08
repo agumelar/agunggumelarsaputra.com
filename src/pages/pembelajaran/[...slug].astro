@@ -86,7 +86,7 @@ const progressPercentage = sortedSidebarModules.length > 0 ? Math.round((totalCo
 ---
 
 <BaseLayout title={entry.data.title} description={entry.data.description}>
-  <div class="container-main py-8" id="module-container" data-slug={lessonSlug} data-init-checkpoint={hasPassedCheckpoint ? "true" : "false"} data-init-lkpd={hasSubmittedLkpd ? "true" : "false"} data-init-reflection={hasSubmittedReflection ? "true" : "false"}>
+  <div class="container-main py-8" id="module-container" data-slug={lessonSlug} data-init-checkpoint={hasPassedCheckpoint ? "true" : "false"} data-init-lkpd={hasSubmittedLkpd ? "true" : "false"} data-init-reflection={hasSubmittedReflection ? "true" : "false"} data-user-role={user?.role || 'student'}>
 
     <!-- Module Header Banner & Gamification Bar -->
     <div class="p-6 md:p-8 rounded-2xl bg-card border border-border mb-8 space-y-4 shadow-sm relative overflow-hidden">
@@ -553,6 +553,8 @@ const progressPercentage = sortedSidebarModules.length > 0 ? Math.round((totalCo
 
     const container = document.getElementById('module-container');
     const slug = container?.getAttribute('data-slug') || '';
+    const userRole = container?.getAttribute('data-user-role') || 'student';
+    const isAdmin = userRole === 'admin';
     const tabBtns = document.querySelectorAll('.module-tab-btn');
     const tabPanels = document.querySelectorAll('.tab-panel');
     const btnComplete = document.getElementById('btn-complete-lesson');
@@ -590,7 +592,7 @@ const progressPercentage = sortedSidebarModules.length > 0 ? Math.round((totalCo
 
     // Update UI unlock states
     function updateTabLockVisuals() {
-      if (isCheckpointPassed) {
+      if (isAdmin || isCheckpointPassed) {
         tabBtnLkpd?.classList.remove('tab-locked', 'opacity-75');
         if (tabIconLkpd) tabIconLkpd.textContent = '📝';
       } else {
@@ -598,7 +600,7 @@ const progressPercentage = sortedSidebarModules.length > 0 ? Math.round((totalCo
         if (tabIconLkpd) tabIconLkpd.textContent = '🔒';
       }
 
-      if (isLkpdSubmitted) {
+      if (isAdmin || isLkpdSubmitted) {
         tabBtnRefleksi?.classList.remove('tab-locked', 'opacity-75');
         if (tabIconRefleksi) tabIconRefleksi.textContent = '💭';
       } else {
@@ -614,7 +616,7 @@ const progressPercentage = sortedSidebarModules.length > 0 ? Math.round((totalCo
       if (!targetTab) return;
 
       // Validate Gating Rules
-      if (targetTab === 'lkpd' && !isCheckpointPassed) {
+      if (targetTab === 'lkpd' && !isAdmin && !isCheckpointPassed) {
         showLockWarning('🔒 Selesaikan kuis checkpoint di Tab Materi terlebih dahulu untuk membuka Form LKPD.');
         const checkpointArea = document.getElementById('checkpoint-challenge-area');
         if (checkpointArea) {
@@ -623,7 +625,7 @@ const progressPercentage = sortedSidebarModules.length > 0 ? Math.round((totalCo
         return;
       }
 
-      if (targetTab === 'refleksi' && !isLkpdSubmitted) {
+      if (targetTab === 'refleksi' && !isAdmin && !isLkpdSubmitted) {
         showLockWarning('🔒 Lengkapi dan simpan data Form LKPD terlebih dahulu untuk membuka Jurnal Refleksi.');
         return;
       }
