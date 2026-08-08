@@ -8,6 +8,8 @@ import InteractiveReflectionForm from '../../components/modul/InteractiveReflect
 import KktpGuideCard from '../../components/modul/KktpGuideCard.astro';
 import InteractiveKnowledgeCheck from '../../components/modul/InteractiveKnowledgeCheck.astro';
 import LiveScoreWidget from '../../components/modul/LiveScoreWidget.astro';
+import AntiCopyPasteGuardian from '../../components/modul/AntiCopyPasteGuardian.astro';
+import SmartMarkdownWrapper from '../../components/modul/SmartMarkdownWrapper.astro';
 import { db, isDbConfigured, ensureDbInitialized } from '../../db';
 import { userSubmissions, userProgress } from '../../db/schema';
 import { eq, and } from 'drizzle-orm';
@@ -38,7 +40,7 @@ if (user && isDbConfigured()) {
     const progressList = await db.select({
       lessonSlug: userProgress.lessonSlug,
     }).from(userProgress).where(eq(userProgress.userId, user.userId));
-    
+
     completedSlugs = progressList.map(p => p.lessonSlug);
 
     const existingSubs = await db.select({
@@ -74,7 +76,7 @@ const progressPercentage = sortedSidebarModules.length > 0 ? Math.round((totalCo
 
 <BaseLayout title={entry.data.title} description={entry.data.description}>
   <div class="container-main py-8" id="module-container" data-slug={lessonSlug} data-init-checkpoint={hasPassedCheckpoint ? "true" : "false"} data-init-lkpd={hasSubmittedLkpd ? "true" : "false"} data-init-reflection={hasSubmittedReflection ? "true" : "false"}>
-    
+
     <!-- Module Header Banner & Gamification Bar -->
     <div class="p-6 md:p-8 rounded-2xl bg-card border border-border mb-8 space-y-4 shadow-sm relative overflow-hidden">
       <div class="flex flex-wrap items-center justify-between gap-3">
@@ -136,8 +138,8 @@ const progressPercentage = sortedSidebarModules.length > 0 ? Math.round((totalCo
 
       {!isCurrentModuleLocked && (
         <div class="pt-4 border-t border-border flex flex-wrap gap-2" id="module-tab-nav">
-          <button 
-            type="button" 
+          <button
+            type="button"
             data-tab="materi"
             class="module-tab-btn active-tab px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 border"
           >
@@ -145,8 +147,8 @@ const progressPercentage = sortedSidebarModules.length > 0 ? Math.round((totalCo
             <span>1. Materi & Visual</span>
           </button>
 
-          <button 
-            type="button" 
+          <button
+            type="button"
             data-tab="lkpd"
             id="tab-btn-lkpd"
             class={`module-tab-btn px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 border ${!hasPassedCheckpoint ? 'tab-locked opacity-75' : ''}`}
@@ -156,8 +158,8 @@ const progressPercentage = sortedSidebarModules.length > 0 ? Math.round((totalCo
             <span class="px-1.5 py-0.2 rounded bg-amber-500/20 text-amber-600 dark:text-amber-400 text-[10px] font-mono">+25 XP</span>
           </button>
 
-          <button 
-            type="button" 
+          <button
+            type="button"
             data-tab="refleksi"
             id="tab-btn-refleksi"
             class={`module-tab-btn px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 border ${!hasSubmittedLkpd ? 'tab-locked opacity-75' : ''}`}
@@ -167,8 +169,8 @@ const progressPercentage = sortedSidebarModules.length > 0 ? Math.round((totalCo
             <span class="px-1.5 py-0.2 rounded bg-purple-500/20 text-purple-600 dark:text-purple-400 text-[10px] font-mono">+15 XP</span>
           </button>
 
-          <button 
-            type="button" 
+          <button
+            type="button"
             data-tab="kktp"
             class="module-tab-btn px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 border"
           >
@@ -190,10 +192,10 @@ const progressPercentage = sortedSidebarModules.length > 0 ? Math.round((totalCo
 
     <!-- Layout: Sidebar + Main Content -->
     <div class="grid grid-cols-1 lg:grid-cols-4 gap-8" id="module-content-area">
-      
+
       <!-- Sticky Sidebar Navigation & Live Scoreboard -->
       <aside class="lg:col-span-1 space-y-5">
-        
+
         <!-- Live Class Score Widget -->
         <LiveScoreWidget initialClass="Semua Kelas" />
 
@@ -225,12 +227,12 @@ const progressPercentage = sortedSidebarModules.length > 0 ? Math.round((totalCo
               }
 
               return (
-                <a 
+                <a
                   href={`/pembelajaran/${modSlug}`}
                   class:list={[
                     "block px-3 py-2 rounded-lg text-xs font-medium transition-all flex items-center justify-between gap-2",
-                    isCurrent 
-                      ? "bg-primary/10 text-primary font-bold border border-primary/20 shadow-sm" 
+                    isCurrent
+                      ? "bg-primary/10 text-primary font-bold border border-primary/20 shadow-sm"
                       : "text-muted-foreground hover:bg-secondary hover:text-foreground"
                   ]}
                 >
@@ -258,7 +260,7 @@ const progressPercentage = sortedSidebarModules.length > 0 ? Math.round((totalCo
 
       <!-- Main Content Area -->
       <main class="lg:col-span-3 space-y-6">
-        
+
         {isCurrentModuleLocked ? (
           <div class="card p-8 md:p-12 text-center rounded-3xl border-border bg-card shadow-lg space-y-6">
             <div class="w-20 h-20 rounded-full bg-amber-500/10 border border-amber-500/30 text-amber-500 text-4xl flex items-center justify-center mx-auto animate-bounce">
@@ -278,14 +280,14 @@ const progressPercentage = sortedSidebarModules.length > 0 ? Math.round((totalCo
 
             <div class="pt-3 flex flex-col sm:flex-row items-center justify-center gap-3">
               {prevModule && (
-                <a 
+                <a
                   href={`/pembelajaran/${prevModule.id || prevModule.slug}`}
                   class="btn btn-primary text-xs sm:text-sm font-bold px-6 py-3 rounded-xl flex items-center gap-2 shadow-md hover:scale-105 transition-all"
                 >
                   <span>← Buka Modul {prevModule.data.order}: {prevModule.data.title}</span>
                 </a>
               )}
-              <a 
+              <a
                 href="/pembelajaran/orientasi-pplg"
                 class="btn btn-secondary text-xs sm:text-sm font-semibold px-5 py-3 rounded-xl border border-border"
               >
@@ -316,15 +318,13 @@ const progressPercentage = sortedSidebarModules.length > 0 ? Math.round((totalCo
               {isModul1 ? (
                 <InteractiveMaterialP1 user={user} />
               ) : (
-                <div class="card p-6 md:p-8 rounded-2xl border-border bg-card shadow-sm">
-                  <article class="prose prose-invert max-w-none prose-headings:font-bold prose-headings:tracking-tight prose-code:font-mono prose-code:bg-secondary prose-code:px-1.5 prose-code:py-0.5 prose-code:rounded prose-pre:bg-secondary prose-pre:border prose-pre:border-border prose-table:border-collapse">
-                    <Content />
-                  </article>
-                </div>
+                <SmartMarkdownWrapper>
+                  <Content />
+                </SmartMarkdownWrapper>
               )}
 
               <div class="space-y-4 pt-2" id="checkpoint-challenge-area">
-                <InteractiveKnowledgeCheck 
+                <InteractiveKnowledgeCheck
                   lessonSlug={lessonSlug}
                   moduleTitle={entry.data.title}
                   isCompleted={hasPassedCheckpoint}
@@ -336,10 +336,10 @@ const progressPercentage = sortedSidebarModules.length > 0 ? Math.round((totalCo
               {isModul1 ? (
                 <InteractiveLkpdP1 lessonSlug={lessonSlug} user={user} />
               ) : (
-                <GeneralInteractiveLkpd 
-                  lessonSlug={lessonSlug} 
+                <GeneralInteractiveLkpd
+                  lessonSlug={lessonSlug}
                   moduleTitle={entry.data.title}
-                  user={user} 
+                  user={user}
                 />
               )}
 
@@ -348,8 +348,8 @@ const progressPercentage = sortedSidebarModules.length > 0 ? Math.round((totalCo
                   <h3 class="text-sm font-bold text-foreground">Selesai Mengisi LKPD?</h3>
                   <p class="text-xs text-muted-foreground">Simpan jawaban di atas untuk membuka Tab 3 (Jurnal Refleksi) dan mengunci pemahaman kalian.</p>
                 </div>
-                <button 
-                  type="button" 
+                <button
+                  type="button"
                   data-switch-tab="refleksi"
                   class="btn btn-primary text-xs font-semibold px-5 py-2.5 rounded-xl shrink-0"
                 >
@@ -359,7 +359,11 @@ const progressPercentage = sortedSidebarModules.length > 0 ? Math.round((totalCo
             </section>
 
             <section id="panel-refleksi" class="tab-panel hidden space-y-6">
-              <InteractiveReflectionForm lessonSlug={lessonSlug} user={user} />
+              <InteractiveReflectionForm
+                lessonSlug={lessonSlug}
+                moduleTitle={entry.data.title}
+                user={user}
+              />
 
               <div class="p-6 md:p-8 rounded-2xl bg-gradient-to-br from-card via-card to-primary/5 border border-border text-center space-y-4 shadow-sm relative overflow-hidden" id="module-completion-card">
                 <div class="space-y-1.5">
@@ -375,12 +379,12 @@ const progressPercentage = sortedSidebarModules.length > 0 ? Math.round((totalCo
                 </div>
 
                 <div class="pt-2 flex flex-col sm:flex-row items-center justify-center gap-3">
-                  <button 
-                    id="btn-complete-lesson" 
+                  <button
+                    id="btn-complete-lesson"
                     data-next-slug={nextModule ? (nextModule.id || nextModule.slug) : ''}
                     class={`btn text-xs sm:text-sm font-bold px-7 py-3 rounded-xl shadow-lg transition-all flex items-center justify-center gap-2 ${
-                      isCurrentModuleCompleted 
-                        ? 'bg-emerald-600 hover:bg-emerald-500 text-white' 
+                      isCurrentModuleCompleted
+                        ? 'bg-emerald-600 hover:bg-emerald-500 text-white'
                         : 'btn-primary hover:scale-105'
                     }`}
                   >
@@ -389,7 +393,7 @@ const progressPercentage = sortedSidebarModules.length > 0 ? Math.round((totalCo
                   </button>
 
                   {nextModule && (
-                    <a 
+                    <a
                       href={`/pembelajaran/${nextModule.id || nextModule.slug}`}
                       id="btn-goto-next"
                       class={`btn btn-secondary text-xs sm:text-sm font-semibold px-5 py-3 rounded-xl border border-border flex items-center justify-center gap-1.5 hover:bg-secondary ${!isCurrentModuleCompleted ? 'hidden' : ''}`}
@@ -406,8 +410,8 @@ const progressPercentage = sortedSidebarModules.length > 0 ? Math.round((totalCo
                   <h3 class="text-sm font-bold text-foreground">Ingin Melihat Standar Penilaian Guru?</h3>
                   <p class="text-xs text-muted-foreground">Cek rubrik KKTP untuk mengetahui kriteria pencapaian Level 0 sampai Level 4.</p>
                 </div>
-                <button 
-                  type="button" 
+                <button
+                  type="button"
                   data-switch-tab="kktp"
                   class="btn btn-secondary text-xs font-semibold px-5 py-2.5 rounded-xl shrink-0 border border-border hover:bg-secondary"
                 >
@@ -417,8 +421,10 @@ const progressPercentage = sortedSidebarModules.length > 0 ? Math.round((totalCo
             </section>
 
             <section id="panel-kktp" class="tab-panel hidden space-y-6">
-              <KktpGuideCard 
-                skillCode={isModul1 ? "OR-01" : "OR-PPLG"}
+              <KktpGuideCard
+                skillCode={entry.data.category?.includes('OR-02') || entry.data.order > 8 ? "OR-02" : entry.data.category?.includes('OR-01') || entry.data.order <= 8 ? "OR-01" : "RPL-CORE"}
+                moduleTitle={entry.data.title}
+                order={entry.data.order}
                 targetLevel="Level 2 (Mencoba ★)"
               />
 
@@ -428,15 +434,15 @@ const progressPercentage = sortedSidebarModules.length > 0 ? Math.round((totalCo
                   <p class="text-xs text-muted-foreground">Pastikan seluruh berkas bukti karya kalian sudah sesuai dengan rubrik Level 2.</p>
                 </div>
                 <div class="flex items-center gap-2">
-                  <button 
-                    type="button" 
+                  <button
+                    type="button"
                     data-switch-tab="materi"
                     class="btn btn-secondary text-xs font-semibold px-4 py-2 rounded-xl border border-border hover:bg-secondary"
                   >
                     ← Kembali ke Materi
                   </button>
-                  <button 
-                    type="button" 
+                  <button
+                    type="button"
                     data-switch-tab="lkpd"
                     class="btn btn-primary text-xs font-semibold px-4 py-2 rounded-xl"
                   >
@@ -483,7 +489,7 @@ const progressPercentage = sortedSidebarModules.length > 0 ? Math.round((totalCo
     const tabPanels = document.querySelectorAll('.tab-panel');
     const btnComplete = document.getElementById('btn-complete-lesson');
     const btnGotoNext = document.getElementById('btn-goto-next');
-    
+
     // Gating Elements
     const tabBtnLkpd = document.getElementById('tab-btn-lkpd');
     const tabIconLkpd = document.getElementById('tab-icon-lkpd');
@@ -494,11 +500,11 @@ const progressPercentage = sortedSidebarModules.length > 0 ? Math.round((totalCo
     const closeLockToast = document.getElementById('close-lock-toast');
 
     // Progression state tracking
-    let isCheckpointPassed = container?.getAttribute('data-init-checkpoint') === 'true' || 
+    let isCheckpointPassed = container?.getAttribute('data-init-checkpoint') === 'true' ||
                              localStorage.getItem(`ags_checkpoint_${slug}`) === 'true';
-    let isLkpdSubmitted = container?.getAttribute('data-init-lkpd') === 'true' || 
+    let isLkpdSubmitted = container?.getAttribute('data-init-lkpd') === 'true' ||
                           localStorage.getItem(`ags_lkpd_${slug}`) === 'true';
-    let isReflectionSubmitted = container?.getAttribute('data-init-reflection') === 'true' || 
+    let isReflectionSubmitted = container?.getAttribute('data-init-reflection') === 'true' ||
                                 localStorage.getItem(`ags_reflection_${slug}`) === 'true';
 
     // Show toast message when clicking locked tab
@@ -614,6 +620,7 @@ const progressPercentage = sortedSidebarModules.length > 0 ? Math.round((totalCo
       isCheckpointPassed = true;
       localStorage.setItem(`ags_checkpoint_${slug}`, 'true');
       updateTabLockVisuals();
+      switchTab('lkpd');
     });
 
     // Listen to LKPD submitted event (or storage event)
@@ -621,6 +628,7 @@ const progressPercentage = sortedSidebarModules.length > 0 ? Math.round((totalCo
       isLkpdSubmitted = true;
       localStorage.setItem(`ags_lkpd_${slug}`, 'true');
       updateTabLockVisuals();
+      switchTab('refleksi');
     });
 
     // Check hash on page load (e.g. #lkpd or #refleksi)
@@ -636,12 +644,12 @@ const progressPercentage = sortedSidebarModules.length > 0 ? Math.round((totalCo
       btnComplete.textContent = '⏳ Menyimpan progres...';
 
       const activeTokenId = localStorage.getItem('ags_active_token_id');
-      
+
       try {
         const res = await fetch('/api/progress/complete-lesson', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ 
+          body: JSON.stringify({
             lessonSlug: slug,
             tokenId: activeTokenId ? Number(activeTokenId) : null
           })
@@ -678,4 +686,6 @@ const progressPercentage = sortedSidebarModules.length > 0 ? Math.round((totalCo
       }
     });
   </script>
+
+  <AntiCopyPasteGuardian />
 </BaseLayout>

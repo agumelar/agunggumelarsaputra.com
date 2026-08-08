@@ -1,0 +1,193 @@
+---
+// AntiCopyPasteGuardian.astro
+// Menjaga integritas pembelajaran dengan menonaktifkan Copy-Paste pada isian jawaban LKPD, kuis, dan jurnal refleksi.
+// Bagian identitas siswa (Nama, NIS, Kelas, Google Drive URL, Token, dsb.) tetap diizinkan untuk Copy-Paste.
+---
+
+<!-- Anti-Copy-Paste Notification Toast -->
+<div
+  id="anti-paste-toast"
+  class="fixed bottom-6 right-6 z-50 transform translate-y-24 opacity-0 pointer-events-none transition-all duration-300 flex items-start gap-3 p-4 rounded-2xl bg-[#0b0f19]/95 backdrop-blur-md border border-amber-500/40 shadow-2xl text-foreground font-sans max-w-sm sm:max-w-md"
+  role="alert"
+  aria-live="assertive"
+>
+  <div class="w-10 h-10 rounded-xl bg-amber-500/20 text-amber-400 border border-amber-500/30 flex items-center justify-center text-xl shrink-0 shadow-inner">
+    ✍️
+  </div>
+  <div class="space-y-1 text-xs">
+    <div class="flex items-center gap-2">
+      <span class="font-bold text-foreground text-sm tracking-tight">Wajib Diketik Mandiri</span>
+      <span class="text-[10px] font-mono px-2 py-0.5 rounded bg-amber-500/20 text-amber-400 border border-amber-500/30 font-bold uppercase">
+        No Paste
+      </span>
+    </div>
+    <p class="text-muted-foreground leading-relaxed text-xs">
+      Untuk mengasah pemahaman konsep dan integritas belajar, isian lembar kerja / refleksi ini <strong>wajib diketik sendiri</strong> secara mandiri.
+    </p>
+    <div class="text-[11px] text-amber-600 dark:text-amber-400/90 font-mono pt-1">
+      💡 <em>Fitur copy-paste hanya aktif pada kolom identitas siswa & URL link.</em>
+    </div>
+  </div>
+</div>
+
+<style is:global>
+  @keyframes field-shake {
+    0%, 100% { transform: translateX(0); }
+    20%, 60% { transform: translateX(-5px); }
+    40%, 80% { transform: translateX(5px); }
+  }
+
+  .shake-warning {
+    animation: field-shake 0.4s ease-in-out !important;
+    border-color: #f59e0b !important;
+    box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.25) !important;
+  }
+</style>
+
+<script>
+  (function initAntiCopyPaste() {
+    let toastTimeout: any = null;
+
+    function showToast() {
+      const toast = document.getElementById('anti-paste-toast');
+      if (!toast) return;
+
+      toast.classList.remove('translate-y-24', 'opacity-0', 'pointer-events-none');
+      toast.classList.add('translate-y-0', 'opacity-100');
+
+      if (toastTimeout) {
+        clearTimeout(toastTimeout);
+      }
+
+      toastTimeout = setTimeout(() => {
+        toast.classList.remove('translate-y-0', 'opacity-100');
+        toast.classList.add('translate-y-24', 'opacity-0', 'pointer-events-none');
+      }, 4500);
+    }
+
+    function flashField(element: HTMLElement) {
+      element.classList.add('shake-warning');
+      setTimeout(() => {
+        element.classList.remove('shake-warning');
+      }, 600);
+    }
+
+    // List of allowed field names & IDs (Identity, URLs, Search, Credentials)
+    const ALLOWED_NAMES = new Set([
+      'studentname',
+      'studentnis',
+      'studentclass',
+      'submissiondate',
+      'driveurl',
+      'evidencedriveurl',
+      'gen_studentname',
+      'gen_studentnis',
+      'gen_studentclass',
+      'gen_submissiondate',
+      'gen_driveurl',
+      'groupmembers',
+      'studentgroup',
+      'token',
+      'tokencode',
+      'email',
+      'password',
+      'search',
+      'query',
+    ]);
+
+    function isPasteAllowed(el: HTMLElement): boolean {
+      // 1. Explicit data attributes & classes
+      if (el.getAttribute('data-allow-paste') === 'true' || el.classList.contains('allow-paste')) {
+        return true;
+      }
+
+      // 2. Container level allowance (e.g. Identity section)
+      if (el.closest('[data-allow-paste-container="true"]') || el.closest('#identity-section') || el.closest('.identity-section')) {
+        return true;
+      }
+
+      // 3. Name or ID match against allowed identity/link list
+      const name = (el.getAttribute('name') || '').toLowerCase();
+      const id = (el.getAttribute('id') || '').toLowerCase();
+
+      if (ALLOWED_NAMES.has(name) || ALLOWED_NAMES.has(id)) {
+        return true;
+      }
+
+      // 4. URL inputs (e.g. Google Drive, repo link)
+      if (el instanceof HTMLInputElement && el.type === 'url') {
+        return true;
+      }
+
+      // 5. If input is outside of learning tasks (e.g. login/register pages), allow
+      const isLearningTask = el.closest('#form-lkpd-p1') ||
+                             el.closest('#form-general-lkpd') ||
+                             el.closest('#form-reflection') ||
+                             el.closest('.lkpd-form-content') ||
+                             el.closest('[data-no-paste="true"]') ||
+                             el.closest('#tab-content-lkpd') ||
+                             el.closest('#tab-content-refleksi');
+
+      if (!isLearningTask) {
+        // If not inside an LKPD or reflection form, do not block
+        return true;
+      }
+
+      // By default for learning activities (LKPD, Reflections, Quizzes), paste is strictly forbidden
+      return false;
+    }
+
+    // Intercept 'paste' event
+    document.addEventListener('paste', (e) => {
+      const target = e.target as HTMLElement;
+      if (!target) return;
+
+      const isTextEntry = target.tagName === 'TEXTAREA' ||
+                          (target.tagName === 'INPUT' && !['checkbox', 'radio', 'button', 'submit', 'range', 'color'].includes((target as HTMLInputElement).type));
+
+      if (isTextEntry && !isPasteAllowed(target)) {
+        e.preventDefault();
+        e.stopPropagation();
+        flashField(target);
+        showToast();
+      }
+    }, true);
+
+    // Intercept 'drop' event (dragging text from outside)
+    document.addEventListener('drop', (e) => {
+      const target = e.target as HTMLElement;
+      if (!target) return;
+
+      const isTextEntry = target.tagName === 'TEXTAREA' ||
+                          (target.tagName === 'INPUT' && !['checkbox', 'radio', 'button', 'submit', 'range', 'color'].includes((target as HTMLInputElement).type));
+
+      if (isTextEntry && !isPasteAllowed(target)) {
+        e.preventDefault();
+        e.stopPropagation();
+        flashField(target);
+        showToast();
+      }
+    }, true);
+
+    // Intercept keyboard paste shortcuts: Ctrl+V, Cmd+V, Shift+Insert
+    document.addEventListener('keydown', (e) => {
+      const target = e.target as HTMLElement;
+      if (!target) return;
+
+      const isTextEntry = target.tagName === 'TEXTAREA' ||
+                          (target.tagName === 'INPUT' && !['checkbox', 'radio', 'button', 'submit', 'range', 'color'].includes((target as HTMLInputElement).type));
+
+      if (!isTextEntry) return;
+
+      const isPasteCombo = ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'v') ||
+                           (e.shiftKey && e.key === 'Insert');
+
+      if (isPasteCombo && !isPasteAllowed(target)) {
+        e.preventDefault();
+        e.stopPropagation();
+        flashField(target);
+        showToast();
+      }
+    }, true);
+  })();
+</script>

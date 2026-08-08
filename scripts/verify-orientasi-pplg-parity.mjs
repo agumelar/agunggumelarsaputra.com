@@ -19,6 +19,12 @@ assert.match(reader, /<GeneralInteractiveLkpd/, 'Reader harus memasang LKPD gene
 assert.match(reader, /<InteractiveReflectionForm[\s\S]*moduleTitle=\{entry\.data\.title\}/, 'Refleksi harus menerima judul modul.');
 assert.match(reader, /id="btn-complete-lesson"/, 'Reader harus menyediakan tombol tuntas.');
 assert.match(reader, /<section id="panel-refleksi"[\s\S]*id="btn-complete-lesson"/, 'Tombol tuntas hanya berada di panel refleksi.');
+assert.match(reader, /data-init-checkpoint=/, 'Reader harus menerima state checkpoint dari server.');
+assert.match(reader, /data-init-lkpd=/, 'Reader harus menerima state LKPD dari server.');
+assert.match(reader, /window\.addEventListener\('checkpoint-passed'/, 'Checkpoint harus membuka LKPD.');
+assert.match(reader, /window\.addEventListener\('lkpd-submitted'/, 'LKPD harus membuka refleksi.');
+assert.match(reader, /isCurrentModuleLocked/, 'Reader harus memeriksa gating modul.');
+assert.match(reader, /user\?\.role !== 'admin'/, 'Admin harus mempertahankan bypass gating.');
 
 for (const filename of orientasi.slice(1)) {
   const slug = filename.replace(/\.md$/, '');

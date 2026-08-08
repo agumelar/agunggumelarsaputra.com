@@ -1,38 +1,112 @@
 ---
 interface Props {
   skillCode?: string;
+  moduleTitle?: string;
+  order?: number;
   targetLevel?: string;
   items?: { no: number; indicator: string; targetMin: string }[];
 }
 
-const { 
-  skillCode = "OR-01", 
+const {
+  skillCode,
+  moduleTitle = "Orientasi PPLG / Rekayasa Perangkat Lunak",
+  order = 1,
   targetLevel = "Level 2 (Mencoba ★)",
-  items = [
-    { no: 1, indicator: "Menjelaskan arti dan tujuan mata pelajaran Orientasi PPLG bagi pemula RPL.", targetMin: "Memahami esensi industri & mindset developer" },
-    { no: 2, indicator: "Memahami fungsi instrumen Skill Passport dan tangga level kompetensi (0 - 4).", targetMin: "Mengetahui target minimal semester 1 adalah Level 2" },
-    { no: 3, indicator: "Menyiapkan struktur folder portofolio Google Drive dengan penamaan baku.", targetMin: "Folder publik (Viewer) & terstruktur rapi" },
-    { no: 4, indicator: "Menyelesaikan formulir LKPD audit teknologi 24 jam dan refleksi awal.", targetMin: "Minimal 3 aplikasi dipetakan dengan tepat" },
-  ]
+  items
 } = Astro.props;
+
+// Determine appropriate skill code if not provided
+const computedSkillCode = skillCode || (order <= 8 ? "OR-01" : order <= 16 ? "OR-02" : "RPL-CORE");
+
+// Smart default KKTP indicators tailored to Sprint 1 (OR-01), Sprint 2 (OR-02), or Core Modules
+const defaultItems = items || (
+  order <= 8
+    ? [
+        {
+          no: 1,
+          indicator: `Menjelaskan konsep esensial dan wawasan industri pada materi "${moduleTitle}".`,
+          targetMin: "Memahami esensi industri, mindset software engineer & alur kerja profesi"
+        },
+        {
+          no: 2,
+          indicator: "Memahami fungsi instrumen Skill Passport dan tangga level kompetensi (Level 0 s/d 4).",
+          targetMin: "Mengetahui target minimal ketuntasan adalah Level 2 (Mencoba)"
+        },
+        {
+          no: 3,
+          indicator: "Menyiapkan struktur folder portofolio Google Drive evidence dengan penamaan baku.",
+          targetMin: "Folder publik (Anyone with link - Viewer) & terstruktur rapi"
+        },
+        {
+          no: 4,
+          indicator: "Menyelesaikan formulir LKPD interaktif dan jurnal refleksi secara mandiri (No Copy-Paste).",
+          targetMin: "Isian orisinal, diketik mandiri, dan memenuhi nilai KKM minimal 73"
+        },
+      ]
+    : order <= 16
+    ? [
+        {
+          no: 1,
+          indicator: `Melakukan bedah audit kualitas dan fungsional produk digital pada materi "${moduleTitle}".`,
+          targetMin: "Mampu mengidentifikasi 6 komponen review & keandalan alur sistem"
+        },
+        {
+          no: 2,
+          indicator: "Membuat tangkapan layar (screenshot) beranotasi visual dengan bukti empiris yang valid.",
+          targetMin: "Anotasi callout presisi, jelas, dan memuat deskripsi teknis yang logis"
+        },
+        {
+          no: 3,
+          indicator: "Menyusun ringkasan eksekutif (Executive Summary) dan rekomendasi solusi engineering.",
+          targetMin: "Rekomendasi terstruktur, realistis, dan berorientasi kenyamanan pengguna"
+        },
+        {
+          no: 4,
+          indicator: "Mengunggah kelengkapan berkas dokumen review produk (PDF) ke portofolio Google Drive.",
+          targetMin: "File PDF rapi, link valid, tidak terkunci, dan memenuhi KKM 73"
+        },
+      ]
+    : [
+        {
+          no: 1,
+          indicator: `Memahami sintaks, aturan logika, dan implementasi kode pada materi "${moduleTitle}".`,
+          targetMin: "Memahami struktur semantik, arsitektur data & best practice pemrograman"
+        },
+        {
+          no: 2,
+          indicator: "Menyelesaikan studi kasus problem solving dan implementasi program praktikum.",
+          targetMin: "Program berjalan lancar tanpa syntax error dan memenuhi spesifikasi"
+        },
+        {
+          no: 3,
+          indicator: "Menyusun dokumentasi kode dan tautan repositori proyek portofolio.",
+          targetMin: "Struktur repositori rapi dan siap didemonstrasikan saat asesmen"
+        },
+        {
+          no: 4,
+          indicator: "Mengisi lembar kerja dan refleksi metakognitif dengan integritas mandiri.",
+          targetMin: "Diketik mandiri, bebas plagiarisme, dan mencapai nilai minimal 73"
+        },
+      ]
+);
 ---
 
 <div class="card p-6 md:p-8 rounded-2xl border-border bg-card shadow-sm space-y-6">
-  
+
   <div class="space-y-1 border-b border-border pb-5">
     <div class="inline-flex items-center gap-2">
       <span class="px-2.5 py-0.5 rounded bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 text-[11px] font-mono font-bold uppercase">
         PANDUAN KRITERIA ASESMEN GURU
       </span>
       <span class="px-2.5 py-0.5 rounded bg-secondary text-foreground text-[11px] font-mono font-semibold border border-border">
-        KODE SKILL: {skillCode}
+        KODE SKILL: {computedSkillCode}
       </span>
     </div>
     <h2 class="text-xl md:text-2xl font-extrabold text-foreground tracking-tight">
       Standar Ketercapaian Kompetensi (KKTP) & Rubrik Guru
     </h2>
     <p class="text-xs text-muted-foreground">
-      Berikut adalah panduan kriteria yang digunakan oleh Guru untuk memvalidasi evidence portofolio dan pencapaian level kompetensi kalian.
+      Berikut adalah panduan kriteria asesmen yang digunakan oleh Guru Pengampu RPL (Agung Gumelar Saputra, S.Tr.T.) untuk memvalidasi evidence portofolio dan pencapaian level kompetensi kalian.
     </p>
   </div>
 
@@ -43,12 +117,12 @@ const {
         Tangga Level Kompetensi Skill Passport
       </h3>
       <span class="text-[11px] font-mono text-primary font-semibold">
-        Target Semester 1: {targetLevel}
+        Target Kelulusan: {targetLevel}
       </span>
     </div>
 
     <div class="grid grid-cols-1 sm:grid-cols-5 gap-2.5">
-      
+
       <!-- Level 0 -->
       <div class="p-3 rounded-xl border border-border bg-secondary/30 space-y-1.5">
         <div class="flex items-center justify-between">
@@ -57,7 +131,7 @@ const {
         </div>
         <h4 class="text-xs font-bold text-foreground">Belum Terlihat</h4>
         <p class="text-[11px] text-muted-foreground leading-relaxed">
-          Belum mengumpulkan file atau link Drive rusak/terkunci.
+          Belum mengumpulkan file atau link Drive rusak/terkunci (Private).
         </p>
       </div>
 
@@ -69,7 +143,7 @@ const {
         </div>
         <h4 class="text-xs font-bold text-foreground">Mengenal</h4>
         <p class="text-[11px] text-muted-foreground leading-relaxed">
-          Evidence ada namun meniru contoh tanpa elaborasi mandiri.
+          Evidence ada namun meniru contoh tanpa elaborasi analisis mandiri.
         </p>
       </div>
 
@@ -81,7 +155,7 @@ const {
         </div>
         <h4 class="text-xs font-bold text-foreground">Mencoba</h4>
         <p class="text-[11px] text-foreground/80 leading-relaxed font-medium">
-          Evidence lengkap, struktur instruksi rapi, link Drive valid.
+          Evidence lengkap, struktur instruksi rapi, link Drive valid (Viewer).
         </p>
       </div>
 
@@ -93,7 +167,7 @@ const {
         </div>
         <h4 class="text-xs font-bold text-foreground">Mandiri</h4>
         <p class="text-[11px] text-muted-foreground leading-relaxed">
-          Karya orisinal, analisis mendalam, presentasi lancar.
+          Karya orisinal, analisis mendalam, presentasi & wawasan teknis lancar.
         </p>
       </div>
 
@@ -105,7 +179,7 @@ const {
         </div>
         <h4 class="text-xs font-bold text-foreground">Portofolio</h4>
         <p class="text-[11px] text-muted-foreground leading-relaxed">
-          Karya standar industri, layak dipamerkan sebagai percontohan.
+          Karya standar industri, layak dipamerkan sebagai percontohan sekolah.
         </p>
       </div>
 
@@ -114,9 +188,14 @@ const {
 
   <!-- Tabel Indikator KKTP -->
   <div class="space-y-3 pt-3 border-t border-border">
-    <h3 class="text-xs font-mono font-bold text-foreground uppercase tracking-wider">
-      Indikator Ketercapaian Tujuan Pembelajaran (KKTP)
-    </h3>
+    <div class="flex items-center justify-between">
+      <h3 class="text-xs font-mono font-bold text-foreground uppercase tracking-wider">
+        Indikator Ketercapaian Tujuan Pembelajaran (KKTP)
+      </h3>
+      <span class="text-[11px] font-mono text-muted-foreground">
+        Ambang Batas Kelulusan: <strong class="text-emerald-500 font-bold">KKM 73</strong>
+      </span>
+    </div>
 
     <div class="overflow-x-auto border border-border rounded-xl">
       <table class="w-full text-left text-xs border-collapse">
@@ -128,7 +207,7 @@ const {
           </tr>
         </thead>
         <tbody class="divide-y divide-border bg-card">
-          {items.map((item) => (
+          {defaultItems.map((item) => (
             <tr>
               <td class="p-3 text-center font-mono font-bold text-muted-foreground">{item.no}</td>
               <td class="p-3 text-foreground font-medium leading-relaxed">{item.indicator}</td>
