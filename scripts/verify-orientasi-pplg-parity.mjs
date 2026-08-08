@@ -44,10 +44,10 @@ assert.equal(orientasi.length, 16, 'Harus ada tepat 16 Markdown Modul Orientasi 
 assert.deepEqual(orientasi.map((name) => name.replace(/\.md$/, '')), CANONICAL_ORIENTASI_SLUGS, 'Markdown Orientasi harus sama persis dengan katalog kanonik.');
 assert.match(reader, /<InteractiveKnowledgeCheck/, 'Reader harus memasang checkpoint bersama.');
 assert.match(reader, /<GeneralInteractiveLkpd/, 'Reader harus memasang LKPD generik untuk Modul 02–16.');
-assert.match(reader, /\{isOrientasiModule && !isModul1 && \([\s\S]*data-reference-material[\s\S]*TeacherMessageCard[\s\S]*OrientasiLearningScene[\s\S]*InteractiveKnowledgeCheck/, 'Reader harus mempertahankan urutan rujukan, pesan guru, scene, lalu checkpoint dalam alur Modul 02–16.');
 assert.match(reader, /\{isModul1 && \([\s\S]*data-reference-material[\s\S]*InteractiveMaterialP1/, 'Reader harus mempertahankan rujukan Modul 01 sebelum InteractiveMaterialP1.');
-const module02Branch = reader.match(/\{isOrientasiModule && !isModul1 && \(([\s\S]*?)\)\}\s*<div class="space-y-4 pt-2" id="checkpoint-challenge-area">/)?.[1];
-assert.ok(module02Branch, 'Cabang Modul 02–16 harus terkopel tepat sebelum checkpoint.');
+const module02Branch = reader.match(/\{isOrientasiModule && !isModul1 && \(([\s\S]*?)\)\}\s*<div class="space-y-4 pt-2" id="checkpoint-challenge-area">\s*<InteractiveKnowledgeCheck\b/)?.[1];
+assert.ok(module02Branch, 'Cabang Modul 02–16 harus berakhir tepat pada batas checkpoint.');
+assert.match(module02Branch, /<details\s+data-reference-material\b[\s\S]*?<Content\s*\/>[\s\S]*?<\/details>\s*<TeacherMessageCard\s+teacherMessage=\{orientasiMaterial!\.teacherMessage\}\s*\/>\s*<OrientasiLearningScene\s+lessonSlug=\{lessonSlug\}\s+moduleTitle=\{entry\.data\.title\}\s*\/>\s*<\/>\s*$/, 'Cabang Modul 02–16 harus menutup panel rujukan sebelum merender kartu guru dan scene.');
 assert.doesNotMatch(module02Branch, /SmartMarkdownWrapper|InteractiveModuleMaterial/, 'Cabang Modul 02–16 tidak boleh memakai wrapper/renderer lama.');
 assert.doesNotMatch(learningScene, /TeacherMessageCard|data-teacher-message/, 'Scene tidak boleh menduplikasi kartu pesan guru milik reader.');
 assert.match(reader, /\{entry\.data\.teacherTip && \(!isOrientasiModule \|\| isModul1\) && \(/, 'teacherTip lama hanya boleh tampil pada Modul 01 dan rute non-Orientasi.');
