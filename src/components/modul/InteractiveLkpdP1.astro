@@ -385,6 +385,8 @@ const { lessonSlug, user } = Astro.props;
 </div>
 
 <script>
+  import { createFormHydrationGuard } from '../../utils/formHydrationGuard';
+
   const cardEl = document.getElementById('lkpd-p1-form-card');
   const slug = cardEl?.getAttribute('data-slug') || 'orientasi-pplg-01-pengantar-skill-passport';
   const form = document.getElementById('form-lkpd-p1') as HTMLFormElement;
@@ -407,6 +409,7 @@ const { lessonSlug, user } = Astro.props;
   if (submissionDateInput && !submissionDateInput.value) {
     submissionDateInput.value = new Date().toISOString().split('T')[0];
   }
+  const formHydrationGuard = createFormHydrationGuard(form);
 
   // Optional Live Drive URL validator
   driveUrlInput?.addEventListener('input', () => {
@@ -501,14 +504,16 @@ const { lessonSlug, user } = Astro.props;
         const lkpdSub = data.submissions.find((s: any) => s.submissionType === 'lkpd');
         if (lkpdSub) {
           const formPayload = lkpdSub.formData;
-          if (formPayload.studentName) (document.getElementById('studentName') as HTMLInputElement).value = formPayload.studentName;
-          if (formPayload.studentNis) (document.getElementById('studentNis') as HTMLInputElement).value = formPayload.studentNis;
-          if (formPayload.studentClass) (document.getElementById('studentClass') as HTMLSelectElement).value = formPayload.studentClass;
-          if (formPayload.submissionDate) (document.getElementById('submissionDate') as HTMLInputElement).value = formPayload.submissionDate;
-          if (formPayload.driveUrl || lkpdSub.driveUrl) (document.getElementById('driveUrl') as HTMLInputElement).value = formPayload.driveUrl || lkpdSub.driveUrl;
+          if (formHydrationGuard.canApplyServerValues()) {
+            if (formPayload.studentName) (document.getElementById('studentName') as HTMLInputElement).value = formPayload.studentName;
+            if (formPayload.studentNis) (document.getElementById('studentNis') as HTMLInputElement).value = formPayload.studentNis;
+            if (formPayload.studentClass) (document.getElementById('studentClass') as HTMLSelectElement).value = formPayload.studentClass;
+            if (formPayload.submissionDate) (document.getElementById('submissionDate') as HTMLInputElement).value = formPayload.submissionDate;
+            if (formPayload.driveUrl || lkpdSub.driveUrl) (document.getElementById('driveUrl') as HTMLInputElement).value = formPayload.driveUrl || lkpdSub.driveUrl;
+          }
 
-          // Render saved audit apps
-          if (formPayload.auditApps && Array.isArray(formPayload.auditApps) && formPayload.auditApps.length > 0) {
+          // Render saved audit apps only before the learner starts editing.
+          if (formHydrationGuard.canApplyServerValues() && formPayload.auditApps && Array.isArray(formPayload.auditApps) && formPayload.auditApps.length > 0) {
             tableBody!.innerHTML = '';
             formPayload.auditApps.forEach((app: any, idx: number) => {
               const tr = document.createElement('tr');

@@ -138,6 +138,8 @@ const displayModuleTitle = moduleTitle || 'Rekayasa Perangkat Lunak & PPLG';
 </div>
 
 <script>
+  import { createFormHydrationGuard } from '../../utils/formHydrationGuard';
+
   const reflCardEl = document.getElementById('reflection-form-card');
   const reflSlug = reflCardEl?.getAttribute('data-slug') || 'orientasi-pplg-01-pengantar-skill-passport';
   const formRefl = document.getElementById('form-reflection') as HTMLFormElement;
@@ -145,6 +147,7 @@ const displayModuleTitle = moduleTitle || 'Rekayasa Perangkat Lunak & PPLG';
   const teacherBannerEl = document.getElementById('teacher-review-banner');
   const teacherFeedbackEl = document.getElementById('refl-teacher-feedback');
   const reviewDateEl = document.getElementById('refl-review-date');
+  const reflectionHydrationGuard = createFormHydrationGuard(formRefl);
 
   async function loadExistingReflection() {
     try {
@@ -154,10 +157,12 @@ const displayModuleTitle = moduleTitle || 'Rekayasa Perangkat Lunak & PPLG';
         const reflSub = data.submissions.find((s: any) => s.submissionType === 'reflection');
         if (reflSub && reflSub.formData) {
           const formPayload = reflSub.formData;
-          if (formPayload.q1) (document.getElementById('refl_q1') as HTMLTextAreaElement).value = formPayload.q1;
-          if (formPayload.q2) (document.getElementById('refl_q2') as HTMLTextAreaElement).value = formPayload.q2;
-          if (formPayload.q3) (document.getElementById('refl_q3') as HTMLTextAreaElement).value = formPayload.q3;
-          if (formPayload.q4) (document.getElementById('refl_q4') as HTMLTextAreaElement).value = formPayload.q4;
+          if (reflectionHydrationGuard.canApplyServerValues()) {
+            if (formPayload.q1) (document.getElementById('refl_q1') as HTMLTextAreaElement).value = formPayload.q1;
+            if (formPayload.q2) (document.getElementById('refl_q2') as HTMLTextAreaElement).value = formPayload.q2;
+            if (formPayload.q3) (document.getElementById('refl_q3') as HTMLTextAreaElement).value = formPayload.q3;
+            if (formPayload.q4) (document.getElementById('refl_q4') as HTMLTextAreaElement).value = formPayload.q4;
+          }
 
           const isReviewed = reflSub.status === 'reviewed' || reflSub.teacherFeedback;
           if (isReviewed) {
