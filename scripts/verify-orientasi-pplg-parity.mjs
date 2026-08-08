@@ -8,6 +8,7 @@ const contentDirectory = resolve(root, 'src/content/pembelajaran');
 const reader = await readFile(resolve(root, 'src/pages/pembelajaran/[...slug].astro'), 'utf8');
 const checkpoints = await readFile(resolve(root, 'src/utils/moduleCheckpoints.ts'), 'utf8');
 const lkpd = await readFile(resolve(root, 'src/components/modul/GeneralInteractiveLkpd.astro'), 'utf8');
+const antiCopyPasteGuardian = await readFile(resolve(root, 'src/components/modul/AntiCopyPasteGuardian.astro'), 'utf8');
 const files = await readdir(contentDirectory);
 const orientasi = files
   .filter((name) => /^orientasi-pplg-(0[1-9]|1[0-6])-.*\.md$/.test(name))
@@ -25,6 +26,10 @@ assert.match(reader, /window\.addEventListener\('checkpoint-passed'/, 'Checkpoin
 assert.match(reader, /window\.addEventListener\('lkpd-submitted'/, 'LKPD harus membuka refleksi.');
 assert.match(reader, /isCurrentModuleLocked/, 'Reader harus memeriksa gating modul.');
 assert.match(reader, /user\?\.role !== 'admin'/, 'Admin harus mempertahankan bypass gating.');
+assert.doesNotMatch(antiCopyPasteGuardian, /'groupmembers'|'studentgroup'|'token'|'tokencode'|'email'|'password'|'search'|'query'/, 'Hanya identitas siswa dan evidence yang boleh diizinkan di dalam form pembelajaran.');
+assert.doesNotMatch(antiCopyPasteGuardian, /el instanceof HTMLInputElement && el\.type === 'url'/, 'Tidak semua input URL boleh menerima paste.');
+assert.match(antiCopyPasteGuardian, /'studentname'[\s\S]*'studentnis'[\s\S]*'studentclass'[\s\S]*'submissiondate'[\s\S]*'driveurl'[\s\S]*'evidencedriveurl'/, 'Identitas siswa dan URL evidence harus tetap diizinkan.');
+assert.match(antiCopyPasteGuardian, /const isLearningTask = [\s\S]*if \(!isLearningTask\) \{[\s\S]*return true;[\s\S]*return false;/, 'Jawaban LKPD dan refleksi yang bukan pengecualian harus tetap diblokir.');
 
 for (const filename of orientasi.slice(1)) {
   const slug = filename.replace(/\.md$/, '');
