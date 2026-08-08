@@ -17,8 +17,8 @@ Menyamakan kedalaman eksplorasi materi Modul 02–16 dengan Modul 01 tanpa menya
 
 ## Arsitektur
 
-1. `src/utils/orientasiInteractiveMaterials.ts` menjadi katalog server-side untuk 15 slug kanonik (Modul 02–16). Setiap konfigurasi memuat judul, tujuan singkat, serta dua aktivitas bertipe `explore`, `scenario`, `sequence`, atau `checklist`.
-2. `src/components/modul/InteractiveModuleMaterial.astro` merender konfigurasi sebagai kartu solid berkontras tinggi dan menangani interaksi menggunakan `data-*` attributes serta script Astro scoped. Tidak ada dependency framework client atau data eksternal.
+1. `src/utils/orientasiInteractiveMaterials.ts` menjadi katalog server-side untuk 15 slug kanonik (Modul 02–16). Setiap konfigurasi memuat judul, tujuan singkat, serta dua aktivitas bertipe `explore`, `scenario`, `sequence`, atau `checklist`, dengan detail dan feedback yang terlihat.
+2. `src/components/modul/InteractiveModuleMaterial.astro` merender konfigurasi sebagai kartu solid berkontras tinggi dan menangani interaksi menggunakan `data-*` attributes serta script Astro scoped. `src/utils/interactiveModuleMaterialBehavior.ts` memegang perilaku lokal aktivitas, termasuk reorder nyata dan validasi aktivitas `sequence`. Tidak ada dependency framework client atau data eksternal.
 3. Reader `src/pages/pembelajaran/[...slug].astro` menampilkan komponen baru untuk Modul 02–16, dengan Markdown dibungkus sebagai bacaan rujukan. Alur Modul 01 dan seluruh komponen bersama yang ada tidak berubah.
 4. Test policy memastikan semua 15 Modul 02–16 mempunyai dua aktivitas valid dan reader memasang komponen hanya pada jalur Modul 02–16. Parity guard diperluas agar kontrak ini tidak mundur pada sesi berikutnya.
 
@@ -58,7 +58,8 @@ Menyamakan kedalaman eksplorasi materi Modul 02–16 dengan Modul 01 tanpa menya
 
 ### Hasil rilis 2026-08-08
 
-- `npm run test:orientasi` lulus 13/13; `npm run verify:orientasi-parity` menghasilkan PASS; `npm run build` menyelesaikan Astro server build dengan exit 0.
+- `npm run test:orientasi` lulus 14/14, termasuk regression Happy DOM executable untuk reorder/validasi `sequence` dan state pilihan aksesibel; `npm run verify:orientasi-parity` menghasilkan PASS; `npm run build` menyelesaikan Astro server build dengan exit 0.
+- `happy-dom` 20.11.2 adalah dev-only test harness dan sudah dipatch. Audit mencatat 0 critical, tetapi bukan audit global bersih: high chain yang tidak terkait melalui `@astrojs/vercel` → `@vercel/routing-utils` → `path-to-regexp` dan dependency `sharp` perlu ditangani pada pemeliharaan dependency terpisah.
 - Deployment `dpl_CMVnY7i2RtM2SWyz299bzXssAkT2` READY hanya untuk proyek standalone di `https://orientasi-interactive-materials-5i6fvi902-agumelars-projects.vercel.app` dan alias `https://orientasi-interactive-materials.vercel.app`; bukan deployment kanonik.
 - Deploy ulang ke proyek kanonik menciptakan `dpl_A8KAA1B3dC9oZb4XPcrEvUUnDW2Z` di `https://agunggumelarsaputra-qdw4qvsy3-agumelars-projects.vercel.app`, tetapi `npx vercel --prod --yes` timeout dan `vercel inspect` menunjukkan status `UNKNOWN`; alias `www.agunggumelarsaputra.com` belum dikonfirmasi untuk job ini. Status desain tidak boleh dinaikkan menjadi rilis sampai ada job kanonik READY.
 - Smoke tanpa autentikasi hanya membuktikan domain kanonik `/` HTTP 200 dan `/pembelajaran` HTTP 302 ke login; redirect tersebut tidak membuktikan konten katalog terproteksi. POST checkpoint tanpa sesi HTTP 401.
