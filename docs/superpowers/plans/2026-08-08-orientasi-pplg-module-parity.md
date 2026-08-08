@@ -34,7 +34,7 @@
 
 ## Interfaces
 
-- `getGamifiedQuestForModule(lessonSlug, moduleTitle)` menyediakan `GamifiedQuest` dengan `matchPairs`, `stage2Detective`, `stage3Speed`, dan `xpReward` untuk `InteractiveKnowledgeCheck`.
+- `getGamifiedQuestForModule(lessonSlug, moduleTitle)` menyediakan `GamifiedQuest` dengan `stage1Match.pairs`, `stage2Detective`, `stage3Speed`, dan `xpReward` untuk `InteractiveKnowledgeCheck`.
 - `GeneralInteractiveLkpd` menerima `{ lessonSlug: string; moduleTitle: string; user: any }` dan mengirim `POST /api/submissions/save` dengan `submissionType: 'lkpd'`.
 - `InteractiveReflectionForm` menerima `{ lessonSlug: string; moduleTitle?: string; user: any }` dan mengirim `POST /api/submissions/save` dengan `submissionType: 'reflection'`.
 - `InteractiveKnowledgeCheck` mengirim `POST /api/gamification/claim-checkpoint` dan memancarkan `checkpoint-passed`.
@@ -136,7 +136,7 @@ for (const filename of orientasi.slice(1)) {
   const slug = filename.replace(/\.md$/, '');
   const checkpointStart = checkpoints.indexOf(`'${slug}'`);
   const checkpointBlock = checkpoints.slice(checkpointStart, checkpoints.indexOf('\n  },', checkpointStart));
-  assert.match(checkpointBlock, /matchPairs:/, `${slug} harus memiliki ronde Puzzle Match.`);
+  assert.match(checkpointBlock, /stage1Match:/, `${slug} harus memiliki ronde Puzzle Match.`);
   assert.match(checkpointBlock, /stage2Detective:/, `${slug} harus memiliki ronde Mitos vs Fakta.`);
   assert.match(checkpointBlock, /stage3Speed:/, `${slug} harus memiliki ronde Skenario Cepat.`);
   assert.match(checkpointBlock, /xpReward:/, `${slug} harus memiliki reward XP.`);
@@ -154,7 +154,7 @@ Expected: PASS only when every current record contains all three stages and an X
 For each key from `orientasi-pplg-02-profesi-peluang-karier` through `orientasi-pplg-16-rekap-skill-clinic-refleksi`:
 
 - Set `moduleTitle` to the actual lesson title.
-- Set `matchPairs` to three concepts and functions found in that module's Markdown.
+- Set `stage1Match` with exactly three `pairs` of concepts and functions found in that module's Markdown.
 - Set `stage2Detective` to a true/false industry statement relevant to that meeting.
 - Set `stage3Speed` to three scenario options with one correct decision and explanation.
 - Keep the game mechanics unchanged: three lives, full state reset, checkpoint persistence, and `xpReward` claimed only through `/api/gamification/claim-checkpoint`.
