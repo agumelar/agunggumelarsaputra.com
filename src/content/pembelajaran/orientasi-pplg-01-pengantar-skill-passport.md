@@ -9,9 +9,9 @@ tags: ["Orientasi PPLG", "Skill Passport", "Fase E", "OR-01", "Kurikulum Merdeka
 teacherTip: "Pastikan link folder Google Drive siswa sudah diatur ke 'Anyone with the link can view' agar mempermudah proses validasi dan asesmen berkala."
 ---
 
-# 🚀 Orientasi Mata Pelajaran & Sistem Skill Passport PPLG
+# 🚀 Orientasi Mata Pelajaran & Sistem Skill Passport RPL
 
-Selamat datang di Program Keahlian **Rekayasa Perangkat Lunak (PPLG)** SMK Negeri 1 Rongga! Modul ini merupakan gerbang awal pembelajaran pada mata pelajaran **Orientasi PPLG (Dasar-Dasar PPLG)** untuk **Kelas 10 RPL / Fase E** Tahun Ajaran 2026/2027.
+Selamat datang di Program Keahlian **Pengembangan Perangkat Lunak dan Gim (PPLG)** — Konsentrasi Keahlian **Rekayasa Perangkat Lunak (RPL)** SMK Negeri 1 Rongga! Modul ini merupakan gerbang awal pembelajaran pada mata pelajaran **Orientasi PPLG / Dasar-Dasar Kejuruan RPL** untuk **Kelas 10 RPL / Fase E** Tahun Ajaran 2026/2027.
 
 ---
 
@@ -20,13 +20,14 @@ Selamat datang di Program Keahlian **Rekayasa Perangkat Lunak (PPLG)** SMK Neger
 | Komponen | Keterangan |
 | :--- | :--- |
 | **Satuan Pendidikan** | SMK Negeri 1 Rongga |
-| **Program Keahlian** | Rekayasa Perangkat Lunak (PPLG) |
-| **Mata Pelajaran** | Orientasi PPLG (Dasar-Dasar PPLG) |
+| **Program Keahlian** | Pengembangan Perangkat Lunak dan Gim (PPLG) |
+| **Konsentrasi Keahlian** | Rekayasa Perangkat Lunak (RPL) |
+| **Mata Pelajaran** | Dasar-Dasar Kejuruan RPL (Orientasi PPLG) |
 | **Fase / Kelas / Semester** | Fase E / Kelas 10 RPL / Semester Ganjil (1) |
 | **Elemen CP** | Wawasan Dunia Kerja Bidang Pengembangan Perangkat Lunak dan Gim |
 | **Acuan Regulasi** | Keputusan Kepala BSKAP Nomor 046/H/KR/2025 |
 | **Kode Skill Passport** | **OR-01** (Sprint 1 - Pertemuan 1) |
-| **Guru Pengampu** | Agung Gumelar Saputra, S.Tr.T, Gr |
+| **Guru Pengampu RPL** | Agung Gumelar Saputra, S.Tr.T, Gr |
 
 ---
 

@@ -1,7 +1,7 @@
 # AGENTS.md — AI Agent Operating Guide & Project Blueprint
 
-> **Proyek:** `agunggumelarsaputra.com` (Personal Website & PPLG Learning Hub)  
-> **Pemilik / Pengajar:** Agung Gumelar Saputra, S.Tr.T. (Guru RPL / PPLG SMKN 1 Rongga & Software Engineer)  
+> **Proyek:** `agunggumelarsaputra.com` (Personal Website & RPL Learning Hub)  
+> **Pemilik / Pengajar:** Agung Gumelar Saputra, S.Tr.T. (Guru Pengampu RPL SMKN 1 Rongga & Software Engineer)  
 > **Target Deployment:** Vercel Serverless SSR (`https://agunggumelarsaputra.com`)  
 > **Dokumentasi Lengkap:** Lihat [`docs/ARCHITECTURE_AND_HANDOVER.md`](./docs/ARCHITECTURE_AND_HANDOVER.md)
 
@@ -9,9 +9,15 @@
 
 ## 1. Core Directives & Brand Philosophy
 
-1. **Gelar & Identitas Pemilik:**
+1. **Gelar & Struktur Kurikulum Vokasi SMK:**
    - **Gelar:** `S.Tr.T.` (Sarjana Terapan Teknik). Pastikan tidak mengubah gelar atau profil tanpa instruksi eksplisit.
-   - **Peran:** Guru Produktif Rekayasa Perangkat Lunak (PPLG) & Fullstack Software Engineer.
+   - **Program Keahlian:** **Pengembangan Perangkat Lunak dan Gim (PPLG)**
+   - **Konsentrasi Keahlian:** **Rekayasa Perangkat Lunak (RPL)**
+   - **Peran Pemilik / Pengajar:** **Guru Pengampu RPL / Guru Produktif RPL** & Fullstack Software Engineer.
+   - **ATURAN MUTLAK NOMENKLATUR:**
+     - Ketika menyebut **Program Keahlian** -> Gunakan **Pengembangan Perangkat Lunak dan Gim (PPLG)** atau **PPLG**.
+     - Ketika menyebut **Konsentrasi Keahlian / Rekayasa Perangkat Lunak** -> Singkatan resmi adalah **RPL** (BUKAN PPLG).
+     - Penyebutan guru pengampu harus selalu **Guru Pengampu RPL** atau **Guru Produktif RPL**.
 2. **Filosofi Desain (Anti AI-Slop & High-Craft):**
    - **TIDAK ADA AI SLOP:** Dilarang menggunakan gradien neon ungu-cyan acak, aura blur berlebih di background, teks bergradien menyilaukan, atau glassmorphism kabur yang menurunkan keterbacaan (*readability*).
    - **Desain Bersih & Solid:** Gunakan palet warna solid bernilai kontras tinggi (Dark slate `#090d16`, `#111827`, border halus `rgba(255,255,255,0.08)`, teks terang `#f3f4f6`).

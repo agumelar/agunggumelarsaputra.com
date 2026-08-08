@@ -6,11 +6,30 @@ Format penulisan mengacu pada [Keep a Changelog](https://keepachangelog.com/id/1
 ---
 
 ## [Unreleased] - Sesi Mendatang
-### Added
 - Opsi Hapus Akun siswa melalui panel Admin (`/admin/users`).
 - Generator PDF Otomatis untuk Rekap Portofolio Skill Passport Siswa.
 
-## [2.6.3] - 2026-08-08
+## [2.6.5] - 2026-08-08
+### Added & Enhanced
+- **Sistem Pembelajaran Sekuensial & Gating Modul Otomatis (*Sequential Module Progression*):**
+  - **Penataan Tombol Tuntas Modul:** Menghapus tombol selesai dari tab awal dan meletakkannya secara eksklusif pada tab terakhir (**Tab 3: Jurnal Refleksi**), sehingga siswa harus melewati alur materi & kuis checkpoint, form LKPD, lalu mengisi jurnal refleksi sebelum menuntaskan modul.
+  - **Gating Modul Antar-Pertemuan:** Modul berikutnya (Modul N+1) baru dapat dibuka dan diakses setelah modul sebelumnya (Modul N) selesai dituntaskan oleh siswa (Modul 1 selalu terbuka sebagai fondasi, dan akun Guru/Admin memiliki akses bypass penuh).
+  - **Layar Proteksi & Gating Screen Interaktif:** Jika siswa mencoba membuka modul terkunci langsung melalui URL, halaman menampilkan status proteksi visual yang jelas beserta tombol navigasi instan kembali ke modul prasyarat yang belum selesai.
+  - **Indikator Status & Progress Bar Mata Pelajaran:**
+    - Di dalam modul (`[...slug].astro`): Tampilan *Progress Bar Mapel Orientasi PPLG* di bagian atas yang menghitung persentase dan jumlah modul yang telah diselesaikan secara dinamis.
+    - Di katalog silabus (`orientasi-pplg.astro`): Tampilan kartu modul dengan 3 status visual (Modul Terkunci dengan border putus-putus 🔒, Modul Aktif berjalan dengan border aksen 🚀, dan Modul Selesai dengan badge centang hijau ✅).
+    - Tombol *Lanjut ke Modul Berikutnya* otomatis aktif dan mengarahkan siswa ke pertemuan selanjutnya begitu modul dituntaskan.
+
+## [2.6.4] - 2026-08-08
+### Fixed & Standardized
+- **Standardisasi Mutlak Nomenklatur Jurusan & Guru Pengampu (RPL):**
+  - Menyelaraskan seluruh sebutan Rekayasa Perangkat Lunak menjadi singkatan resmi **RPL** (bukan PPLG).
+  - Menetapkan peran & identitas pengajar sebagai **Guru Pengampu RPL / Guru Produktif RPL** pada seluruh dokumen sistem:
+    - Aturan operasional agen (`AGENTS.md`).
+    - Generator ekspor Excel guru (`src/utils/excelExport.ts`): Kop dokumen, tabel metadata, dan blok tanda tangan pengesahan guru pengampu.
+    - Panel Admin Console (`src/pages/admin/index.astro`).
+    - Komponen modul & visual pembelajaran (`InteractiveMaterialP1.astro`, `orientasi-pplg.astro`, `index.astro`, `cv.astro`, `Footer.astro`).
+    - Koleksi materi pembelajaran markdown (`src/content/pembelajaran/`).
 ### Enhanced
 - **Standardisasi Ekspor Dokumen Rekap Excel Guru Profesional (`src/utils/excelExport.ts`):**
   - Menyempurnakan ketiga format generator ekspor Excel (`Rekap Nilai Sesi / Token`, `Rekap Penilaian LKPD`, dan `Rekap Jurnal Refleksi`):

@@ -116,7 +116,7 @@ const progressPercentage = orientasiModules.length > 0 ? Math.round((totalComple
             <!-- Meta details -->
             <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-2">
               <div class="p-3 rounded-lg bg-secondary/50 border border-border">
-                <span class="text-[10px] font-mono text-muted-foreground block">GURU PENGAMPU</span>
+                <span class="text-[10px] font-mono text-muted-foreground block">GURU PENGAMPU RPL</span>
                 <span class="text-xs font-bold text-foreground">Agung Gumelar S., S.Tr.T, Gr</span>
               </div>
               <div class="p-3 rounded-lg bg-secondary/50 border border-border">
@@ -191,13 +191,57 @@ const progressPercentage = orientasiModules.length > 0 ? Math.round((totalComple
 
           <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
             {sprint1Modules.map((mod) => {
+              const modIndex = orientasiModules.findIndex(m => (m.id || m.slug) === (mod.id || mod.slug));
               const isDone = completedSlugs.includes(mod.id || mod.slug);
+              const isLocked = user?.role !== 'admin' && modIndex > 0 && !completedSlugs.includes(orientasiModules[modIndex - 1].id || orientasiModules[modIndex - 1].slug);
+              const prevMod = modIndex > 0 ? orientasiModules[modIndex - 1] : null;
+
+              if (isLocked) {
+                return (
+                  <div class="card p-5 border-border/50 bg-secondary/10 opacity-60 flex flex-col justify-between space-y-4 rounded-xl border-dashed select-none">
+                    <div class="space-y-2.5">
+                      <div class="flex items-center justify-between">
+                        <span class="px-2 py-0.5 rounded text-[10px] bg-secondary text-muted-foreground font-mono font-semibold border border-border">
+                          🔒 Pertemuan {mod.data.order}
+                        </span>
+                        <span class="text-xs text-muted-foreground font-mono">{mod.data.duration}</span>
+                      </div>
+
+                      <h3 class="text-sm font-bold text-muted-foreground">
+                        {mod.data.title}
+                      </h3>
+
+                      <p class="text-xs text-muted-foreground line-clamp-2 leading-relaxed">
+                        {mod.data.description}
+                      </p>
+                    </div>
+
+                    <div class="pt-3 border-t border-border/40 flex items-center justify-between text-xs">
+                      <span class="text-muted-foreground font-mono text-[11px]">🔒 Modul Terkunci</span>
+                      <span class="px-3 py-1.5 rounded-lg bg-secondary/60 text-muted-foreground text-[11px] font-semibold border border-border/50 cursor-not-allowed">
+                        Selesaikan Modul {prevMod?.data.order}
+                      </span>
+                    </div>
+                  </div>
+                );
+              }
+
               return (
-                <div class="card p-5 border-border bg-card flex flex-col justify-between space-y-4 rounded-xl shadow-sm hover:border-primary/50 transition-all">
+                <div class:list={[
+                  "card p-5 flex flex-col justify-between space-y-4 rounded-xl shadow-sm transition-all",
+                  isDone 
+                    ? "border-emerald-500/30 bg-emerald-500/5 hover:border-emerald-500/50" 
+                    : "border-primary/40 bg-card hover:border-primary ring-1 ring-primary/20 shadow-md"
+                ]}>
                   <div class="space-y-2.5">
                     <div class="flex items-center justify-between">
-                      <span class="px-2 py-0.5 rounded text-[10px] bg-secondary text-foreground font-mono font-semibold border border-border">
-                        {mod.data.order === 8 ? '🏆 SUMATIF OR-01' : `Pertemuan ${mod.data.order}`}
+                      <span class:list={[
+                        "px-2 py-0.5 rounded text-[10px] font-mono font-bold border",
+                        isDone 
+                          ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20" 
+                          : "bg-primary/10 text-primary border-primary/20"
+                      ]}>
+                        {isDone ? `✅ Pertemuan ${mod.data.order}` : `🚀 Pertemuan ${mod.data.order} (Aktif)`}
                       </span>
                       <span class="text-xs text-muted-foreground font-mono">{mod.data.duration}</span>
                     </div>
@@ -213,7 +257,7 @@ const progressPercentage = orientasiModules.length > 0 ? Math.round((totalComple
 
                   <div class="pt-3 border-t border-border flex items-center justify-between text-xs">
                     <div class="flex items-center gap-2">
-                      <span class="text-amber-600 dark:text-amber-400 font-mono font-medium">✨ +15 XP</span>
+                      <span class="text-amber-600 dark:text-amber-400 font-mono font-medium">⚡ +50 XP</span>
                       {isDone && (
                         <span class="px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-[10px] font-mono font-bold">
                           ✓ SELESAI
@@ -221,8 +265,14 @@ const progressPercentage = orientasiModules.length > 0 ? Math.round((totalComple
                       )}
                     </div>
 
-                    <a href={`/pembelajaran/${mod.id || mod.slug}`} class="btn btn-sm btn-primary text-xs font-semibold px-3 py-1.5 rounded-lg">
-                      Buka Modul →
+                    <a 
+                      href={`/pembelajaran/${mod.id || mod.slug}`} 
+                      class:list={[
+                        "btn btn-sm text-xs font-semibold px-3 py-1.5 rounded-lg shadow-sm",
+                        isDone ? "btn-secondary" : "btn-primary font-bold"
+                      ]}
+                    >
+                      {isDone ? 'Buka Modul →' : 'Mulai Belajar →'}
                     </a>
                   </div>
                 </div>
@@ -252,13 +302,57 @@ const progressPercentage = orientasiModules.length > 0 ? Math.round((totalComple
 
           <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
             {sprint2Modules.map((mod) => {
+              const modIndex = orientasiModules.findIndex(m => (m.id || m.slug) === (mod.id || mod.slug));
               const isDone = completedSlugs.includes(mod.id || mod.slug);
+              const isLocked = user?.role !== 'admin' && modIndex > 0 && !completedSlugs.includes(orientasiModules[modIndex - 1].id || orientasiModules[modIndex - 1].slug);
+              const prevMod = modIndex > 0 ? orientasiModules[modIndex - 1] : null;
+
+              if (isLocked) {
+                return (
+                  <div class="card p-5 border-border/50 bg-secondary/10 opacity-60 flex flex-col justify-between space-y-4 rounded-xl border-dashed select-none">
+                    <div class="space-y-2.5">
+                      <div class="flex items-center justify-between">
+                        <span class="px-2 py-0.5 rounded text-[10px] bg-secondary text-muted-foreground font-mono font-semibold border border-border">
+                          🔒 Pertemuan {mod.data.order}
+                        </span>
+                        <span class="text-xs text-muted-foreground font-mono">{mod.data.duration}</span>
+                      </div>
+
+                      <h3 class="text-sm font-bold text-muted-foreground">
+                        {mod.data.title}
+                      </h3>
+
+                      <p class="text-xs text-muted-foreground line-clamp-2 leading-relaxed">
+                        {mod.data.description}
+                      </p>
+                    </div>
+
+                    <div class="pt-3 border-t border-border/40 flex items-center justify-between text-xs">
+                      <span class="text-muted-foreground font-mono text-[11px]">🔒 Modul Terkunci</span>
+                      <span class="px-3 py-1.5 rounded-lg bg-secondary/60 text-muted-foreground text-[11px] font-semibold border border-border/50 cursor-not-allowed">
+                        Selesaikan Modul {prevMod?.data.order}
+                      </span>
+                    </div>
+                  </div>
+                );
+              }
+
               return (
-                <div class="card p-5 border-border bg-card flex flex-col justify-between space-y-4 rounded-xl shadow-sm hover:border-primary/50 transition-all">
+                <div class:list={[
+                  "card p-5 flex flex-col justify-between space-y-4 rounded-xl shadow-sm transition-all",
+                  isDone 
+                    ? "border-emerald-500/30 bg-emerald-500/5 hover:border-emerald-500/50" 
+                    : "border-primary/40 bg-card hover:border-primary ring-1 ring-primary/20 shadow-md"
+                ]}>
                   <div class="space-y-2.5">
                     <div class="flex items-center justify-between">
-                      <span class="px-2 py-0.5 rounded text-[10px] bg-secondary text-foreground font-mono font-semibold border border-border">
-                        {mod.data.order === 16 ? '🏆 SUMATIF OR-02 & REKAP' : `Pertemuan ${mod.data.order}`}
+                      <span class:list={[
+                        "px-2 py-0.5 rounded text-[10px] font-mono font-bold border",
+                        isDone 
+                          ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20" 
+                          : "bg-primary/10 text-primary border-primary/20"
+                      ]}>
+                        {isDone ? `✅ Pertemuan ${mod.data.order}` : `🚀 Pertemuan ${mod.data.order} (Aktif)`}
                       </span>
                       <span class="text-xs text-muted-foreground font-mono">{mod.data.duration}</span>
                     </div>
@@ -274,7 +368,7 @@ const progressPercentage = orientasiModules.length > 0 ? Math.round((totalComple
 
                   <div class="pt-3 border-t border-border flex items-center justify-between text-xs">
                     <div class="flex items-center gap-2">
-                      <span class="text-amber-600 dark:text-amber-400 font-mono font-medium">✨ +15 XP</span>
+                      <span class="text-amber-600 dark:text-amber-400 font-mono font-medium">⚡ +50 XP</span>
                       {isDone && (
                         <span class="px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-[10px] font-mono font-bold">
                           ✓ SELESAI
@@ -282,8 +376,14 @@ const progressPercentage = orientasiModules.length > 0 ? Math.round((totalComple
                       )}
                     </div>
 
-                    <a href={`/pembelajaran/${mod.id || mod.slug}`} class="btn btn-sm btn-primary text-xs font-semibold px-3 py-1.5 rounded-lg">
-                      Buka Modul →
+                    <a 
+                      href={`/pembelajaran/${mod.id || mod.slug}`} 
+                      class:list={[
+                        "btn btn-sm text-xs font-semibold px-3 py-1.5 rounded-lg shadow-sm",
+                        isDone ? "btn-secondary" : "btn-primary font-bold"
+                      ]}
+                    >
+                      {isDone ? 'Buka Modul →' : 'Mulai Belajar →'}
                     </a>
                   </div>
                 </div>

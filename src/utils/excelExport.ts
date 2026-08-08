@@ -126,7 +126,7 @@ export async function generateTokenExcelReport(data: TokenReportData): Promise<B
 
   worksheet.mergeCells('A4:I4');
   const r4 = worksheet.getCell('A4');
-  r4.value = 'KONSENTRASI KEAHLIAN REKAYASA PERANGKAT LUNAK (PPLG)';
+  r4.value = 'PROGRAM KEAHLIAN PPLG — KONSENTRASI KEAHLIAN REKAYASA PERANGKAT LUNAK (RPL)';
   r4.font = { name: 'Arial', size: 11, bold: true, color: { argb: accentTeal } };
   r4.alignment = { horizontal: 'center', vertical: 'middle' };
 
@@ -150,10 +150,10 @@ export async function generateTokenExcelReport(data: TokenReportData): Promise<B
 
   worksheet.getCell('A7').value = 'Mata Pelajaran / Sesi';
   worksheet.getCell('A7').font = { name: 'Arial', size: 9, bold: true, color: { argb: textDark } };
-  worksheet.getCell('B7').value = ': Dasar-Dasar Kejuruan PPLG (Orientasi PPLG)';
+  worksheet.getCell('B7').value = ': Dasar-Dasar Kejuruan RPL';
   worksheet.getCell('B7').font = { name: 'Arial', size: 9, color: { argb: textDark } };
 
-  worksheet.getCell('F7').value = 'Guru Pengampu';
+  worksheet.getCell('F7').value = 'Guru Pengampu RPL';
   worksheet.getCell('F7').font = { name: 'Arial', size: 9, bold: true, color: { argb: textDark } };
   worksheet.getCell('G7').value = `: ${teacher}`;
   worksheet.getCell('G7').font = { name: 'Arial', size: 9, bold: true, color: { argb: textDark } };
@@ -346,7 +346,7 @@ export async function generateTokenExcelReport(data: TokenReportData): Promise<B
   worksheet.mergeCells(`G${currentRowIndex}:I${currentRowIndex}`);
 
   currentRowIndex++;
-  worksheet.getCell(`G${currentRowIndex}`).value = 'Guru Pengampu Mata Pelajaran PPLG,';
+  worksheet.getCell(`G${currentRowIndex}`).value = 'Guru Pengampu Mata Pelajaran RPL,';
   worksheet.getCell(`G${currentRowIndex}`).font = { name: 'Arial', size: 9.5, bold: true, color: { argb: textDark } };
   worksheet.getCell(`G${currentRowIndex}`).alignment = { horizontal: 'center' };
   worksheet.mergeCells(`G${currentRowIndex}:I${currentRowIndex}`);
@@ -359,7 +359,7 @@ export async function generateTokenExcelReport(data: TokenReportData): Promise<B
   worksheet.mergeCells(`G${currentRowIndex}:I${currentRowIndex}`);
 
   currentRowIndex++;
-  worksheet.getCell(`G${currentRowIndex}`).value = 'NIP. — / Guru Produktif PPLG SMKN 1 Rongga';
+  worksheet.getCell(`G${currentRowIndex}`).value = 'NIP. — / Guru Produktif RPL SMKN 1 Rongga';
   worksheet.getCell(`G${currentRowIndex}`).font = { name: 'Arial', size: 9, color: { argb: textMuted } };
   worksheet.getCell(`G${currentRowIndex}`).alignment = { horizontal: 'center' };
   worksheet.mergeCells(`G${currentRowIndex}:I${currentRowIndex}`);
@@ -408,8 +408,8 @@ export async function generateLkpdSubmissionsExcel(submissions: any[]): Promise<
 
   // Kop
   worksheet.mergeCells('A1:H1');
-  worksheet.getCell('A1').value = 'SMK NEGERI 1 RONGGA — KONSENTRASI KEAHLIAN REKAYASA PERANGKAT LUNAK';
-  worksheet.getCell('A1').font = { name: 'Arial', size: 12, bold: true, color: { argb: primaryNavy } };
+  worksheet.getCell('A1').value = 'SMK NEGERI 1 RONGGA — PROGRAM KEAHLIAN PPLG / KONSENTRASI REKAYASA PERANGKAT LUNAK (RPL)';
+  worksheet.getCell('A1').font = { name: 'Arial', size: 11, bold: true, color: { argb: primaryNavy } };
   worksheet.getCell('A1').alignment = { horizontal: 'center' };
 
   worksheet.mergeCells('A2:H2');
@@ -417,7 +417,7 @@ export async function generateLkpdSubmissionsExcel(submissions: any[]): Promise<
   worksheet.getCell('A2').font = { name: 'Arial', size: 13, bold: true, color: { argb: 'FF0D9488' } };
   worksheet.getCell('A2').alignment = { horizontal: 'center' };
 
-  worksheet.getCell('A4').value = 'Guru Pengampu: Agung Gumelar Saputra, S.Tr.T.';
+  worksheet.getCell('A4').value = 'Guru Pengampu RPL: Agung Gumelar Saputra, S.Tr.T.';
   worksheet.getCell('A4').font = { name: 'Arial', size: 9.5, bold: true };
   worksheet.getCell('A5').value = 'Standar KKM: 73 (Kompeten & Penguncian Portofolio)';
   worksheet.getCell('A5').font = { name: 'Arial', size: 9, bold: true, color: { argb: 'FF16A34A' } };
@@ -513,7 +513,7 @@ export async function generateLkpdSubmissionsExcel(submissions: any[]): Promise<
   worksheet.mergeCells(`F${rowIdx}:H${rowIdx}`);
 
   rowIdx++;
-  worksheet.getCell(`F${rowIdx}`).value = 'Guru Pengampu Mata Pelajaran PPLG,';
+  worksheet.getCell(`F${rowIdx}`).value = 'Guru Pengampu Mata Pelajaran RPL,';
   worksheet.getCell(`F${rowIdx}`).font = { name: 'Arial', size: 9.5, bold: true, color: { argb: textDark } };
   worksheet.getCell(`F${rowIdx}`).alignment = { horizontal: 'center' };
   worksheet.mergeCells(`F${rowIdx}:H${rowIdx}`);
@@ -526,7 +526,7 @@ export async function generateLkpdSubmissionsExcel(submissions: any[]): Promise<
   worksheet.mergeCells(`F${rowIdx}:H${rowIdx}`);
 
   rowIdx++;
-  worksheet.getCell(`F${rowIdx}`).value = 'NIP. — / Guru Produktif PPLG SMKN 1 Rongga';
+  worksheet.getCell(`F${rowIdx}`).value = 'NIP. — / Guru Produktif RPL SMKN 1 Rongga';
   worksheet.getCell(`F${rowIdx}`).font = { name: 'Arial', size: 9, color: { argb: textMuted } };
   worksheet.getCell(`F${rowIdx}`).alignment = { horizontal: 'center' };
   worksheet.mergeCells(`F${rowIdx}:H${rowIdx}`);
@@ -571,8 +571,8 @@ export async function generateReflectionsExcel(reflections: any[]): Promise<Buff
 
   // Kop
   worksheet.mergeCells('A1:J1');
-  worksheet.getCell('A1').value = 'SMK NEGERI 1 RONGGA — KONSENTRASI KEAHLIAN REKAYASA PERANGKAT LUNAK';
-  worksheet.getCell('A1').font = { name: 'Arial', size: 12, bold: true, color: { argb: primaryNavy } };
+  worksheet.getCell('A1').value = 'SMK NEGERI 1 RONGGA — PROGRAM KEAHLIAN PPLG / KONSENTRASI REKAYASA PERANGKAT LUNAK (RPL)';
+  worksheet.getCell('A1').font = { name: 'Arial', size: 11, bold: true, color: { argb: primaryNavy } };
   worksheet.getCell('A1').alignment = { horizontal: 'center' };
 
   worksheet.mergeCells('A2:J2');
@@ -580,7 +580,7 @@ export async function generateReflectionsExcel(reflections: any[]): Promise<Buff
   worksheet.getCell('A2').font = { name: 'Arial', size: 13, bold: true, color: { argb: 'FFDB2777' } }; // Pink 600
   worksheet.getCell('A2').alignment = { horizontal: 'center' };
 
-  worksheet.getCell('A4').value = 'Guru Pengampu: Agung Gumelar Saputra, S.Tr.T.';
+  worksheet.getCell('A4').value = 'Guru Pengampu RPL: Agung Gumelar Saputra, S.Tr.T.';
   worksheet.getCell('A4').font = { name: 'Arial', size: 9.5, bold: true };
   worksheet.getCell('A5').value = 'Sifat Asesmen: Kualitatif / Suara Siswa & Umpan Balik Guru';
   worksheet.getCell('A5').font = { name: 'Arial', size: 9, bold: true, color: { argb: 'FFDB2777' } };
@@ -659,7 +659,7 @@ export async function generateReflectionsExcel(reflections: any[]): Promise<Buff
   worksheet.mergeCells(`H${rowIdx}:J${rowIdx}`);
 
   rowIdx++;
-  worksheet.getCell(`H${rowIdx}`).value = 'Guru Pengampu Mata Pelajaran PPLG,';
+  worksheet.getCell(`H${rowIdx}`).value = 'Guru Pengampu Mata Pelajaran RPL,';
   worksheet.getCell(`H${rowIdx}`).font = { name: 'Arial', size: 9.5, bold: true, color: { argb: textDark } };
   worksheet.getCell(`H${rowIdx}`).alignment = { horizontal: 'center' };
   worksheet.mergeCells(`H${rowIdx}:J${rowIdx}`);
@@ -672,7 +672,7 @@ export async function generateReflectionsExcel(reflections: any[]): Promise<Buff
   worksheet.mergeCells(`H${rowIdx}:J${rowIdx}`);
 
   rowIdx++;
-  worksheet.getCell(`H${rowIdx}`).value = 'NIP. — / Guru Produktif PPLG SMKN 1 Rongga';
+  worksheet.getCell(`H${rowIdx}`).value = 'NIP. — / Guru Produktif RPL SMKN 1 Rongga';
   worksheet.getCell(`H${rowIdx}`).font = { name: 'Arial', size: 9, color: { argb: textMuted } };
   worksheet.getCell(`H${rowIdx}`).alignment = { horizontal: 'center' };
   worksheet.mergeCells(`H${rowIdx}:J${rowIdx}`);

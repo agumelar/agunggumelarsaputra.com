@@ -86,14 +86,15 @@ const quest = getGamifiedQuestForModule(lessonSlug, moduleTitle);
         </p>
       </div>
       <div class="pt-2 flex flex-wrap items-center justify-center gap-3">
-        <a 
-          href="#panel-lkpd" 
-          onclick="window.location.hash = 'panel-lkpd'; return false;"
-          class="px-5 py-2.5 rounded-xl bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white font-bold text-xs sm:text-sm shadow-md transition-transform hover:scale-105 flex items-center gap-2"
+        <button 
+          type="button"
+          data-switch-tab="lkpd" 
+          onclick="if (window.switchModuleTab) { window.switchModuleTab('lkpd'); }"
+          class="px-5 py-2.5 rounded-xl bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white font-bold text-xs sm:text-sm shadow-md transition-transform hover:scale-105 flex items-center gap-2 cursor-pointer"
         >
           <span>📝 Buka Tab Lembar Kerja (LKPD)</span>
           <span>➔</span>
-        </a>
+        </button>
         <button 
           type="button" 
           id="btn-replay-game"
@@ -261,14 +262,15 @@ const quest = getGamifiedQuestForModule(lessonSlug, moduleTitle);
 
       <!-- Action Button to Open LKPD -->
       <div class="pt-3 flex flex-wrap items-center justify-center gap-3">
-        <a 
-          href="#panel-lkpd" 
-          onclick="window.location.hash = 'panel-lkpd'; return false;"
-          class="px-6 py-3.5 rounded-xl bg-gradient-to-r from-emerald-500 via-teal-500 to-cyan-500 hover:from-emerald-400 hover:to-cyan-400 text-black font-extrabold text-sm sm:text-base shadow-xl transition-transform hover:scale-105 flex items-center gap-2 animate-pulse"
+        <button 
+          type="button"
+          data-switch-tab="lkpd" 
+          onclick="if (window.switchModuleTab) { window.switchModuleTab('lkpd'); }"
+          class="px-6 py-3.5 rounded-xl bg-gradient-to-r from-emerald-500 via-teal-500 to-cyan-500 hover:from-emerald-400 hover:to-cyan-400 text-black font-extrabold text-sm sm:text-base shadow-xl transition-transform hover:scale-105 flex items-center gap-2 animate-pulse cursor-pointer"
         >
           <span>🔓 Gembok Terbuka! Lanjut Mengerjakan LKPD</span>
           <span>➔</span>
-        </a>
+        </button>
       </div>
     </div>
 
