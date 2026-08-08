@@ -1,7 +1,5 @@
 import type { APIRoute } from 'astro';
-import { db, isDbConfigured, ensureDbInitialized } from '../../../db';
-import { userSubmissions, userGamification } from '../../../db/schema';
-import { sql } from 'drizzle-orm';
+import { sql as neonSql, isDbConfigured, ensureDbInitialized } from '../../../db';
 import { authorizeOrientasiAction, getApprovedCheckpoint } from '../../../utils/orientasiPplgPolicy.ts';
 import { getOrientasiServerState } from '../../../utils/orientasiPplgServer.ts';
 
@@ -10,7 +8,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
     return new Response(JSON.stringify({ error: 'Harap masuk (login) untuk mencatat checkpoint.' }), { status: 401 });
   }
 
-  if (!isDbConfigured()) {
+  if (!neonSql || !isDbConfigured()) {
     return new Response(JSON.stringify({ error: 'Database belum terhubung di server.' }), { status: 503 });
   }
 
@@ -32,53 +30,68 @@ export const POST: APIRoute = async ({ request, locals }) => {
       return new Response(JSON.stringify({ error: authorization.error }), { status: authorization.status });
     }
 
-    // The composite unique key makes this insert the single arbiter for parallel
-    // first claims. Only the request receiving a RETURNING row may award XP.
-    const [inserted] = await db.insert(userSubmissions).values({
-      userId,
-      tokenId: serverState.enrollmentTokenId,
-      lessonSlug: checkpoint.lessonSlug,
-      submissionType: 'checkpoint',
-      formData: JSON.stringify({ quizId: checkpoint.quizId, passed: true, autoGraded: true, timestamp: new Date().toISOString() }),
-      score: 100,
-      teacherScore: 100,
-      teacherLevel: 'Level 2',
-      teacherFeedback: 'Selesai otomatis via Gamified Checkpoint Quest',
-      gradedAt: new Date(),
-      status: 'verified',
-    })
-      .onConflictDoNothing({
-        target: [
-          userSubmissions.userId,
-          userSubmissions.lessonSlug,
-          userSubmissions.submissionType,
-        ],
-      })
-      .returning({ id: userSubmissions.id });
+    const checkpointPayload = JSON.stringify({
+      quizId: checkpoint.quizId,
+      passed: true,
+      autoGraded: true,
+      timestamp: new Date().toISOString(),
+    });
+
+    // One PostgreSQL statement is the transaction boundary. If the XP upsert
+    // fails, the winning checkpoint insert is rolled back as part of the same
+    // statement, so a retry can still receive the reward exactly once.
+    const insertedRows = await neonSql`
+      WITH inserted_checkpoint AS (
+        INSERT INTO user_submissions (
+          user_id,
+          token_id,
+          lesson_slug,
+          submission_type,
+          form_data,
+          score,
+          teacher_score,
+          teacher_level,
+          teacher_feedback,
+          graded_at,
+          status
+        )
+        VALUES (
+          ${userId},
+          ${serverState.enrollmentTokenId},
+          ${checkpoint.lessonSlug},
+          'checkpoint',
+          ${checkpointPayload},
+          100,
+          100,
+          'Level 2',
+          'Selesai otomatis via Gamified Checkpoint Quest',
+          NOW(),
+          'verified'
+        )
+        ON CONFLICT (user_id, lesson_slug, submission_type) DO NOTHING
+        RETURNING id
+      ),
+      rewarded_checkpoint AS (
+        INSERT INTO user_gamification (user_id, xp, level, last_active_date)
+        SELECT
+          ${userId},
+          ${checkpoint.xpReward},
+          LEAST(5, FLOOR(${checkpoint.xpReward} / 100.0)::int + 1),
+          NOW()
+        FROM inserted_checkpoint
+        ON CONFLICT (user_id) DO UPDATE SET
+          xp = user_gamification.xp + EXCLUDED.xp,
+          level = LEAST(5, FLOOR((user_gamification.xp + EXCLUDED.xp) / 100.0)::int + 1),
+          last_active_date = NOW()
+        RETURNING user_id
+      )
+      SELECT id AS submission_id FROM inserted_checkpoint
+    `;
+
+    const inserted = insertedRows[0];
 
     const isFirstTime = Boolean(inserted);
     const xpEarned = inserted ? checkpoint.xpReward : 0;
-
-    if (inserted) {
-      const initialLevel = Math.min(5, Math.floor(xpEarned / 100) + 1);
-      const now = new Date();
-
-      // Atomic upsert avoids read/modify/write lost updates when two different
-      // checkpoints are legitimately claimed at the same time.
-      await db.insert(userGamification).values({
-        userId,
-        xp: xpEarned,
-        level: initialLevel,
-        lastActiveDate: now,
-      }).onConflictDoUpdate({
-        target: userGamification.userId,
-        set: {
-          xp: sql`${userGamification.xp} + ${xpEarned}`,
-          level: sql`LEAST(5, FLOOR((${userGamification.xp} + ${xpEarned}) / 100.0)::int + 1)`,
-          lastActiveDate: now,
-        },
-      });
-    }
 
     return new Response(JSON.stringify({
       success: true,

@@ -9,6 +9,14 @@ Format penulisan mengacu pada [Keep a Changelog](https://keepachangelog.com/id/1
 - Opsi Hapus Akun siswa melalui panel Admin (`/admin/users`).
 - Generator PDF Otomatis untuk Rekap Portofolio Skill Passport Siswa.
 
+### 2026-08-08 — Submission Trust Boundary & Exactly-Once Reward Fix
+- Memperkuat `/api/gamification/claim-checkpoint`: insert checkpoint dan atomic upsert XP kini dijalankan sebagai satu statement PostgreSQL berbasis data-modifying CTE. Error pada award XP akan me-rollback insert checkpoint, sehingga retry tetap dapat menerima reward tepat satu kali.
+- Menambahkan `getApprovedSubmission()` sebagai katalog server untuk submission. Endpoint `/api/submissions/save` sekarang hanya menerima 16 slug Orientasi PPLG kanonik dengan jenis `lkpd` (+25 XP) atau `reflection` (+15 XP); slug/jenis arbitrer, `tokenId`, `score`, dan fallback reward dari klien tidak lagi dipercaya.
+- Submission pertama dan reward XP juga digabung dalam satu statement CTE conflict-safe. Request paralel yang kalah pada unique key beralih ke jalur update idempoten, bukan unique violation HTTP 500, dan tidak memperoleh XP duplikat.
+- Mempertahankan satu record submission per siswa/modul/jenis, isian LKPD/refleksi lama, nilai/feedback guru, penguncian KKM 73, serta alur remedial. Update remedial memakai kondisi database agar penilaian tuntas yang terjadi bersamaan tidak tertimpa.
+- Menambahkan regression guard `tests/orientasi-submission-security.test.ts` dan memperkuat `tests/orientasi-checkpoint-atomicity.test.ts`. Siklus TDD dibuktikan RED 0/4 lalu GREEN 4/4; verifikasi pada clone rilis terisolasi lulus `npm run test:orientasi` 9/9, parity guard PASS, dan Astro build exit 0.
+- Deployment production belum berubah: dua invocation `vercel --prod --yes` berhenti karena timeout lokal setelah 124 dan 304 detik sebelum job baru tercatat. `vercel ls` tetap menampilkan deployment sebelumnya `agunggumelarsaputra-cgcllt7b2-agumelars-projects.vercel.app` sebagai latest READY. Smoke baseline pada production lama: tiga halaman publik HTTP 200 serta POST checkpoint/submission tanpa sesi HTTP 401. Patch wajib dideploy ulang dari clone bersih setelah hambatan CLI selesai.
+
 ### 2026-08-08 — Orientasi PPLG Module Parity Release
 - Kontrak pengalaman Modul 01 diterapkan pada seluruh Modul Orientasi PPLG 02–16: checkpoint Quest tiga tahap per modul, LKPD, jurnal refleksi, dan panduan KKTP kini menerima konteks materi masing-masing tanpa mengganti substansi Markdown.
 - Reader bersama mempertahankan gating sekuensial antar-modul, urutan checkpoint → LKPD → refleksi → penyelesaian di `#btn-complete-lesson`, indikator progres 16 pertemuan, serta bypass untuk admin.

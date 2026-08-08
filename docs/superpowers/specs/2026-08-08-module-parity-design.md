@@ -60,6 +60,15 @@ Jika dokumen handover belum cukup untuk membuat agen atau sesi berikutnya dapat 
 
 ## Hasil verifikasi dan deployment (2026-08-08)
 
+### Security addendum: trust boundary dan concurrency submission
+
+- Klaim checkpoint harus bersifat exactly-once pada dua sisi sekaligus: row checkpoint dan XP. Unique insert saja tidak cukup karena statement XP yang gagal sesudah insert akan membuat partial commit. Kontrak final memakai satu data-modifying CTE PostgreSQL yang menggabungkan insert conflict-safe dengan XP upsert.
+- Endpoint submission tidak memiliki jalur generik. `getApprovedSubmission()` hanya menyetujui slug dari katalog 16 modul serta tipe `lkpd`/`reflection`, sekaligus menurunkan action dan reward dari server. Enrollment, prasyarat modul, dan urutan checkpoint → LKPD → refleksi tetap diperiksa dari state database.
+- First-submit LKPD/refleksi memakai CTE insert+reward yang sama-sama atomik. Conflict pada request paralel bukan error: request yang kalah melakukan update record pemenang tanpa reward tambahan. Update tetap menjaga grade/feedback dan remedial; row dengan `teacher_score >= 73` dikunci, termasuk bila grade masuk bersamaan dengan update siswa.
+- Input klien yang tidak lagi memiliki otoritas: `tokenId`, `score`, slug nonkanonik, tipe submission lain, dan nilai reward. Existing submission records tidak dimigrasikan atau dihapus oleh patch ini.
+- Guard fokus: `tests/orientasi-checkpoint-atomicity.test.ts` dan `tests/orientasi-submission-security.test.ts`. RED awal 0/4 membuktikan ketiga celah; GREEN 4/4 membuktikan kontrak baru. Suite Orientasi bertambah menjadi 9 tes.
+- Verifikasi clone rilis terisolasi berhasil: suite Orientasi 9/9, parity PASS, dan build exit 0. Deployment masih tertunda karena dua invocation Vercel CLI timeout sebelum mencatat job baru; production masih menjalankan deployment `agunggumelarsaputra-cgcllt7b2-agumelars-projects.vercel.app`. Smoke production lama (public 200, mutation tanpa sesi 401) adalah baseline saja dan harus diulang setelah patch benar-benar dideploy.
+
 ### Security addendum: atomisitas reward checkpoint
 
 - Identity submission dibakukan menjadi `(user_id, lesson_slug, submission_type)` dan dipaksakan oleh unique index PostgreSQL, bukan oleh pre-check aplikasi.

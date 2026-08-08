@@ -19,6 +19,7 @@ export const CANONICAL_ORIENTASI_SLUGS = [
 
 export type OrientasiSlug = typeof CANONICAL_ORIENTASI_SLUGS[number];
 export type OrientasiAction = 'checkpoint' | 'lkpd' | 'reflection' | 'complete';
+export type OrientasiSubmissionType = 'lkpd' | 'reflection';
 
 const canonicalSlugSet = new Set<string>(CANONICAL_ORIENTASI_SLUGS);
 
@@ -46,6 +47,23 @@ export function getApprovedCheckpoint(lessonSlug: unknown) {
     lessonSlug,
     quizId: `quest-or${String(moduleNumber).padStart(2, '0')}`,
     xpReward: 15,
+  };
+}
+
+export function getApprovedSubmission(lessonSlug: unknown, submissionType: unknown) {
+  if (!isCanonicalOrientasiSlug(lessonSlug)) return null;
+  if (submissionType !== 'lkpd' && submissionType !== 'reflection') return null;
+
+  return {
+    lessonSlug,
+    submissionType,
+    action: submissionType,
+    xpReward: submissionType === 'lkpd' ? 25 : 15,
+  } satisfies {
+    lessonSlug: OrientasiSlug;
+    submissionType: OrientasiSubmissionType;
+    action: OrientasiAction;
+    xpReward: number;
   };
 }
 

@@ -1,16 +1,20 @@
 import type { APIRoute } from 'astro';
-import { db, isDbConfigured, ensureDbInitialized } from '../../../db';
-import { userSubmissions, userGamification } from '../../../db/schema';
-import { eq, and } from 'drizzle-orm';
-import { authorizeOrientasiAction, isCanonicalOrientasiSlug } from '../../../utils/orientasiPplgPolicy.ts';
+import { db, sql as neonSql, isDbConfigured, ensureDbInitialized } from '../../../db';
+import { userSubmissions } from '../../../db/schema';
+import { and, eq, isNull, lt, or } from 'drizzle-orm';
+import { authorizeOrientasiAction, getApprovedSubmission } from '../../../utils/orientasiPplgPolicy.ts';
 import { getOrientasiServerState } from '../../../utils/orientasiPplgServer.ts';
+
+const lockedSubmissionResponse = () => new Response(JSON.stringify({
+  error: 'Lembar kerja ini telah dinilai tuntas oleh guru (KKM Tercapai) dan telah dikunci secara permanen.',
+}), { status: 403 });
 
 export const POST: APIRoute = async ({ request, locals }) => {
   if (!locals.user) {
     return new Response(JSON.stringify({ error: 'Harap masuk (login) terlebih dahulu untuk menyimpan jawaban.' }), { status: 401 });
   }
 
-  if (!isDbConfigured()) {
+  if (!neonSql || !isDbConfigured()) {
     return new Response(JSON.stringify({ error: 'Database belum terhubung di server.' }), { status: 503 });
   }
 
@@ -18,121 +22,133 @@ export const POST: APIRoute = async ({ request, locals }) => {
     await ensureDbInitialized();
     const userId = locals.user.userId;
     const body = await request.json();
-    const { lessonSlug, submissionType, formData, driveUrl, tokenId, score } = body;
+    const { lessonSlug, submissionType, formData, driveUrl } = body;
 
     if (!lessonSlug || !submissionType || !formData) {
       return new Response(JSON.stringify({ error: 'Data formulir tidak lengkap.' }), { status: 400 });
     }
 
-    if (typeof lessonSlug === 'string' && lessonSlug.startsWith('orientasi-pplg-') && !isCanonicalOrientasiSlug(lessonSlug)) {
-      return new Response(JSON.stringify({ error: 'Slug Modul Orientasi PPLG tidak valid.' }), { status: 400 });
+    const approvedSubmission = getApprovedSubmission(lessonSlug, submissionType);
+    if (!approvedSubmission) {
+      return new Response(JSON.stringify({ error: 'Slug atau jenis submission Orientasi PPLG tidak valid.' }), { status: 400 });
     }
 
-    let trustedTokenId = tokenId ? Number(tokenId) : null;
-    if (isCanonicalOrientasiSlug(lessonSlug)) {
-      if (submissionType !== 'lkpd' && submissionType !== 'reflection') {
-        return new Response(JSON.stringify({ error: 'Jenis submission Orientasi PPLG tidak valid.' }), { status: 400 });
-      }
-      const serverState = await getOrientasiServerState(userId, lessonSlug);
-      const authorization = authorizeOrientasiAction({
-        lessonSlug,
-        action: submissionType,
-        role: locals.user.role,
-        ...serverState,
-      });
-      if (!authorization.allowed) {
-        return new Response(JSON.stringify({ error: authorization.error }), { status: authorization.status });
-      }
-      trustedTokenId = serverState.enrollmentTokenId;
+    const serverState = await getOrientasiServerState(userId, approvedSubmission.lessonSlug);
+    const authorization = authorizeOrientasiAction({
+      lessonSlug: approvedSubmission.lessonSlug,
+      action: approvedSubmission.action,
+      role: locals.user.role,
+      ...serverState,
+    });
+    if (!authorization.allowed) {
+      return new Response(JSON.stringify({ error: authorization.error }), { status: authorization.status });
     }
 
     const jsonFormData = typeof formData === 'string' ? formData : JSON.stringify(formData);
+    const trustedDriveUrl = typeof driveUrl === 'string' && driveUrl.trim() ? driveUrl.trim() : null;
 
-    // Cek apakah sudah pernah submit sebelumnya
-    const [existing] = await db.select()
-      .from(userSubmissions)
-      .where(and(
-        eq(userSubmissions.userId, userId),
-        eq(userSubmissions.lessonSlug, lessonSlug),
-        eq(userSubmissions.submissionType, submissionType)
-      ))
-      .limit(1);
+    // The first insert and XP award share one PostgreSQL statement. A parallel
+    // request that loses the unique-key race returns no row and continues via
+    // the normal update path below; it never receives duplicate XP or a 500.
+    const insertedRows = await neonSql`
+      WITH inserted_submission AS (
+        INSERT INTO user_submissions (
+          user_id,
+          token_id,
+          lesson_slug,
+          submission_type,
+          form_data,
+          drive_url,
+          score,
+          status
+        )
+        VALUES (
+          ${userId},
+          ${serverState.enrollmentTokenId},
+          ${approvedSubmission.lessonSlug},
+          ${approvedSubmission.submissionType},
+          ${jsonFormData},
+          ${trustedDriveUrl},
+          NULL,
+          'submitted'
+        )
+        ON CONFLICT (user_id, lesson_slug, submission_type) DO NOTHING
+        RETURNING id
+      ),
+      rewarded_submission AS (
+        INSERT INTO user_gamification (user_id, xp, level, last_active_date)
+        SELECT
+          ${userId},
+          ${approvedSubmission.xpReward},
+          LEAST(5, FLOOR(${approvedSubmission.xpReward} / 100.0)::int + 1),
+          NOW()
+        FROM inserted_submission
+        ON CONFLICT (user_id) DO UPDATE SET
+          xp = user_gamification.xp + EXCLUDED.xp,
+          level = LEAST(5, FLOOR((user_gamification.xp + EXCLUDED.xp) / 100.0)::int + 1),
+          last_active_date = NOW()
+        RETURNING user_id
+      )
+      SELECT id AS submission_id FROM inserted_submission
+    `;
 
-    // Kunci pengeditan di sisi server jika sudah dinilai tuntas (>= 73)
-    if (existing && existing.teacherScore !== null && existing.teacherScore !== undefined && existing.teacherScore >= 73) {
-      return new Response(JSON.stringify({ 
-        error: 'Lembar kerja ini telah dinilai tuntas oleh guru (KKM Tercapai) dan telah dikunci secara permanen.' 
-      }), { status: 403 });
-    }
-
-    let isNewSubmission = false;
+    const inserted = insertedRows[0] as { submission_id: number } | undefined;
+    let submissionId = inserted ? Number(inserted.submission_id) : 0;
     let isRemedialResubmit = false;
-    let submissionId: number;
 
-    if (existing) {
-      submissionId = existing.id;
-      if (existing.teacherScore !== null && existing.teacherScore < 73) {
-        isRemedialResubmit = true;
+    if (!inserted) {
+      const [existing] = await db.select()
+        .from(userSubmissions)
+        .where(and(
+          eq(userSubmissions.userId, userId),
+          eq(userSubmissions.lessonSlug, approvedSubmission.lessonSlug),
+          eq(userSubmissions.submissionType, approvedSubmission.submissionType),
+        ))
+        .limit(1);
+
+      if (!existing) {
+        return new Response(JSON.stringify({ error: 'Submission berubah saat disimpan. Silakan coba lagi.' }), { status: 409 });
+      }
+      if (existing.teacherScore !== null && existing.teacherScore >= 73) {
+        return lockedSubmissionResponse();
       }
 
-      await db.update(userSubmissions)
+      submissionId = existing.id;
+      isRemedialResubmit = existing.teacherScore !== null && existing.teacherScore < 73;
+
+      const [updated] = await db.update(userSubmissions)
         .set({
           formData: jsonFormData,
-          driveUrl: driveUrl || existing.driveUrl,
-          tokenId: trustedTokenId ?? existing.tokenId,
-          score: score !== undefined ? Number(score) : existing.score,
+          driveUrl: trustedDriveUrl ?? existing.driveUrl,
+          tokenId: serverState.enrollmentTokenId ?? existing.tokenId,
           status: isRemedialResubmit ? 'submitted' : existing.status,
           updatedAt: new Date(),
         })
-        .where(eq(userSubmissions.id, existing.id));
-    } else {
-      isNewSubmission = true;
-      const [inserted] = await db.insert(userSubmissions)
-        .values({
-          userId,
-          tokenId: trustedTokenId,
-          lessonSlug,
-          submissionType,
-          formData: jsonFormData,
-          driveUrl: driveUrl || null,
-          score: score !== undefined ? Number(score) : null,
-          status: 'submitted',
-        })
-        .returning();
-      submissionId = inserted.id;
+        .where(and(
+          eq(userSubmissions.id, existing.id),
+          or(isNull(userSubmissions.teacherScore), lt(userSubmissions.teacherScore, 73)),
+        ))
+        .returning({ id: userSubmissions.id });
+
+      // A teacher may grade and lock the LKPD between the read and update. The
+      // guarded UPDATE fails closed instead of overwriting that new grade.
+      if (!updated) return lockedSubmissionResponse();
     }
 
-    // Gamification XP award on first submission
-    let xpEarned = 0;
-    if (isNewSubmission) {
-      xpEarned = submissionType === 'lkpd' ? 25 : submissionType === 'reflection' ? 15 : 10;
-      
-      const [gam] = await db.select().from(userGamification).where(eq(userGamification.userId, userId)).limit(1);
-      if (gam) {
-        const newXp = gam.xp + xpEarned;
-        const newLevel = Math.min(5, Math.floor(newXp / 100) + 1);
-        await db.update(userGamification)
-          .set({ xp: newXp, level: newLevel, lastActiveDate: new Date() })
-          .where(eq(userGamification.userId, userId));
-      } else {
-        await db.insert(userGamification).values({
-          userId,
-          xp: xpEarned,
-          level: 1,
-        });
-      }
-    }
+    const isNewSubmission = Boolean(inserted);
+    const xpEarned = isNewSubmission ? approvedSubmission.xpReward : 0;
 
     return new Response(JSON.stringify({
       success: true,
       submissionId,
       isNewSubmission,
       xpEarned,
-      message: isNewSubmission 
+      message: isNewSubmission
         ? `Berhasil mengumpulkan! (+${xpEarned} XP diperoleh 🎉)`
-        : 'Perubahan jawaban berhasil diperbarui!',
+        : isRemedialResubmit
+          ? 'Perbaikan jawaban berhasil dikirim ulang!'
+          : 'Perubahan jawaban berhasil diperbarui!',
     }), { status: 200 });
-
   } catch (err: any) {
     console.error('Error saving submission:', err);
     return new Response(JSON.stringify({ error: err.message || 'Gagal menyimpan jawaban formulir.' }), { status: 500 });
