@@ -177,7 +177,7 @@ const ORIENTASI_LEARNING_CONTEXTS: Record<ActiveInteractiveOrientasiSlug, Learni
     teacherMessage: { title: 'Pesan Guru Pengampu RPL', message: 'Tidak ada lingkungan kerja yang paling unggul untuk semua orang; kenali cara kalian belajar, berkolaborasi, dan memberi dampak.', signature: 'Agung Gumelar Saputra, S.Tr.T. · Guru Pengampu RPL' },
   },
   'orientasi-pplg-04-matriks-skill-jenjang-karier': {
-    hero: { code: 'OR-01', sprint: 'Sprint 1 · Pertemuan 4', context: 'Karier PPLG tumbuh melalui hard skill, soft skill, dan pengalaman bertahap dari kelas 10 hingga peran profesional.', objective: 'Petakan bekal teknis dan kolaboratif kalian dalam roadmap kesiapan karier yang berangkat dari fondasi belajar.' },
+    hero: { code: 'OR-01', sprint: 'Sprint 1 · Pertemuan 4 & 5', context: 'Karier PPLG tumbuh melalui hard skill, soft skill, dan pengalaman bertahap dari kelas 10 hingga peran profesional.', objective: 'Petakan bekal teknis dan kolaboratif kalian dalam roadmap kesiapan karier yang berangkat dari fondasi belajar.' },
     teacherMessage: { title: 'Pesan Guru Pengampu RPL', message: 'Portofolio yang kuat bukan hanya menunjukkan kemampuan teknis, tetapi juga bukti komunikasi, ketekunan, dan kerja tim.', signature: 'Agung Gumelar Saputra, S.Tr.T. · Guru Pengampu RPL' },
   },
   'orientasi-pplg-05-job-fair-kelas': {
