@@ -7,7 +7,7 @@ const root = resolve(fileURLToPath(new URL('..', import.meta.url)));
 const contentDirectory = resolve(root, 'src/content/pembelajaran');
 const reader = await readFile(resolve(root, 'src/pages/pembelajaran/[...slug].astro'), 'utf8');
 const learningScene = await readFile(resolve(root, 'src/components/modul/OrientasiLearningScene.astro'), 'utf8');
-const interactiveRenderer = await readFile(resolve(root, 'src/components/modul/InteractiveModuleMaterial.astro'), 'utf8');
+const teacherMessageCard = await readFile(resolve(root, 'src/components/modul/TeacherMessageCard.astro'), 'utf8');
 const interactiveBehavior = await readFile(resolve(root, 'src/utils/interactiveModuleMaterialBehavior.ts'), 'utf8');
 const checkpoints = await readFile(resolve(root, 'src/utils/moduleCheckpoints.ts'), 'utf8');
 const lkpd = await readFile(resolve(root, 'src/components/modul/GeneralInteractiveLkpd.astro'), 'utf8');
@@ -22,7 +22,7 @@ const expectedInteractiveActivityKinds = new Map([
   ['orientasi-pplg-02-profesi-peluang-karier', ['explore', 'sequence']],
   ['orientasi-pplg-03-ekosistem-industri-pplg', ['explore', 'scenario']],
   ['orientasi-pplg-04-matriks-skill-jenjang-karier', ['explore', 'sequence']],
-  ['orientasi-pplg-05-job-fair-kelas', ['checklist', 'scenario']],
+  ['orientasi-pplg-05-job-fair-kelas', ['scenario', 'scenario']],
   ['orientasi-pplg-06-rencana-minat-awal', ['checklist', 'scenario']],
   ['orientasi-pplg-07-mind-map-profesi-pplg', ['explore', 'checklist']],
   ['orientasi-pplg-08-finalisasi-validasi-or01', ['checklist', 'sequence']],
@@ -47,9 +47,10 @@ assert.match(reader, /<GeneralInteractiveLkpd/, 'Reader harus memasang LKPD gene
 assert.match(reader, /\{isModul1 && \([\s\S]*data-reference-material[\s\S]*InteractiveMaterialP1/, 'Reader harus mempertahankan rujukan Modul 01 sebelum InteractiveMaterialP1.');
 const module02Branch = reader.match(/\{isOrientasiModule && !isModul1 && \(([\s\S]*?)\)\}\s*<div class="space-y-4 pt-2" id="checkpoint-challenge-area">\s*<InteractiveKnowledgeCheck\b/)?.[1];
 assert.ok(module02Branch, 'Cabang Modul 02–16 harus berakhir tepat pada batas checkpoint.');
-assert.match(module02Branch, /<details\s+data-reference-material\b[\s\S]*?<Content\s*\/>[\s\S]*?<\/details>\s*<TeacherMessageCard\s+teacherMessage=\{orientasiMaterial!\.teacherMessage\}\s*\/>\s*<OrientasiLearningScene\s+lessonSlug=\{lessonSlug\}\s+moduleTitle=\{entry\.data\.title\}\s*\/>\s*<\/>\s*$/, 'Cabang Modul 02–16 harus menutup panel rujukan sebelum merender kartu guru dan scene.');
+assert.match(module02Branch, /<details\s+data-reference-material\b[\s\S]*?<Content\s*\/>[\s\S]*?<\/details>\s*<TeacherMessageCard\s+lessonSlug=\{lessonSlug\}\s+teacherMessage=\{orientasiMaterial!\.teacherMessage\}\s*\/>\s*<OrientasiLearningScene\s+lessonSlug=\{lessonSlug\}\s+moduleTitle=\{entry\.data\.title\}\s+moduleDuration=\{entry\.data\.duration\}\s*\/>\s*<\/>\s*$/, 'Cabang Modul 02–16 harus menutup panel rujukan sebelum merender kartu guru dan scene dengan durasi frontmatter.');
 assert.doesNotMatch(module02Branch, /SmartMarkdownWrapper|InteractiveModuleMaterial/, 'Cabang Modul 02–16 tidak boleh memakai wrapper/renderer lama.');
 assert.doesNotMatch(learningScene, /TeacherMessageCard|data-teacher-message/, 'Scene tidak boleh menduplikasi kartu pesan guru milik reader.');
+assert.match(reader, /focus-visible:outline-amber-400[\s\S]*focus-visible:outline-offset-4/g, 'Kedua ringkasan referensi harus memiliki fokus keyboard kontras tinggi.');
 assert.match(reader, /\{entry\.data\.teacherTip && \(!isOrientasiModule \|\| isModul1\) && \(/, 'teacherTip lama hanya boleh tampil pada Modul 01 dan rute non-Orientasi.');
 assert.match(reader, /<InteractiveReflectionForm[\s\S]*moduleTitle=\{entry\.data\.title\}/, 'Refleksi harus menerima judul modul.');
 assert.match(reader, /id="btn-complete-lesson"/, 'Reader harus menyediakan tombol tuntas.');
@@ -102,14 +103,22 @@ for (const slug of CANONICAL_ORIENTASI_SLUGS.slice(1)) {
     }
   }
 }
-assert.match(interactiveRenderer, /aria-pressed="false"/, 'Renderer harus memberi state awal aria-pressed false.');
-assert.match(interactiveRenderer, /interactive-material__item-detail">\{item\.detail\}/, 'Renderer harus menampilkan detail setiap item.');
-assert.match(interactiveRenderer, /data-correct-order/, 'Renderer urutan harus menerima urutan jawaban eksplisit.');
-assert.match(interactiveRenderer, /data-sequence-action="up"[\s\S]*data-sequence-action="down"/, 'Renderer urutan harus memiliki kontrol pindah keyboard-accessible.');
-assert.match(interactiveRenderer, /getSequencePresentationItems\(activity\)/, 'Renderer urutan harus menyajikan item dalam urutan latihan yang dikonfigurasi.');
-assert.match(interactiveRenderer, /Periksa urutan[\s\S]*initializeInteractiveModuleMaterial/, 'Renderer urutan harus memasang perilaku validasi lokal.');
+assert.match(learningScene, /moduleDuration:\s*string/, 'Renderer aktif harus mewajibkan prop durasi bertipe string.');
+assert.match(learningScene, /data-module-duration[\s\S]*\{moduleDuration\}/, 'Hero renderer aktif harus menampilkan badge durasi.');
+assert.match(learningScene, /data-learning-scene/, 'Renderer aktif harus menandai setiap root scene.');
+assert.match(learningScene, /aria-pressed="false"/, 'Renderer aktif harus memberi state awal aria-pressed false.');
+assert.match(learningScene, /getChoiceActionLabel\(scene\.kind, item\.label\)/, 'Kontrol renderer aktif harus memakai label aksi spesifik item.');
+assert.match(learningScene, /aria-live="polite"\s+role="status"/, 'Setiap kartu scene harus memiliki live region lokal.');
+assert.match(learningScene, /data-correct-order/, 'Renderer aktif harus menerima urutan jawaban eksplisit.');
+assert.match(learningScene, /data-sequence-list/, 'Renderer aktif harus merender daftar urutan.');
+assert.match(learningScene, /data-sequence-action="up"[\s\S]*data-sequence-action="down"/, 'Renderer aktif harus memiliki kontrol pindah keyboard-accessible.');
+assert.match(learningScene, /getSequencePresentationItems\(scene\)/, 'Renderer aktif harus menyajikan item dalam urutan latihan yang dikonfigurasi.');
+assert.match(learningScene, /Periksa urutan[\s\S]*initializeInteractiveModuleMaterials\(document\)/, 'Renderer aktif harus memasang validasi lokal pada semua root scene.');
 assert.match(interactiveBehavior, /Urutan sudah tepat[\s\S]*Urutan belum tepat/, 'Perilaku urutan harus memvalidasi jawaban dengan umpan balik jelas.');
-assert.match(interactiveRenderer, /explore: 'Eksplorasi'[\s\S]*scenario: 'Pilih skenario'[\s\S]*sequence: 'Susun urutan'[\s\S]*checklist: 'Daftar cek'/, 'Label setiap jenis aktivitas harus dilokalkan.');
+assert.match(interactiveBehavior, /querySelectorAll<HTMLElement>\('\[data-learning-scene\]'\)/, 'Initializer harus mencakup setiap instance scene.');
+assert.match(teacherMessageCard, /teacher-message-\$\{lessonSlug\}/, 'ID kartu pesan guru harus diturunkan dari lessonSlug.');
+assert.match(learningScene, /orientasi-learning-scene-\$\{lessonSlug\}/, 'ID renderer aktif harus diturunkan dari lessonSlug.');
+assert.doesNotMatch(learningScene, /fetch\s*\(|localStorage|sessionStorage|\/api\/|\bXP\b|href=|data-switch-tab/i, 'Renderer aktif harus tetap lokal tanpa API, storage, XP, atau navigasi.');
 
 for (const filename of orientasi.slice(1)) {
   const slug = filename.replace(/\.md$/, '');

@@ -28,9 +28,9 @@ Modul 01 tidak diubah secara fungsional. Ia tetap menjadi baseline yang telah ad
 
 ## Arsitektur terimplementasi
 
-1. `OrientasiLearningScene.astro` menjadi shell bersama hero dan dua scene Modul 02–16. `TeacherMessageCard.astro` tetap komponen mandiri di luar shell dan di luar panel `details`. Keduanya memakai token dark-slate, kontras tinggi, serta fokus keyboard eksplisit tanpa gradien neon, blur, atau glassmorphism.
+1. `OrientasiLearningScene.astro` menjadi shell bersama hero dan dua scene Modul 02–16. Hero menerima durasi frontmatter sebagai prop wajib dan menampilkannya bersama kode, sprint, serta fase. `TeacherMessageCard.astro` tetap komponen mandiri di luar shell dan di luar panel `details`. Keduanya memakai token dark-slate, kontras tinggi, serta fokus keyboard eksplisit tanpa gradien neon, blur, atau glassmorphism.
 2. Katalog `orientasiInteractiveMaterials.ts` menyimpan data pembelajaran terstruktur. Setiap modul memuat `teacherMessage`, `hero`, tujuan, dan dua scene dengan fakta/detail yang berasal dari Markdown modul terkait.
-3. Renderer membedakan mekanik choice/scenario/checklist dan sequence; umpan balik tinggal pada scene yang dioperasikan, sedangkan sequence menyediakan kontrol naik/turun dan validasi.
+3. Renderer membedakan mekanik choice/scenario/checklist dan sequence; umpan balik tinggal pada scene yang dioperasikan, sedangkan sequence menyediakan kontrol naik/turun dan validasi. ID relasi aksesibilitas diturunkan dari `lessonSlug`, dan initializer memproses setiap root `[data-learning-scene]` agar aman bila lebih dari satu instance dirender.
 4. State scene hanya berada di DOM selama halaman aktif. Tidak ada API, `localStorage`, XP, atau navigasi pada aktivitas formatif.
 5. Urutan sibling DOM reader Modul 02–16 adalah: `details[data-reference-material]` → `TeacherMessageCard` → hero dan dua scene dalam `OrientasiLearningScene` → area checkpoint `InteractiveKnowledgeCheck`. Modul 01 mempertahankan urutan baseline yang telah tervalidasi.
 

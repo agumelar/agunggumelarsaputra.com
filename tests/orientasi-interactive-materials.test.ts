@@ -10,7 +10,7 @@ const expectedActivityKinds = {
   'orientasi-pplg-02-profesi-peluang-karier': ['explore', 'sequence'],
   'orientasi-pplg-03-ekosistem-industri-pplg': ['explore', 'scenario'],
   'orientasi-pplg-04-matriks-skill-jenjang-karier': ['explore', 'sequence'],
-  'orientasi-pplg-05-job-fair-kelas': ['checklist', 'scenario'],
+  'orientasi-pplg-05-job-fair-kelas': ['scenario', 'scenario'],
   'orientasi-pplg-06-rencana-minat-awal': ['checklist', 'scenario'],
   'orientasi-pplg-07-mind-map-profesi-pplg': ['explore', 'checklist'],
   'orientasi-pplg-08-finalisasi-validasi-or01': ['checklist', 'sequence'],
@@ -51,32 +51,12 @@ test('every active Orientasi module after Module 01 has complete and expected in
   }
 });
 
-test('interactive material renderer keeps feedback local and accessible', async () => {
+test('retired interactive renderer has no production reader reference', async () => {
   const source = await readFile(
-    new URL('../src/components/modul/InteractiveModuleMaterial.astro', import.meta.url),
+    new URL('../src/pages/pembelajaran/[...slug].astro', import.meta.url),
     'utf8',
   );
-  const behaviorSource = await readFile(
-    new URL('../src/utils/interactiveModuleMaterialBehavior.ts', import.meta.url),
-    'utf8',
-  );
-
-  assert.match(source, /aria-live="polite"/);
-  assert.match(source, /data-activity-id/);
-  assert.match(source, /aria-pressed="false"/);
-  assert.match(source, /interactive-material__item-detail">\{item\.detail\}/);
-  assert.match(source, /data-correct-order/);
-  assert.match(source, /<ol class="interactive-material__sequence-list" data-sequence-list/);
-  assert.match(source, /data-sequence-action="up"/);
-  assert.match(source, /data-sequence-action="down"/);
-  assert.match(source, /Periksa urutan/);
-  assert.match(source, /getSequencePresentationItems\(activity\)/);
-  assert.match(source, /initializeInteractiveModuleMaterial/);
-  assert.match(behaviorSource, /Urutan sudah tepat/);
-  assert.match(behaviorSource, /Urutan belum tepat/);
-  assert.match(source, /explore: 'Eksplorasi'[\s\S]*scenario: 'Pilih skenario'[\s\S]*sequence: 'Susun urutan'[\s\S]*checklist: 'Daftar cek'/);
-  assert.doesNotMatch(source, /localStorage/);
-  assert.doesNotMatch(source, /fetch\s*\(/);
+  assert.doesNotMatch(source, /InteractiveModuleMaterial/);
 });
 
 test('reader mounts canonical Module 02–16 activities while preserving Module 01', async () => {
@@ -91,5 +71,14 @@ test('reader mounts canonical Module 02–16 activities while preserving Module 
     source,
     /\{isOrientasiModule && !isModul1 && \([\s\S]*data-reference-material[\s\S]*TeacherMessageCard[\s\S]*OrientasiLearningScene[\s\S]*InteractiveKnowledgeCheck/,
   );
+  assert.match(source, /TeacherMessageCard\s+lessonSlug=\{lessonSlug\}\s+teacherMessage=\{orientasiMaterial!\.teacherMessage\}/);
+  assert.match(source, /OrientasiLearningScene[\s\S]*moduleDuration=\{entry\.data\.duration\}/);
   assert.match(source, /\{isModul1 && \([\s\S]*data-reference-material[\s\S]*InteractiveMaterialP1/);
+
+  const referenceSummaries = [...source.matchAll(/<summary class="([^"]+)"/g)].map((match) => match[1]);
+  assert.equal(referenceSummaries.length, 2);
+  for (const className of referenceSummaries) {
+    assert.match(className, /focus-visible:outline-amber-400/);
+    assert.match(className, /focus-visible:outline-offset-4/);
+  }
 });

@@ -9,6 +9,14 @@ Format penulisan mengacu pada [Keep a Changelog](https://keepachangelog.com/id/1
 - Opsi Hapus Akun siswa melalui panel Admin (`/admin/users`).
 - Generator PDF Otomatis untuk Rekap Portofolio Skill Passport Siswa.
 
+### 2026-08-08 — Final Fix Paritas Renderer Aktif Modul 02–16 — Release BLOCKED
+- Menambahkan durasi frontmatter sebagai prop wajib bertipe string dan badge hero yang terlihat pada `OrientasiLearningScene`; reader kini meneruskan `entry.data.duration` tanpa mengubah policy, gating, Quest, LKPD, refleksi, atau XP.
+- Memindahkan regression guard inti dari renderer lama yang tidak dipakai ke markup nyata `OrientasiLearningScene`. Harness mengompilasi komponen Astro aktif, merender HTML server, lalu memeriksa label kontrol spesifik item, state awal `aria-pressed`, live region lokal, kontrol sequence, serta ketiadaan API, storage, XP, navigasi, dan perilaku progres.
+- Membuat ID kartu guru, root scene, judul hero, dan judul kartu unik berdasarkan `lessonSlug`; initializer kini mencakup setiap root `[data-learning-scene]`. Kedua ringkasan bacaan rujukan mendapat outline `focus-visible` amber berkontras tinggi.
+- Menyelaraskan Modul 05 dengan peta belajar yang disetujui dari Markdown sumber: scene pertama memilih rute booth berdasarkan minat/tujuan, sedangkan scene kedua membedakan pertanyaan wawancara kuat dan lemah.
+- Verifikasi lokal final lulus: focused tests 10/10, `npm run test:orientasi` 20/20, `npm run verify:orientasi-parity` PASS, `npm run build` exit 0, dan whitespace check exit 0.
+- Status rilis tetap **BLOCKED** oleh `TEAM_ACCESS_REQUIRED` pada deployment `dpl_EiYNktHu2XLAsiHfGVdcDA8sS5Ui`. Tidak ada deployment, login siswa, submission, progress, atau mutasi data pada final-fix ini; uji siswa production tetap ditunda sampai deployment kanonis benar-benar `READY` dan beralias `www`.
+
 ### 2026-08-08 — Paritas Alur Visual Modul 02–16 — Release BLOCKED
 - Menetapkan urutan DOM reader Modul 02–16 agar mengikuti ritme Modul 01 secara eksplisit: panel `details` **Bacaan Rujukan & Materi Lengkap** → `TeacherMessageCard` yang selalu terlihat di luar `details` → hero dan dua scene kontekstual melalui `OrientasiLearningScene` → `InteractiveKnowledgeCheck` sebagai checkpoint. Modul 01 tetap menjadi baseline dan tidak dipindahkan ke shell baru.
 - Memperkaya 15 entri `orientasiInteractiveMaterials.ts` dengan `teacherMessage`, hero faktual, dan tepat dua scene yang mempertahankan substansi modul. Modul 02 membahas profesi serta handoff tim produk; isinya bukan contoh Skill Passport Modul 01. Aktivitas scene tetap formatif dan lokal di DOM: tanpa API, storage, XP, atau jalur pembuka tab.

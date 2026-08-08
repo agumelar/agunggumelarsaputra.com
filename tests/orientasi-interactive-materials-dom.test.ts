@@ -1,44 +1,62 @@
 import assert from 'node:assert/strict';
-import { readFile } from 'node:fs/promises';
 import test from 'node:test';
 import { Window } from 'happy-dom';
 
 import { getSequencePresentationItems, initializeInteractiveModuleMaterial } from '../src/utils/interactiveModuleMaterialBehavior.ts';
+import * as interactiveBehavior from '../src/utils/interactiveModuleMaterialBehavior.ts';
 import { getOrientasiInteractiveMaterial } from '../src/utils/orientasiInteractiveMaterials.ts';
+import { renderAstroComponent } from './helpers/renderAstroComponent.ts';
 
 const material = getOrientasiInteractiveMaterial('orientasi-pplg-02-profesi-peluang-karier');
 const sequenceActivity = material.activities.find((activity) => activity.kind === 'sequence');
 assert.ok(sequenceActivity?.correctOrder);
 const correctOrder = [...sequenceActivity.correctOrder];
 
-function renderSceneFixture() {
-  const root = document.createElement('section');
-  root.innerHTML = `<aside data-teacher-message></aside><div role="status" aria-live="polite"></div><article data-activity-id="scene-explore"><div role="status" aria-live="polite"></div><button class="interactive-material__choice" data-kind="explore" data-label="Frontend Developer" data-detail="Mengubah desain menjadi antarmuka web responsif." data-feedback="Frontend menghubungkan rancangan ke antarmuka." aria-pressed="false">Frontend Developer</button></article>`;
-  return root;
-}
-
-test('scene choice announces feedback and preserves the teacher message outside details', () => {
+test('all rendered learning-scene instances initialize scenario and checklist state with local feedback', async () => {
   const window = new Window();
   globalThis.document = window.document;
-  const root = renderSceneFixture();
+  const componentUrl = new URL('../src/components/modul/OrientasiLearningScene.astro', import.meta.url);
+  const scenario = await renderAstroComponent(componentUrl, {
+    lessonSlug: 'orientasi-pplg-03-ekosistem-industri-pplg',
+    moduleTitle: 'Ekosistem Industri PPLG',
+    moduleDuration: '2 JP (90 Menit)',
+  });
+  const checklist = await renderAstroComponent(componentUrl, {
+    lessonSlug: 'orientasi-pplg-06-rencana-minat-awal',
+    moduleTitle: 'Rencana Minat Awal',
+    moduleDuration: '2 JP (90 Menit)',
+  });
+  document.body.innerHTML = scenario.html + checklist.html;
 
-  initializeInteractiveModuleMaterial(root);
-  root.querySelector<HTMLButtonElement>('[data-label="Frontend Developer"]')!.click();
+  assert.equal(typeof interactiveBehavior.initializeInteractiveModuleMaterials, 'function');
+  interactiveBehavior.initializeInteractiveModuleMaterials(document);
 
-  assert.match(root.querySelector('[data-activity-id] [role="status"]')!.textContent!, /Frontend/);
-  assert.equal(root.querySelector(':scope > [role="status"]')!.textContent, '');
-  assert.equal(root.querySelector('[data-teacher-message]')!.closest('details'), null);
-  assert.equal(root.querySelector('[aria-pressed]')!.getAttribute('aria-pressed'), 'true');
-  window.close();
-});
+  const roots = document.querySelectorAll<HTMLElement>('[data-learning-scene]');
+  assert.equal(roots.length, 2);
+  const scenarioButton = roots[0].querySelector<HTMLButtonElement>('[data-kind="scenario"]');
+  const checklistButton = roots[1].querySelector<HTMLButtonElement>('[data-kind="checklist"]');
+  assert.ok(scenarioButton && checklistButton);
 
-test('learning scene gives every factual item an action name containing its label', async () => {
-  const source = await readFile(
-    new URL('../src/components/modul/OrientasiLearningScene.astro', import.meta.url),
-    'utf8',
+  scenarioButton.click();
+  assert.equal(scenarioButton.getAttribute('aria-pressed'), 'true');
+  assert.match(
+    scenarioButton.closest('[data-activity-id]')!.querySelector('[role="status"]')!.textContent!,
+    new RegExp(scenarioButton.dataset.label!),
   );
 
-  assert.match(source, /kind === 'checklist' \? `Tandai \$\{label\}` : `Lihat kaitan \$\{label\}`/);
+  checklistButton.click();
+  assert.equal(checklistButton.getAttribute('aria-pressed'), 'true');
+  assert.match(
+    checklistButton.closest('[data-activity-id]')!.querySelector('[role="status"]')!.textContent!,
+    /ditandai sebagai sudah dicek/,
+  );
+  checklistButton.click();
+  assert.equal(checklistButton.getAttribute('aria-pressed'), 'false');
+  assert.match(
+    checklistButton.closest('[data-activity-id]')!.querySelector('[role="status"]')!.textContent!,
+    /tanda cek dibatalkan/,
+  );
+  window.close();
 });
 
 test('sequence renderer script reorders, validates, and keeps selection state accessible', () => {

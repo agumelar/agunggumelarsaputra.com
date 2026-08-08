@@ -90,3 +90,9 @@ export function initializeInteractiveModuleMaterial(root: HTMLElement): void {
     });
   });
 }
+
+export function initializeInteractiveModuleMaterials(scope: ParentNode): void {
+  scope.querySelectorAll<HTMLElement>('[data-learning-scene]').forEach((root) => {
+    initializeInteractiveModuleMaterial(root);
+  });
+}

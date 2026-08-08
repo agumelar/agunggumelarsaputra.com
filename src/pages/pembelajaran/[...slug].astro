@@ -311,7 +311,7 @@ const progressPercentage = sortedSidebarModules.length > 0 ? Math.round((totalCo
             <section id="panel-materi" class="tab-panel space-y-6">
               {isModul1 && (
                 <details data-reference-material class="group p-4 sm:p-5 rounded-2xl bg-secondary/30 border border-border/80 hover:border-border transition-all shadow-sm">
-                  <summary class="cursor-pointer font-bold text-xs sm:text-sm text-foreground flex items-center justify-between list-none select-none outline-none">
+                  <summary class="cursor-pointer font-bold text-xs sm:text-sm text-foreground flex items-center justify-between list-none select-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-amber-400 focus-visible:outline-offset-4">
                     <span class="flex items-center gap-2">
                       <span class="text-base">📜</span>
                       <span>Bacaan Rujukan Silabus & Catatan Kurikulum Lengkap</span>
@@ -337,7 +337,7 @@ const progressPercentage = sortedSidebarModules.length > 0 ? Math.round((totalCo
               {isOrientasiModule && !isModul1 && (
                 <>
                   <details data-reference-material class="group p-4 sm:p-5 rounded-2xl bg-secondary/30 border border-border/80 hover:border-border transition-all shadow-sm">
-                    <summary class="cursor-pointer font-bold text-xs sm:text-sm text-foreground flex items-center justify-between list-none select-none outline-none">
+                    <summary class="cursor-pointer font-bold text-xs sm:text-sm text-foreground flex items-center justify-between list-none select-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-amber-400 focus-visible:outline-offset-4">
                       <span class="flex items-center gap-2">
                         <span class="text-base">📜</span>
                         <span>Bacaan Rujukan & Materi Lengkap</span>
@@ -351,11 +351,15 @@ const progressPercentage = sortedSidebarModules.length > 0 ? Math.round((totalCo
                     </div>
                   </details>
 
-                  <TeacherMessageCard teacherMessage={orientasiMaterial!.teacherMessage} />
+                  <TeacherMessageCard
+                    lessonSlug={lessonSlug}
+                    teacherMessage={orientasiMaterial!.teacherMessage}
+                  />
 
                   <OrientasiLearningScene
                     lessonSlug={lessonSlug}
                     moduleTitle={entry.data.title}
+                    moduleDuration={entry.data.duration}
                   />
                 </>
               )}

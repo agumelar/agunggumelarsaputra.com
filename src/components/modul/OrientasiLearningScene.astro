@@ -10,9 +10,10 @@ import type { OrientasiSlug } from '../../utils/orientasiPplgPolicy.ts';
 interface Props {
   lessonSlug: OrientasiSlug;
   moduleTitle?: string;
+  moduleDuration: string;
 }
 
-const { lessonSlug, moduleTitle } = Astro.props;
+const { lessonSlug, moduleTitle, moduleDuration } = Astro.props;
 const material = getOrientasiInteractiveMaterial(lessonSlug);
 const hero: LearningHero = material.hero;
 const scenes: [LearningScene, LearningScene] = material.scenes;
@@ -20,15 +21,18 @@ const kindLabels = { explore: 'Jelajahi fakta', scenario: 'Cermati situasi', seq
 const getChoiceActionLabel = (kind: LearningScene['kind'], label: string) => (
   kind === 'checklist' ? `Tandai ${label}` : `Lihat kaitan ${label}`
 );
+const componentId = `orientasi-learning-scene-${lessonSlug}`;
+const titleId = `${componentId}-title`;
+const getSceneTitleId = (index: number) => `${componentId}-scene-${index + 1}-title`;
 ---
 
-<section id="orientasi-learning-scene" class="learning-scene" aria-labelledby="learning-scene-title">
+<section id={componentId} data-learning-scene class="learning-scene" aria-labelledby={titleId}>
   <header class="learning-scene__hero">
     <div class="learning-scene__meta" aria-label="Konteks modul">
-      <span>{hero.code}</span><span>{hero.sprint}</span><span>Orientasi PPLG · Fase E</span>
+      <span>{hero.code}</span><span>{hero.sprint}</span><span>Orientasi PPLG · Fase E</span><span data-module-duration aria-label={`Durasi ${moduleDuration}`}>{moduleDuration}</span>
     </div>
     <p class="learning-scene__context">{hero.context}</p>
-    <h2 id="learning-scene-title">{moduleTitle ?? material.title}</h2>
+    <h2 id={titleId}>{moduleTitle ?? material.title}</h2>
     <div class="learning-scene__objective">
       <span aria-hidden="true">◎</span>
       <div><strong>Target yang dapat diamati</strong><p>{hero.objective}</p></div>
@@ -37,10 +41,10 @@ const getChoiceActionLabel = (kind: LearningScene['kind'], label: string) => (
 
   <div class="learning-scene__cards">
     {scenes.map((scene, index) => (
-      <article class="learning-scene__card" data-activity-id={`${lessonSlug}-scene-${index + 1}`} aria-labelledby={`scene-${index + 1}`}>
+      <article class="learning-scene__card" data-activity-id={`${lessonSlug}-scene-${index + 1}`} aria-labelledby={getSceneTitleId(index)}>
         <div class="learning-scene__card-heading">
           <p><span aria-hidden="true">{index === 0 ? '01' : '02'}</span>{kindLabels[scene.kind]}</p>
-          <h3 id={`scene-${index + 1}`}>{scene.title}</h3>
+          <h3 id={getSceneTitleId(index)}>{scene.title}</h3>
           <p class="learning-scene__instruction">{scene.instruction}</p>
         </div>
 
@@ -78,9 +82,8 @@ const getChoiceActionLabel = (kind: LearningScene['kind'], label: string) => (
 </section>
 
 <script>
-  import { initializeInteractiveModuleMaterial } from '../../utils/interactiveModuleMaterialBehavior.ts';
-  const root = document.querySelector<HTMLElement>('#orientasi-learning-scene');
-  if (root) initializeInteractiveModuleMaterial(root);
+  import { initializeInteractiveModuleMaterials } from '../../utils/interactiveModuleMaterialBehavior.ts';
+  initializeInteractiveModuleMaterials(document);
 </script>
 
 <style>

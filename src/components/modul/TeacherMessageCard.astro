@@ -1,18 +1,22 @@
 ---
 import type { TeacherMessage } from '../../utils/orientasiInteractiveMaterials.ts';
+import type { OrientasiSlug } from '../../utils/orientasiPplgPolicy.ts';
 
 interface Props {
+  lessonSlug: OrientasiSlug;
   teacherMessage: TeacherMessage;
 }
 
-const { teacherMessage } = Astro.props;
+const { lessonSlug, teacherMessage } = Astro.props;
+const cardId = `teacher-message-${lessonSlug}`;
+const titleId = `${cardId}-title`;
 ---
 
-<aside class="teacher-message" data-teacher-message aria-labelledby="teacher-message-title">
+<aside id={cardId} class="teacher-message" data-teacher-message aria-labelledby={titleId}>
   <div class="teacher-message__icon" aria-hidden="true">✦</div>
   <div>
     <p class="teacher-message__eyebrow">Arahan pembelajaran</p>
-    <h2 id="teacher-message-title">{teacherMessage.title}</h2>
+    <h2 id={titleId}>{teacherMessage.title}</h2>
     <p class="teacher-message__body">{teacherMessage.message}</p>
     <p class="teacher-message__signature">— {teacherMessage.signature}</p>
   </div>
