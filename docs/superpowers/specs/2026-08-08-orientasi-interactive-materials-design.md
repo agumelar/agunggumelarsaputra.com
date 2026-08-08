@@ -1,6 +1,6 @@
 # Desain Materi Interaktif Orientasi PPLG Modul 02–16
 
-> **Status:** Implementasi terverifikasi; rilis kanonik tertunda (deployment kanonik belum READY)
+> **Status:** Implementasi terverifikasi dan dirilis pada production kanonik
 > **Tanggal:** 2026-08-08
 > **Acuan mutu:** `InteractiveMaterialP1.astro` pada Modul 01
 
@@ -61,8 +61,8 @@ Menyamakan kedalaman eksplorasi materi Modul 02–16 dengan Modul 01 tanpa menya
 - `npm run test:orientasi` lulus 14/14, termasuk regression Happy DOM executable untuk reorder/validasi `sequence` dan state pilihan aksesibel; `npm run verify:orientasi-parity` menghasilkan PASS; `npm run build` menyelesaikan Astro server build dengan exit 0.
 - `happy-dom` 20.11.2 adalah dev-only test harness dan sudah dipatch. Audit mencatat 0 critical, tetapi bukan audit global bersih: high chain yang tidak terkait melalui `@astrojs/vercel` → `@vercel/routing-utils` → `path-to-regexp` dan dependency `sharp` perlu ditangani pada pemeliharaan dependency terpisah.
 - Deployment `dpl_CMVnY7i2RtM2SWyz299bzXssAkT2` READY hanya untuk proyek standalone di `https://orientasi-interactive-materials-5i6fvi902-agumelars-projects.vercel.app` dan alias `https://orientasi-interactive-materials.vercel.app`; bukan deployment kanonik.
-- Deploy ulang ke proyek kanonik menciptakan `dpl_A8KAA1B3dC9oZb4XPcrEvUUnDW2Z` di `https://agunggumelarsaputra-qdw4qvsy3-agumelars-projects.vercel.app`, tetapi `npx vercel --prod --yes` timeout dan `vercel inspect` menunjukkan status `UNKNOWN`; alias `www.agunggumelarsaputra.com` belum dikonfirmasi untuk job ini. Status desain tidak boleh dinaikkan menjadi rilis sampai ada job kanonik READY.
-- Smoke tanpa autentikasi hanya membuktikan domain kanonik `/` HTTP 200 dan `/pembelajaran` HTTP 302 ke login; redirect tersebut tidak membuktikan konten katalog terproteksi. POST checkpoint tanpa sesi HTTP 401.
+- Percobaan kanonik sebelumnya `dpl_A8KAA1B3dC9oZb4XPcrEvUUnDW2Z` tetap `UNKNOWN` dan bukan dasar klaim rilis. Deployment kanonik final `dpl_8RN2agHFQJmDZX2gLPZ6xxEMbrmL` READY di `https://agunggumelarsaputra-q3bm6qzbb-agumelars-projects.vercel.app` dan teralias ke `https://www.agunggumelarsaputra.com` serta apex.
+- Smoke tanpa autentikasi pada deployment final membuktikan domain kanonik `/` HTTP 200, `/pembelajaran` HTTP 302 ke `/login?redirect=%2Fpembelajaran`, dan `POST /api/gamification/claim-checkpoint` HTTP 401. Redirect tersebut tidak membuktikan konten katalog terproteksi.
 - Batas yang disengaja: alur interaksi dan inspeksi katalog terproteksi memerlukan siswa legitimate yang telah enrollment. Rilis ini tidak membuat akun palsu dan tidak membypass autentikasi.
 
 ## Keputusan eksplisit
