@@ -136,11 +136,11 @@ Mencatat pengumpulan lembar kerja (LKPD & Refleksi) siswa beserta nilai dan cata
 
 ---
 
-## 4. Standar Penulisan Konten Modul Pembelajaran (Content Collections)
+## 4. Standar Penulisan & Arsitektur Modul Pembelajaran (`[...slug].astro`)
 
-Semua modul pembelajaran diletakkan di `src/content/pembelajaran/*.md`.
+Semua modul pembelajaran diletakkan di `src/content/pembelajaran/*.md` dan dirender secara interaktif melalui `src/pages/pembelajaran/[...slug].astro`.
 
-### Format Frontmatter Standar:
+### 4.1 Format Frontmatter Standar:
 ```yaml
 ---
 title: "01. Pengantar Orientasi PPLG & Skill Passport"
@@ -154,12 +154,19 @@ tags: ["PPLG", "Kurikulum Merdeka", "Skill Passport", "Kelas 10"]
 ---
 ```
 
-### Struktur Konten Modul Wajib:
-1. **Target Capaian Pembelajaran (CP / TP)**
-2. **Uraian Materi Konseptual & Praktis** (Gunakan ilustrasi, tabel, diagram, atau tips)
-3. **Tips & Arahan Guru (Pak Agung)**: Disajikan dalam format quote/alert box elegan.
-4. **Lembar Kerja Peserta Didik (LKPD)**: Pertanyaan evaluasi atau tugas mandiri/kelompok.
-5. **Tombol "Tandai Selesai"**: Terhubung ke endpoint `/api/progress/complete` untuk pemberian XP.
+### 4.2 Ketentuan Alur Pembelajaran Sekuensial & 4-Tab Reader:
+1. **Gating Antar-Modul:**
+   - Siswa harus menuntaskan **Modul $N$** sebelum **Modul $N+1$** dapat diakses (Modul 1 selalu terbuka, Guru/Admin memiliki hak bypass).
+   - Akses URL langsung ke modul terkunci menampilkan **Layar Proteksi (*Locked Gating Card*)**.
+2. **Struktur 4 Tab Sekuensial di Dalam Modul:**
+   - **Tab 1 (Materi & Visual):** Pembahasan materi + **Mini-Game / Checkpoint Quest** (sistem 3 nyawa, auto-reset state saat gagal). Lolos checkpoint membuka Tab 2.
+   - **Tab 2 (Form LKPD):** Form lembar kerja interaktif (+25 XP). Menyimpan jawaban membuka Tab 3.
+   - **Tab 3 (Jurnal Refleksi - Tab Terakhir):** Form refleksi metakognitif (+15 XP).
+     - **ATURAN POSISI TOMBOL SELESAI:** Tombol **"Tandai Selesai & Buka Modul Selanjutnya"** (`#btn-complete-lesson`) **HANYA ADA DI TAB REFLEKSI (Tab 3)** dan tidak boleh diletakkan di tab sebelumnya.
+     - Mengklik tombol ini menyimpan data penyelesaian ke tabel `user_progress` dan memicu tombol **"Lanjut ke Modul Selanjutnya ➔"**.
+   - **Tab 4 (Panduan KKTP):** Standar rubrik ketercapaian kompetensi Guru (Level 0 s/d Level 4).
+3. **Bilah Progres Mata Pelajaran:**
+   - Bilah progres dinamis (% & rasio modul selesai dari total 16 pertemuan) ditampilkan di header reader modul dan katalog utama `/pembelajaran/orientasi-pplg`.
 
 ---
 

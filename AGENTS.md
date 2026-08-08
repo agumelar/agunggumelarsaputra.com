@@ -92,7 +92,7 @@
 
 ---
 
-## 5. Alur Kerja Modul Pembelajaran & Token Enrollment
+## 5. Alur Kerja Modul Pembelajaran, Gating Sekuensial, & Token Enrollment
 
 ```text
 [Siswa Membuka /pembelajaran]
@@ -105,12 +105,40 @@
    ├── Jika Belum Terdaftar (Unenrolled):
    │     └── Muncul Modal/Input Token: "Masukkan Token Akses dari Guru"
    │     └── Siswa memasukkan Token (misal: "OPPLG-XRPL1") ──► POST /api/enroll
-   │     └── Token tervalidasi ──► Akses 16 Modul Terbuka
+   │     └── Token tervalidasi ──► Akses Modul Terbuka (Mengikuti Alur Sekuensial)
    │
    └── Jika Sudah Terdaftar (Enrolled):
-         └── Seluruh modul (Modul 1 s/d 16) dapat diakses
-         └── Progress baca & LKPD tersimpan ke database via POST /api/progress/complete
+         └── Tampil Bilah Progres Mata Pelajaran (Jumlah & % Modul Selesai)
+         └── Kartu Modul memiliki 3 status visual:
+               ├── 🔒 TERKUNCI: Modul N+1 jika Modul N belum diselesaikan siswa
+               ├── 🚀 AKTIF: Modul berjalan yang siap dipelajari
+               └── ✅ SELESAI: Modul yang telah tuntas ditandai selesai
 ```
+
+### 5.1 Ketentuan Baku Alur Modul Pembelajaran (`[...slug].astro`):
+1. **Gating Sekuensial Antar-Modul (Mutlak):**
+   - **Modul 1** selalu terbuka sebagai fondasi awal.
+   - **Modul $N+1$** terkunci hingga siswa menyelesaikan **Modul $N$** (tercatat di tabel `userProgress`).
+   - Akun Guru / Admin (`role: 'admin'`) memiliki hak akses *bypass* untuk memeriksa seluruh modul kapan saja.
+   - Jika siswa membuka URL modul terkunci secara langsung, sistem wajib menampilkan **Layar Proteksi (*Locked Card Screen*)** dengan tombol navigasi kembali ke modul prasyarat.
+
+2. **Aturan 4 Tab Pembelajaran di Setiap Modul:**
+   - **Tab 1: 📖 Materi & Visual:**
+     - Berisi materi konseptual, diagram interaktif, dan panduan visual.
+     - Di bagian bawah materi terdapat **Mini-Game / Kuis Checkpoint 3-Stage Quest** (sistem 3 nyawa, auto-reset total saat Game Over).
+     - Menuntaskan kuis checkpoint membuka akses ke Tab 2.
+   - **Tab 2: 📝 Form LKPD Interaktif (+25 XP):**
+     - Form pengisian lembar kerja mandiri/kelompok.
+     - Menyimpan form LKPD (POST `/api/submissions/save`) membuka akses ke Tab 3.
+   - **Tab 3: 💭 Jurnal Refleksi (+15 XP) [TAB TERAKHIR UTAMA]:**
+     - Form refleksi metakognitif siswa atas pembelajaran.
+     - **ATURAN POSISI TOMBOL SELESAI:** Tombol **"Tandai Selesai & Buka Modul Selanjutnya"** (`#btn-complete-lesson`) **HANYA ADA DI TAB INI (Tab 3)** dan DILARANG diletakkan di tab sebelumnya.
+     - Setelah diklik, sistem memicu POST `/api/progress/complete`, memperbarui live score/XP, dan menampilkan tombol aktif **"Lanjut ke Modul Selanjutnya ➔"**.
+   - **Tab 4: 🎯 Panduan Kriteria Guru (KKTP):**
+     - Rubrik penilaian ketercapaian kompetensi Level 0 (Belum), Level 1 (Mengingat), Level 2 (Mencoba), Level 3 (Mahir), hingga Level 4 (Kreatif).
+
+3. **Bilah Progres Mata Pelajaran:**
+   - Setiap modul menampilkan progress bar horizontal di header yang menghitung total modul selesai dibagi 16 modul Orientasi PPLG secara *real-time*.
 
 ---
 
