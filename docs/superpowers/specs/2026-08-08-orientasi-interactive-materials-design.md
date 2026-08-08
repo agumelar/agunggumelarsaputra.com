@@ -17,7 +17,7 @@ Menyamakan kedalaman eksplorasi materi Modul 02–16 dengan Modul 01 tanpa menya
 
 ## Arsitektur
 
-1. `src/utils/orientasiInteractiveMaterials.ts` menjadi katalog server-side untuk 15 slug kanonik (Modul 02–16). Setiap konfigurasi memuat judul, tujuan singkat, serta dua aktivitas bertipe `explore`, `scenario`, `sequence`, atau `checklist`, dengan detail dan feedback yang terlihat.
+1. `src/utils/orientasiInteractiveMaterials.ts` menjadi katalog server-side untuk 15 slug kanonik (Modul 02–16). Setiap konfigurasi memuat judul, tujuan singkat, serta dua aktivitas bertipe `explore`, `scenario`, `sequence`, atau `checklist`, dengan detail instruksional setiap butir yang selalu terlihat; feedback muncul secara lokal setelah interaksi, dan checklist menyampaikannya melalui live region.
 2. `src/components/modul/InteractiveModuleMaterial.astro` merender konfigurasi sebagai kartu solid berkontras tinggi dan menangani interaksi menggunakan `data-*` attributes serta script Astro scoped. `src/utils/interactiveModuleMaterialBehavior.ts` memegang perilaku lokal aktivitas, termasuk reorder nyata dan validasi aktivitas `sequence`. Tidak ada dependency framework client atau data eksternal.
 3. Reader `src/pages/pembelajaran/[...slug].astro` menampilkan komponen baru untuk Modul 02–16, dengan Markdown dibungkus sebagai bacaan rujukan. Alur Modul 01 dan seluruh komponen bersama yang ada tidak berubah.
 4. Test policy memastikan semua 15 Modul 02–16 mempunyai dua aktivitas valid dan reader memasang komponen hanya pada jalur Modul 02–16. Parity guard diperluas agar kontrak ini tidak mundur pada sesi berikutnya.
