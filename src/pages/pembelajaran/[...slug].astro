@@ -10,6 +10,7 @@ import InteractiveKnowledgeCheck from '../../components/modul/InteractiveKnowled
 import LiveScoreWidget from '../../components/modul/LiveScoreWidget.astro';
 import AntiCopyPasteGuardian from '../../components/modul/AntiCopyPasteGuardian.astro';
 import SmartMarkdownWrapper from '../../components/modul/SmartMarkdownWrapper.astro';
+import InteractiveModuleMaterial from '../../components/modul/InteractiveModuleMaterial.astro';
 import { db, isDbConfigured, ensureDbInitialized } from '../../db';
 import { userSubmissions, userProgress } from '../../db/schema';
 import { eq, and } from 'drizzle-orm';
@@ -322,10 +323,34 @@ const progressPercentage = sortedSidebarModules.length > 0 ? Math.round((totalCo
 
               {isModul1 ? (
                 <InteractiveMaterialP1 user={user} />
-              ) : (
+              ) : !isOrientasiModule ? (
                 <SmartMarkdownWrapper>
                   <Content />
                 </SmartMarkdownWrapper>
+              ) : null}
+
+              {isOrientasiModule && !isModul1 && (
+                <>
+                  <InteractiveModuleMaterial
+                    lessonSlug={lessonSlug}
+                    moduleTitle={entry.data.title}
+                  />
+
+                  <details class="group p-4 sm:p-5 rounded-2xl bg-secondary/30 border border-border/80 hover:border-border transition-all shadow-sm">
+                    <summary class="cursor-pointer font-bold text-xs sm:text-sm text-foreground flex items-center justify-between list-none select-none outline-none">
+                      <span class="flex items-center gap-2">
+                        <span class="text-base">📜</span>
+                        <span>Bacaan Rujukan & Materi Lengkap</span>
+                      </span>
+                      <span class="group-open:rotate-180 transition-transform duration-200 text-muted-foreground text-xs font-mono">▼</span>
+                    </summary>
+                    <div class="pt-4 border-t border-border mt-3.5">
+                      <article class="prose prose-invert max-w-none text-xs leading-relaxed">
+                        <Content />
+                      </article>
+                    </div>
+                  </details>
+                </>
               )}
 
               <div class="space-y-4 pt-2" id="checkpoint-challenge-area">

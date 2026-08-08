@@ -13,6 +13,7 @@ const checkpointRoute = await readFile(resolve(root, 'src/pages/api/gamification
 const submissionRoute = await readFile(resolve(root, 'src/pages/api/submissions/save.ts'), 'utf8');
 const completionRoute = await readFile(resolve(root, 'src/pages/api/progress/complete-lesson.ts'), 'utf8');
 const { CANONICAL_ORIENTASI_SLUGS, getApprovedCheckpoint } = await import('../src/utils/orientasiPplgPolicy.ts');
+const { getOrientasiInteractiveMaterial } = await import('../src/utils/orientasiInteractiveMaterials.ts');
 const { getOrientasiLkpdSchema } = await import('../src/utils/orientasiLkpdSchemas.ts');
 const files = await readdir(contentDirectory);
 const orientasi = files
@@ -23,6 +24,9 @@ assert.equal(orientasi.length, 16, 'Harus ada tepat 16 Markdown Modul Orientasi 
 assert.deepEqual(orientasi.map((name) => name.replace(/\.md$/, '')), CANONICAL_ORIENTASI_SLUGS, 'Markdown Orientasi harus sama persis dengan katalog kanonik.');
 assert.match(reader, /<InteractiveKnowledgeCheck/, 'Reader harus memasang checkpoint bersama.');
 assert.match(reader, /<GeneralInteractiveLkpd/, 'Reader harus memasang LKPD generik untuk Modul 02–16.');
+assert.match(reader, /import InteractiveModuleMaterial from '..\/..\/components\/modul\/InteractiveModuleMaterial\.astro';/, 'Reader harus mengimpor renderer materi interaktif Modul 02–16.');
+assert.match(reader, /isOrientasiModule && !isModul1/, 'Reader harus membatasi renderer materi interaktif pada Modul 02–16 Orientasi.');
+assert.match(reader, /<InteractiveModuleMaterial\s+lessonSlug=\{lessonSlug\}\s+moduleTitle=\{entry\.data\.title\}\s+\/>/, 'Reader harus meneruskan slug dan judul modul ke renderer materi interaktif.');
 assert.match(reader, /<InteractiveReflectionForm[\s\S]*moduleTitle=\{entry\.data\.title\}/, 'Refleksi harus menerima judul modul.');
 assert.match(reader, /id="btn-complete-lesson"/, 'Reader harus menyediakan tombol tuntas.');
 assert.match(reader, /<section id="panel-refleksi"[\s\S]*id="btn-complete-lesson"/, 'Tombol tuntas hanya berada di panel refleksi.');
@@ -55,6 +59,10 @@ assert.equal(getApprovedCheckpoint('slug-arbitrer'), null, 'Slug arbitrer harus 
 assert.equal(getApprovedCheckpoint(CANONICAL_ORIENTASI_SLUGS[1]).xpReward, 15, 'Reward checkpoint harus berasal dari policy server.');
 assert.equal(getOrientasiLkpdSchema(CANONICAL_ORIENTASI_SLUGS[1]).sections[0].fields.length, 12, 'Modul 02 harus mempertahankan tabel tiga profesi.');
 assert.equal(getOrientasiLkpdSchema(CANONICAL_ORIENTASI_SLUGS[11]).sections.length, 2, 'Modul 12 harus mempertahankan dua latihan CER screenshot.');
+
+for (const slug of CANONICAL_ORIENTASI_SLUGS.slice(1)) {
+  assert.equal(getOrientasiInteractiveMaterial(slug).activities.length, 2, `${slug} harus memiliki tepat dua aktivitas interaktif.`);
+}
 
 for (const filename of orientasi.slice(1)) {
   const slug = filename.replace(/\.md$/, '');
