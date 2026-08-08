@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import { readFile } from 'node:fs/promises';
 import test from 'node:test';
 import { Window } from 'happy-dom';
 
@@ -12,7 +13,7 @@ const correctOrder = [...sequenceActivity.correctOrder];
 
 function renderSceneFixture() {
   const root = document.createElement('section');
-  root.innerHTML = `<aside data-teacher-message></aside><div role="status" aria-live="polite"></div><button class="interactive-material__choice" data-kind="explore" data-label="Frontend Developer" data-detail="Mengubah desain menjadi antarmuka web responsif." data-feedback="Frontend menghubungkan rancangan ke antarmuka." aria-pressed="false">Frontend Developer</button>`;
+  root.innerHTML = `<aside data-teacher-message></aside><div role="status" aria-live="polite"></div><article data-activity-id="scene-explore"><div role="status" aria-live="polite"></div><button class="interactive-material__choice" data-kind="explore" data-label="Frontend Developer" data-detail="Mengubah desain menjadi antarmuka web responsif." data-feedback="Frontend menghubungkan rancangan ke antarmuka." aria-pressed="false">Frontend Developer</button></article>`;
   return root;
 }
 
@@ -24,10 +25,20 @@ test('scene choice announces feedback and preserves the teacher message outside 
   initializeInteractiveModuleMaterial(root);
   root.querySelector<HTMLButtonElement>('[data-label="Frontend Developer"]')!.click();
 
-  assert.match(root.querySelector('[role="status"]')!.textContent!, /Frontend/);
+  assert.match(root.querySelector('[data-activity-id] [role="status"]')!.textContent!, /Frontend/);
+  assert.equal(root.querySelector(':scope > [role="status"]')!.textContent, '');
   assert.equal(root.querySelector('[data-teacher-message]')!.closest('details'), null);
   assert.equal(root.querySelector('[aria-pressed]')!.getAttribute('aria-pressed'), 'true');
   window.close();
+});
+
+test('learning scene gives every factual item an action name containing its label', async () => {
+  const source = await readFile(
+    new URL('../src/components/modul/OrientasiLearningScene.astro', import.meta.url),
+    'utf8',
+  );
+
+  assert.match(source, /kind === 'checklist' \? `Tandai \$\{label\}` : `Lihat kaitan \$\{label\}`/);
 });
 
 test('sequence renderer script reorders, validates, and keeps selection state accessible', () => {
@@ -37,6 +48,7 @@ test('sequence renderer script reorders, validates, and keeps selection state ac
     <section id="interactive-module-material">
       <div aria-live="polite" role="status"></div>
       <article data-activity-id="sequence-activity">
+        <div aria-live="polite" role="status"></div>
         <div data-sequence data-correct-order='${JSON.stringify(correctOrder)}'>
           <ol class="interactive-material__sequence-list" data-sequence-list>
             ${getSequencePresentationItems(sequenceActivity).map((item) => `
@@ -63,7 +75,7 @@ test('sequence renderer script reorders, validates, and keeps selection state ac
 
   const sequenceLabels = () => [...root.querySelectorAll<HTMLElement>('[data-sequence-item]')]
     .map((item) => item.dataset.itemLabel);
-  const feedback = root.querySelector<HTMLElement>('[aria-live="polite"]');
+  const feedback = root.querySelector<HTMLElement>('[data-activity-id="sequence-activity"] [aria-live="polite"]');
   assert.ok(feedback);
   assert.deepEqual(sequenceLabels(), [...correctOrder].reverse());
   const topLabel = correctOrder.at(-1);
