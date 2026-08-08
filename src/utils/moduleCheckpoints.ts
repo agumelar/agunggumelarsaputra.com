@@ -38,13 +38,16 @@ export interface GamifiedQuest {
 }
 
 export const MODULE_GAMIFIED_QUESTS: Record<string, GamifiedQuest> = {
+  // ==========================================
+  // SPRINT 1: OR-01 (MODUL 01 - 08)
+  // ==========================================
   'orientasi-pplg-01-pengantar-skill-passport': {
     id: 'quest-or01',
     moduleTitle: 'Pengantar Skill Passport & Standar Portofolio',
     badge: '🎮 Mini-Game Quest: Modul 1',
     xpReward: 15,
     stage1Match: {
-      instruction: 'Pasangkan 3 Konsep Skill Passport dengan Definisi yang Tepat (Klik Kartu Kiri lalu Kartu Kanan):',
+      instruction: 'Pasangkan 3 Konsep Skill Passport dengan Definisi yang Tepat:',
       pairs: [
         { id: 'p1', left: 'Skill Passport', right: 'Buku rekam jejak portofolio & kompetensi industri' },
         { id: 'p2', left: 'Evidence Google Drive', right: 'Bukti fisik file PDF laporan & link repositori tugas' },
@@ -126,7 +129,7 @@ export const MODULE_GAMIFIED_QUESTS: Record<string, GamifiedQuest> = {
 
   'orientasi-pplg-03-ekosistem-industri-pplg': {
     id: 'quest-or03',
-    moduleTitle: 'Ekosistem Industri & Model Bisnis Software',
+    moduleTitle: 'Ekosistem Industri & Jalur Kerja Bidang Perangkat Lunak',
     badge: '🎮 Mini-Game Quest: Modul 3',
     xpReward: 15,
     stage1Match: {
@@ -169,7 +172,7 @@ export const MODULE_GAMIFIED_QUESTS: Record<string, GamifiedQuest> = {
 
   'orientasi-pplg-04-matriks-skill-jenjang-karier': {
     id: 'quest-or04',
-    moduleTitle: 'Matriks Skill & Jenjang Karier PPLG',
+    moduleTitle: 'Matriks Skill, Kurikulum RPL, & Jenjang Karier PPLG',
     badge: '🎮 Mini-Game Quest: Modul 4',
     xpReward: 15,
     stage1Match: {
@@ -210,9 +213,184 @@ export const MODULE_GAMIFIED_QUESTS: Record<string, GamifiedQuest> = {
     },
   },
 
+  'orientasi-pplg-05-job-fair-kelas': {
+    id: 'quest-or05',
+    moduleTitle: 'Job Fair Kelas PPLG & Eksplorasi Lintas Booth',
+    badge: '🎮 Mini-Game Quest: Modul 5',
+    xpReward: 15,
+    stage1Match: {
+      instruction: 'Pasangkan Komponen Job Fair Kelas dengan Fungsinya:',
+      pairs: [
+        { id: 'p1', left: 'Elevator Pitch', right: 'Penjelasan singkat profil keahlian diri dalam waktu 30-60 detik' },
+        { id: 'p2', left: 'Booth Exhibitor', right: 'Peran memamerkan tech stack dan tanggung jawab profesi kelompok' },
+        { id: 'p3', left: 'Curriculum Vitae (CV)', right: 'Dokumen rangkuman riwayat keahlian dan tautan portofolio proyek' },
+      ],
+    },
+    stage2Detective: {
+      statement: 'Klaim: "Saat wawancara kerja teknis, jika kita tidak mengetahui jawaban secara pasti, sikap terbaik adalah mengarang jawaban palsu dengan percaya diri."',
+      isFact: false,
+      factLabel: '✅ FAKTA WAWANCARA',
+      mythLabel: '❌ MITOS / FATAL ERROR',
+      explanation: 'MITOS! Kejujuran intelektual sangat dihargai. Lebih baik sampaikan pemahaman dasar dan alur logika bagaimana kamu akan mencari solusinya secara sistematis.',
+    },
+    stage3Speed: {
+      question: 'Apa tujuan utama dari aktivitas simulasi Job Fair kelas bagi siswa Fase E RPL?',
+      options: [
+        {
+          label: 'Melatih *communication skill*, *confidence*, dan membuka wawasan luas mengenai tuntutan riil industri perangkat lunak.',
+          isCorrect: true,
+          explanation: 'Tepat sekali! Kemampuan berbicara di depan publik dan mengomunikasikan ide teknis adalah aset utama calon engineer.',
+        },
+        {
+          label: 'Membeli barang dagangan di dalam kelas.',
+          isCorrect: false,
+          explanation: 'Job Fair kelas adalah pameran profil karier teknologi, bukan bazar komersial.',
+        },
+        {
+          label: 'Menghindari jam belajar coding.',
+          isCorrect: false,
+          explanation: 'Job Fair melengkapi keterampilan coding dengan soft skills presentasi teknis.',
+        },
+      ],
+      timerSeconds: 25,
+    },
+  },
+
+  'orientasi-pplg-06-rencana-minat-awal': {
+    id: 'quest-or06',
+    moduleTitle: 'Perumusan Rencana Minat Karier Awal 3 Tahun',
+    badge: '🎮 Mini-Game Quest: Modul 6',
+    xpReward: 15,
+    stage1Match: {
+      instruction: 'Pasangkan Jalur Peminatan RPL dengan Fokus Praktik Utamanya:',
+      pairs: [
+        { id: 'p1', left: 'Web Development', right: 'Membangun aplikasi berbasis web interaktif (Frontend, Backend, Fullstack)' },
+        { id: 'p2', left: 'Mobile Development', right: 'Menciptakan aplikasi Android/iOS dengan Flutter, React Native, atau Kotlin' },
+        { id: 'p3', left: 'Game Development', right: 'Merancang mekanika permainan, fisika game, dan aset menggunakan Unity/Godot' },
+      ],
+    },
+    stage2Detective: {
+      statement: 'Klaim: "Metode SMART Goal (Specific, Measurable, Achievable, Relevant, Time-bound) membantu kita menetapkan target belajar coding yang realistis dan terukur."',
+      isFact: true,
+      factLabel: '✅ FAKTA METODOLOGI',
+      mythLabel: '❌ SALAH / BUKAN SMART',
+      explanation: 'FAKTA! Target yang spesifik dan berjangka waktu (misal: Selesai membuat 1 landing page HTML/CSS dalam 2 minggu) jauh lebih efektif dibanding target abstrak.',
+    },
+    stage3Speed: {
+      question: 'Manakah contoh target belajar coding yang memenuhi kaidah SMART Goal bagi siswa kelas 10 RPL?',
+      options: [
+        {
+          label: '"Dalam 1 bulan ke depan, saya akan menyelesaikan 3 modul HTML/CSS dan membuat 1 website portofolio profil diri di GitHub Pages."',
+          isCorrect: true,
+          explanation: 'Sempurna! Target ini spesifik (HTML/CSS portofolio), terukur (1 website), dan memiliki batas waktu jelas (1 bulan).',
+        },
+        {
+          label: '"Saya ingin menjadi programmer paling hebat di dunia suatu saat nanti."',
+          isCorrect: false,
+          explanation: 'Terlalu abstrak, tidak terukur, dan tidak memiliki batas waktu.',
+        },
+        {
+          label: '"Saya akan belajar jika sempat saja."',
+          isCorrect: false,
+          explanation: 'Tidak memiliki komitmen dan metrik ketercapaian.',
+        },
+      ],
+      timerSeconds: 25,
+    },
+  },
+
+  'orientasi-pplg-07-mind-map-profesi-pplg': {
+    id: 'quest-or07',
+    moduleTitle: 'Desain & Visualisasi Mind Map Profesi PPLG',
+    badge: '🎮 Mini-Game Quest: Modul 7',
+    xpReward: 15,
+    stage1Match: {
+      instruction: 'Pasangkan Cabang Mind Map dengan Elemen Penjelasnya:',
+      pairs: [
+        { id: 'p1', left: 'Cabang Profesi Utama', right: 'Pengelompokan 8 profesi inti dari perancang, pembangun, hingga penguji' },
+        { id: 'p2', left: 'Cabang Tech Stack', right: 'Bahasa pemrograman, framework, dan tools yang dipakai setiap peran' },
+        { id: 'p3', left: 'Cabang Interkoneksi', right: 'Garis hubungan kolaborasi kerja antar-profesi dalam siklus software' },
+      ],
+    },
+    stage2Detective: {
+      statement: 'Klaim: "Mind Mapping hanya berguna untuk menggambar hiasan warna-warni dan tidak memiliki manfaat dalam memetakan arsitektur sistem software."',
+      isFact: false,
+      factLabel: '✅ FAKTA STRUKTUR VISUAL',
+      mythLabel: '❌ MITOS / SALAH TOTAL',
+      explanation: 'MITOS! Pemetaan pikiran (Mind Mapping) terbukti ilmiah mempercepat pemahaman relasi konsep kompleks dan arsitektur data hingga 40%.',
+    },
+    stage3Speed: {
+      question: 'Tools digital apa yang populer digunakan untuk membuat diagram alur, mind map, dan wireframe kolaboratif di industri?',
+      options: [
+        {
+          label: 'Figma / FigJam, Miro, atau Draw.io',
+          isCorrect: true,
+          explanation: 'Tepat sekali! Tools kolaboratif ini menjadi standar industri modern untuk visualisasi konsep dan arsitektur produk.',
+        },
+        {
+          label: 'Aplikasi Kalkulator Sederhana',
+          isCorrect: false,
+          explanation: 'Kalkulator untuk hitungan numerik, bukan visual mapping.',
+        },
+        {
+          label: 'Notepad teks polos tanpa diagram',
+          isCorrect: false,
+          explanation: 'Notepad tidak mendukung diagram visual interaktif.',
+        },
+      ],
+      timerSeconds: 25,
+    },
+  },
+
+  'orientasi-pplg-08-finalisasi-validasi-or01': {
+    id: 'quest-or08',
+    moduleTitle: 'Finalisasi & Validasi Asesmen Sumatif Skill Passport OR-01',
+    badge: '🎮 Mini-Game Quest: Modul 8',
+    xpReward: 15,
+    stage1Match: {
+      instruction: 'Pasangkan Berkas Kelengkapan Portofolio OR-01 dengan Standar Validitasnya:',
+      pairs: [
+        { id: 'p1', left: 'Folder Google Drive', right: 'Izin share "Anyone with link (Viewer)" dan tidak ada file yang corrupt' },
+        { id: 'p2', left: 'Skill Passport Log', right: 'Seluruh checklist LKPD P1 s/d P7 telah tuntas dan ditandatangani' },
+        { id: 'p3', left: 'Nilai KKM 73', right: 'Ketercapaian minimal Level 2 (Mencoba) pada rubrik asesmen guru' },
+      ],
+    },
+    stage2Detective: {
+      statement: 'Klaim: "Siswa yang mengumpulkan folder evidence dalam keadaan akses terkunci (Request Access) akan langsung otomatis dinyatakan lulus kompetensi tanpa perlu dicek guru."',
+      isFact: false,
+      factLabel: '✅ FAKTA VALIDASI',
+      mythLabel: '❌ MITOS / AUTO LEVEL 0',
+      explanation: 'MITOS! Evidence yang terkunci berada pada status Level 0 (Belum Terlihat) dan wajib dibuka aksesnya sebelum guru dapat memberikan nilai kelulusan.',
+    },
+    stage3Speed: {
+      question: 'Apa langkah yang wajib dilakukan siswa jika nilai evaluasi LKPD berada di bawah KKM 73?',
+      options: [
+        {
+          label: 'Membaca catatan masukan guru pada banner evaluasi, merevisi isian LKPD, dan mengklik "Kirim Ulang Hasil Perbaikan".',
+          isCorrect: true,
+          explanation: 'Benar sekali! Remedial adalah proses belajar untuk memastikan kompetensi tercapai secara tuntas.',
+        },
+        {
+          label: 'Membiarkan saja karena tidak akan berpengaruh pada nilai akhir.',
+          isCorrect: false,
+          explanation: 'Nilai di bawah KKM menghambat kelulusan modul dan gating berikutnya.',
+        },
+        {
+          label: 'Membuat akun baru.',
+          isCorrect: false,
+          explanation: 'Cukup revisi tugas pada akun yang sama melalui tombol remedial.',
+        },
+      ],
+      timerSeconds: 25,
+    },
+  },
+
+  // ==========================================
+  // SPRINT 2: OR-02 (MODUL 09 - 16)
+  // ==========================================
   'orientasi-pplg-09-app-audit-produk-digital': {
     id: 'quest-or09',
-    moduleTitle: 'App Audit & Bedah Kualitas Produk Digital',
+    moduleTitle: 'App Audit: Membedah Produk Digital Sehari-hari',
     badge: '🎮 Mini-Game Quest: Modul 9',
     xpReward: 15,
     stage1Match: {
@@ -255,7 +433,7 @@ export const MODULE_GAMIFIED_QUESTS: Record<string, GamifiedQuest> = {
 
   'orientasi-pplg-10-ui-ux-fungsi-produk': {
     id: 'quest-or10',
-    moduleTitle: 'UI vs UX & Anatomi Desain Produk Digital',
+    moduleTitle: 'Anatomi UI, UX, & Analisis Komparasi Produk Digital',
     badge: '🎮 Mini-Game Quest: Modul 10',
     xpReward: 15,
     stage1Match: {
@@ -295,6 +473,396 @@ export const MODULE_GAMIFIED_QUESTS: Record<string, GamifiedQuest> = {
       timerSeconds: 25,
     },
   },
+
+  'orientasi-pplg-11-framework-review-6-komponen': {
+    id: 'quest-or11',
+    moduleTitle: 'Framework Review Produk Digital 6 Komponen Terstruktur',
+    badge: '🎮 Mini-Game Quest: Modul 11',
+    xpReward: 15,
+    stage1Match: {
+      instruction: 'Pasangkan Komponen Framework Review dengan Fokus Analisisnya:',
+      pairs: [
+        { id: 'p1', left: 'Tujuan & Target User', right: 'Siapa pengguna utama aplikasi dan problem apa yang diselesaikan' },
+        { id: 'p2', left: 'Analisis Fitur Kunci', right: 'Evaluasi keandalan dan alur fungsi inti dari produk digital' },
+        { id: 'p3', left: 'Rekomendasi Solutif', right: 'Usulan perbaikan konkrit dari sudut pandang software engineer' },
+      ],
+    },
+    stage2Detective: {
+      statement: 'Klaim: "Memberikan kritik pada aplikasi cukup dengan mengatakan \'Aplikasi ini jelek\' tanpa perlu memberikan data pendukung atau solusi alternatif."',
+      isFact: false,
+      factLabel: '✅ FAKTA REVIEW PROFESIONAL',
+      mythLabel: '❌ MITOS / KRITIK NON-KONSTRUKTIF',
+      explanation: 'MITOS! Review software engineering wajib berbasis bukti (evidence-based) dan menyertakan usulan perbaikan teknis yang solutif.',
+    },
+    stage3Speed: {
+      question: 'Mengapa analisis aksesibilitas (Accessibility / a11y) penting diuji pada aplikasi digital?',
+      options: [
+        {
+          label: 'Memastikan aplikasi dapat digunakan dengan nyaman oleh semua orang, termasuk pengguna dengan keterbatasan visual atau fisik.',
+          isCorrect: true,
+          explanation: 'Tepat sekali! Aksesibilitas adalah standar inklusivitas software modern internasional (WCAG).',
+        },
+        {
+          label: 'Hanya agar aplikasi lolos verifikasi Play Store.',
+          isCorrect: false,
+          explanation: 'Aksesibilitas adalah hak kenyamanan setiap pengguna, bukan sekadar syarat formal.',
+        },
+        {
+          label: 'Supaya ukuran file aplikasi menjadi lebih besar.',
+          isCorrect: false,
+          explanation: 'Aksesibilitas tidak menambah beban ukuran file secara signifikan.',
+        },
+      ],
+      timerSeconds: 25,
+    },
+  },
+
+  'orientasi-pplg-12-latihan-analisis-anotasi-visual': {
+    id: 'quest-or12',
+    moduleTitle: 'Latihan Analisis Terpandu & Anotasi Bukti Visual Screenshot',
+    badge: '🎮 Mini-Game Quest: Modul 12',
+    xpReward: 15,
+    stage1Match: {
+      instruction: 'Pasangkan Elemen Anotasi Visual dengan Fungsinya:',
+      pairs: [
+        { id: 'p1', left: 'Callout Box Merah', right: 'Menyorot titik error, typo, atau kelemahan alur UX yang fatal' },
+        { id: 'p2', left: 'Callout Box Hijau', right: 'Mengapresiasi fitur inovatif atau desain yang sangat efektif' },
+        { id: 'p3', left: 'Deskripsi Anotasi', right: 'Penjelasan ringkas dampak masalah bagi kenyamanan user' },
+      ],
+    },
+    stage2Detective: {
+      statement: 'Klaim: "Anotasi visual yang efektif adalah yang menutupi seluruh layar hingga teks aplikasi aslinya tidak terbaca sama sekali."',
+      isFact: false,
+      factLabel: '✅ FAKTA ANOTASI BERSIH',
+      mythLabel: '❌ MITOS / RUANG BERANTAKAN',
+      explanation: 'MITOS! Anotasi harus rapi, proporsional, dan tetap memperlihatkan konteks layar asli dengan jelas.',
+    },
+    stage3Speed: {
+      question: 'Alat bantu apa yang paling praktis untuk membuat screenshot beranotasi anak panah dan kotak teks di laptop?',
+      options: [
+        {
+          label: 'Snipping Tool / Lightshot / Flameshot / Canva',
+          isCorrect: true,
+          explanation: 'Benar! Tools ini memungkinkan penambahan highlight, panah, dan nomor langkah secara cepat.',
+        },
+        {
+          label: 'Aplikasi Pemutar Musik',
+          isCorrect: false,
+          explanation: 'Pemutar musik tidak memiliki fungsi manipulasi grafis.',
+        },
+        {
+          label: 'Kamera HP difoto miring tanpa fokus',
+          isCorrect: false,
+          explanation: 'Foto layar HP dari luar tampak buram dan tidak profesional.',
+        },
+      ],
+      timerSeconds: 25,
+    },
+  },
+
+  'orientasi-pplg-13-review-show-peer-feedback': {
+    id: 'quest-or13',
+    moduleTitle: 'Review Show & Peer Feedback Kolaboratif',
+    badge: '🎮 Mini-Game Quest: Modul 13',
+    xpReward: 15,
+    stage1Match: {
+      instruction: 'Pasangkan Prinsip Peer Feedback dengan Sikap yang Benar:',
+      pairs: [
+        { id: 'p1', left: 'Konstruktif', right: 'Memberikan saran perbaikan yang jelas dan dapat dieksekusi' },
+        { id: 'p2', left: 'Objektif', right: 'Menilai berdasarkan rubrik karya, bukan preferensi pribadi' },
+        { id: 'p3', left: 'Apresiatif', right: 'Mengakui kelebihan dan orisinalitas analisis yang telah dibuat rekan' },
+      ],
+    },
+    stage2Detective: {
+      statement: 'Klaim: "Metode Sandwich Feedback menyampaikan kritik dengan urutan: Pujian Positif -> Kritik/Masukan Konstruktif -> Dorongan Semangat Positif."',
+      isFact: true,
+      factLabel: '✅ FAKTA METODE KOMUNIKASI',
+      mythLabel: '❌ SALAH / BUKAN SANDWICH',
+      explanation: 'FAKTA! Metode Sandwich Feedback membuat rekan kerja lebih nyaman menerima masukan perbaikan tanpa merasa diserang.',
+    },
+    stage3Speed: {
+      question: 'Bagaimana respon seorang engineer profesional saat menerima kritik teknis dari rekan satu tim?',
+      options: [
+        {
+          label: 'Mendengarkan dengan terbuka, mencatat poin evaluasi, dan mendiskusikan alternatif solusi terbaik bersama.',
+          isCorrect: true,
+          explanation: 'Luar biasa! Kedewasaan menerima code review adalah modal utama engineer sukses.',
+        },
+        {
+          label: 'Marah dan menolak berbicara lagi dengan rekan tersebut.',
+          isCorrect: false,
+          explanation: 'Sikap tidak profesional merusak dinamika kerja tim.',
+        },
+        {
+          label: 'Menghapus proyek secara sepihak.',
+          isCorrect: false,
+          explanation: 'Tindakan destruktif sangat dilarang di dunia kerja.',
+        },
+      ],
+      timerSeconds: 25,
+    },
+  },
+
+  'orientasi-pplg-14-finalisasi-dokumen-review': {
+    id: 'quest-or14',
+    moduleTitle: 'Finalisasi & Standarisasi Dokumen Review OR-02',
+    badge: '🎮 Mini-Game Quest: Modul 14',
+    xpReward: 15,
+    stage1Match: {
+      instruction: 'Pasangkan Bab Laporan Dokumen Review dengan Isinya:',
+      pairs: [
+        { id: 'p1', left: 'Executive Summary', right: 'Ringkasan singkat hasil audit, skor total, dan kesimpulan utama' },
+        { id: 'p2', left: 'Tabel Temuan Masalah', right: 'Daftar temuan bug, kendala UX, beserta tingkat keparahannya (Severity)' },
+        { id: 'p3', left: 'Rekomendasi Roadmap', right: 'Urutan prioritas fitur yang harus diperbaiki pada update selanjutnya' },
+      ],
+    },
+    stage2Detective: {
+      statement: 'Klaim: "Executive Summary harus ditulis sebanyak 50 halaman agar terlihat tebal dan meyakinkan bagi manajer proyek."',
+      isFact: false,
+      factLabel: '✅ FAKTA RINGKASAN PADAT',
+      mythLabel: '❌ MITOS / BERTELE-TELE',
+      explanation: 'MITOS! Executive Summary dirancang ringkas (1-2 halaman) agar pimpinan dan stakeholder dapat mengambil keputusan dalam hitungan menit.',
+    },
+    stage3Speed: {
+      question: 'Format dokumen akhir apa yang standar digunakan untuk laporan resmi audit produk agar tata letaknya tidak berantakan di berbagai perangkat?',
+      options: [
+        {
+          label: 'Portable Document Format (PDF)',
+          isCorrect: true,
+          explanation: 'Tepat sekali! PDF mengunci format font, margin, dan gambar sehingga konsisten di HP, tablet, maupun PC.',
+        },
+        {
+          label: 'File teks .txt mentah tanpa format gambar',
+          isCorrect: false,
+          explanation: 'TXT tidak mendukung gambar screenshot beranotasi.',
+        },
+        {
+          label: 'File executable .exe',
+          isCorrect: false,
+          explanation: 'EXE adalah aplikasi program, bukan format dokumen laporan.',
+        },
+      ],
+      timerSeconds: 25,
+    },
+  },
+
+  'orientasi-pplg-15-pengumpulan-validasi-or02': {
+    id: 'quest-or15',
+    moduleTitle: 'Pengumpulan & Validasi Portofolio Skill Passport OR-02',
+    badge: '🎮 Mini-Game Quest: Modul 15',
+    xpReward: 15,
+    stage1Match: {
+      instruction: 'Pasangkan Aspek Validasi OR-02 dengan Standar Kelulusannya:',
+      pairs: [
+        { id: 'p1', left: 'Dokumen PDF Laporan', right: 'Memuat 6 komponen review dan screenshot beranotasi lengkap' },
+        { id: 'p2', left: 'Link Portofolio GDrive', right: 'Dapat diakses publik dan memiliki folder terstruktur' },
+        { id: 'p3', left: 'Pencapaian Level 2', right: 'Memenuhi KKM 73 pada seluruh kriteria rubrik guru pengampu' },
+      ],
+    },
+    stage2Detective: {
+      statement: 'Klaim: "Asesmen Sumatif OR-02 menguji kemampuan berpikir kritis siswa dalam membedah produk digital serta merumuskan solusi rekayasa perangkat lunak."',
+      isFact: true,
+      factLabel: '✅ FAKTA SUMATIF KOMPETENSI',
+      mythLabel: '❌ SALAH / BUKAN OR-02',
+      explanation: 'FAKTA! OR-02 membekali calon software engineer dengan insting audit kualitas dan pemahaman standar kepuasan pengguna.',
+    },
+    stage3Speed: {
+      question: 'Apa manfaat jangka panjang mengumpulkan portofolio review produk digital yang rapi sejak kelas 10 RPL?',
+      options: [
+        {
+          label: 'Menjadi bukti kompetensi nyata (*proof of work*) saat melamar magang industri (PKL) dan sertifikasi keahlian.',
+          isCorrect: true,
+          explanation: 'Sempurna! Rekam jejak portofolio yang konsisten membedakan kalian dari ribuan lulusan lainnya.',
+        },
+        {
+          label: 'Hanya untuk memenuhi kuota penyimpanan Google Drive.',
+          isCorrect: false,
+          explanation: 'Portofolio adalah investasi karier masa depan kalian.',
+        },
+        {
+          label: 'Tidak memiliki manfaat sama sekali.',
+          isCorrect: false,
+          explanation: 'Portofolio adalah aset terpenting seorang praktisi IT.',
+        },
+      ],
+      timerSeconds: 25,
+    },
+  },
+
+  'orientasi-pplg-16-rekap-skill-clinic-refleksi': {
+    id: 'quest-or16',
+    moduleTitle: 'Rekapitulasi Level, Skill Clinic, & Refleksi Akhir Semester 1',
+    badge: '🎮 Mini-Game Quest: Modul 16',
+    xpReward: 15,
+    stage1Match: {
+      instruction: 'Pasangkan Tahapan Sesi Penutup Semester dengan Tujuannya:',
+      pairs: [
+        { id: 'p1', left: 'Skill Clinic', right: 'Sesi konsultasi bimbingan khusus untuk penuntasan target kompetensi' },
+        { id: 'p2', left: 'Rekapitulasi Passport', right: 'Pengecekan stempel kelulusan seluruh modul Sprint 1 & 2' },
+        { id: 'p3', left: 'Refleksi Akhir Semester', right: 'Evaluasi pertumbuhan pola pikir dan kesiapan melangkah ke semester genap' },
+      ],
+    },
+    stage2Detective: {
+      statement: 'Klaim: "Seorang programmer yang hebat adalah mereka yang merasa sudah tahu segalanya dan berhenti belajar setelah lulus satu mata pelajaran."',
+      isFact: false,
+      factLabel: '✅ FAKTA LIFELONG LEARNING',
+      mythLabel: '❌ MITOS / MINDSET JUMUD',
+      explanation: 'MITOS! Dunia teknologi terus berkembang pesat. Pola pikir pembelajar sepanjang hayat (Continuous Learner) adalah kunci utama kesuksesan seorang software engineer.',
+    },
+    stage3Speed: {
+      question: 'Setelah menuntaskan 16 modul Orientasi PPLG, apa modal utama yang telah kalian kuasai untuk menghadapi mata pelajaran kejuruan RPL berikutnya?',
+      options: [
+        {
+          label: 'Pondasi logika software, wawasan ekosistem industri, kedisiplinan portofolio, dan etika kerja tim profesional.',
+          isCorrect: true,
+          explanation: 'Selamat! Kalian telah menyelesaikan seluruh rangkaian Orientasi PPLG dengan luar biasa!',
+        },
+        {
+          label: 'Hanya hafalan istilah tanpa makna.',
+          isCorrect: false,
+          explanation: 'Kalian telah mempraktikkan analisis dan pemecahan masalah riil.',
+        },
+        {
+          label: 'Rasa lelah tanpa hasil.',
+          isCorrect: false,
+          explanation: 'Portofolio Skill Passport kalian kini siap menjadi saksi kompetensi!',
+        },
+      ],
+      timerSeconds: 25,
+    },
+  },
+
+  // ==========================================
+  // CORE PROGRAMMING & DATABASE MODULES
+  // ==========================================
+  'pengenalan-html5-smk': {
+    id: 'quest-html5',
+    moduleTitle: 'Struktur Semantik HTML5, DOM & Tag Esensial',
+    badge: '🎮 Mini-Game Quest: HTML5 Web',
+    xpReward: 15,
+    stage1Match: {
+      instruction: 'Pasangkan Tag Semantik HTML5 dengan Fungsinya:',
+      pairs: [
+        { id: 'p1', left: '<header>', right: 'Bagian pengantar, logo, dan judul utama halaman web' },
+        { id: 'p2', left: '<main>', right: 'Konten inti yang unik dan menjadi topik utama dokumen' },
+        { id: 'p3', left: '<footer>', right: 'Bagian catatan kaki, hak cipta, dan informasi kontak web' },
+      ],
+    },
+    stage2Detective: {
+      statement: 'Klaim: "Menggunakan tag semantik seperti <nav>, <article>, dan <section> membuat website lebih ramah SEO dan mudah diakses oleh screen reader dibanding membungkus semuanya dengan <div>."',
+      isFact: true,
+      factLabel: '✅ FAKTA SEMANTIK HTML',
+      mythLabel: '❌ SALAH / TIDAK ADA BEDA',
+      explanation: 'FAKTA! Tag semantik memberikan makna struktural bagi mesin pencari (Google) dan teknologi asistif aksesibilitas.',
+    },
+    stage3Speed: {
+      question: 'Atribut wajib apa yang harus ditambahkan pada tag <img> untuk memberikan deskripsi teks saat gambar gagal dimuat atau bagi pengguna tunanetra?',
+      options: [
+        {
+          label: 'alt (Alternative Text)',
+          isCorrect: true,
+          explanation: 'Benar sekali! Atribut alt sangat krusial untuk aksesibilitas dan SEO web.',
+        },
+        {
+          label: 'href',
+          isCorrect: false,
+          explanation: 'href digunakan pada tag <a> untuk tautan link.',
+        },
+        {
+          label: 'color',
+          isCorrect: false,
+          explanation: 'Warna diatur melalui CSS, bukan atribut tag img.',
+        },
+      ],
+      timerSeconds: 25,
+    },
+  },
+
+  'dasar-basis-data-sql': {
+    id: 'quest-sql',
+    moduleTitle: 'Dasar Basis Data Relasional & Query SQL',
+    badge: '🎮 Mini-Game Quest: Basis Data',
+    xpReward: 15,
+    stage1Match: {
+      instruction: 'Pasangkan Perintah SQL dengan Kategorinya:',
+      pairs: [
+        { id: 'p1', left: 'SELECT', right: 'Mengambil dan menampilkan data dari satu atau beberapa tabel' },
+        { id: 'p2', left: 'INSERT INTO', right: 'Menambahkan baris record data baru ke dalam tabel' },
+        { id: 'p3', left: 'PRIMARY KEY', right: 'Kolom pengenal unik yang mencegah adanya duplikasi data' },
+      ],
+    },
+    stage2Detective: {
+      statement: 'Klaim: "Perintah DELETE FROM users tanpa menyertakan klausa WHERE id = 1 akan menghapus SELURUH data user di dalam tabel."',
+      isFact: true,
+      factLabel: '✅ FAKTA KEAMANAN DATABASE',
+      mythLabel: '❌ SALAH / HANYA 1 DATA',
+      explanation: 'FAKTA & PERINGATAN KERAS! Selalu gunakan klausa WHERE saat mengeksekusi DELETE atau UPDATE agar tidak merusak seluruh database!',
+    },
+    stage3Speed: {
+      question: 'Klausa SQL apa yang digunakan untuk memfilter data berdasarkan kondisi tertentu?',
+      options: [
+        {
+          label: 'WHERE',
+          isCorrect: true,
+          explanation: 'Tepat sekali! Klausa WHERE menyaring baris data yang memenuhi kondisi logika.',
+        },
+        {
+          label: 'ORDER BY',
+          isCorrect: false,
+          explanation: 'ORDER BY untuk mengurutkan data (ASC/DESC).',
+        },
+        {
+          label: 'GROUP BY',
+          isCorrect: false,
+          explanation: 'GROUP BY untuk mengelompokkan data agregat.',
+        },
+      ],
+      timerSeconds: 25,
+    },
+  },
+
+  'konsep-oop-javascript': {
+    id: 'quest-oop',
+    moduleTitle: 'Paradigma OOP: Class, Objek & Enkapsulasi',
+    badge: '🎮 Mini-Game Quest: OOP JavaScript',
+    xpReward: 15,
+    stage1Match: {
+      instruction: 'Pasangkan 3 Pilar OOP dengan Konsepnya:',
+      pairs: [
+        { id: 'p1', left: 'Encapsulation', right: 'Menyembunyikan detail internal data dan melindungi dari akses liar' },
+        { id: 'p2', left: 'Inheritance', right: 'Mewarisi sifat dan method dari Class induk (Parent) ke Class anak (Child)' },
+        { id: 'p3', left: 'Polymorphism', right: 'Satu method yang sama memiliki implementasi perilaku yang berbeda' },
+      ],
+    },
+    stage2Detective: {
+      statement: 'Klaim: "Class adalah cetak biru (blueprint), sedangkan Object adalah wujud nyata (instance) yang dibuat dari cetak biru tersebut."',
+      isFact: true,
+      factLabel: '✅ FAKTA PARADIGMA OOP',
+      mythLabel: '❌ SALAH / TERBALIK',
+      explanation: 'FAKTA! Analoginya: Class seperti cetak biru arsitektur rumah, sedangkan Objek adalah rumah fisik nyata yang dibangun dari cetak biru itu.',
+    },
+    stage3Speed: {
+      question: 'Keyword apa yang digunakan di JavaScript untuk membuat Class baru yang mewarisi sifat dari Class lain?',
+      options: [
+        {
+          label: 'extends (Contoh: class Mobil extends Kendaraan)',
+          isCorrect: true,
+          explanation: 'Tepat sekali! Keyword extends menghubungkan relasi pewarisan (Inheritance).',
+        },
+        {
+          label: 'implements',
+          isCorrect: false,
+          explanation: 'implements digunakan untuk interface di TypeScript/Java.',
+        },
+        {
+          label: 'inherits',
+          isCorrect: false,
+          explanation: 'Bukan keyword valid di sintaks ECMAScript modern.',
+        },
+      ],
+      timerSeconds: 25,
+    },
+  },
 };
 
 export function getGamifiedQuestForModule(slug: string, moduleTitle?: string): GamifiedQuest {
@@ -302,8 +870,8 @@ export function getGamifiedQuestForModule(slug: string, moduleTitle?: string): G
     return MODULE_GAMIFIED_QUESTS[slug];
   }
 
-  // Smart fallback quest generator for any module
-  const cleanTitle = moduleTitle || 'Materi Kejuruan PPLG';
+  // Smart fallback quest generator for any new module or subject
+  const cleanTitle = moduleTitle || 'Materi Kejuruan Rekayasa Perangkat Lunak';
   return {
     id: `quest-${slug.replace(/[^a-zA-Z0-9]/g, '-')}`,
     moduleTitle: cleanTitle,
@@ -314,7 +882,7 @@ export function getGamifiedQuestForModule(slug: string, moduleTitle?: string): G
       pairs: [
         { id: 'p1', left: 'Pemahaman Konsep', right: 'Fondasi logika dan teori sebelum mengeksekusi kode' },
         { id: 'p2', left: 'Evidence Portofolio', right: 'Bukti karya nyata yang diunggah ke repositori GDrive' },
-        { id: 'p3', left: 'Standar KKM 73', right: 'Tolok ukur ketercapaian kompetensi vokasi PPLG' },
+        { id: 'p3', left: 'Standar KKM 73', right: 'Tolok ukur ketercapaian kompetensi vokasi RPL' },
       ],
     },
     stage2Detective: {

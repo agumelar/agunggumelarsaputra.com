@@ -6,6 +6,105 @@ interface Props {
 }
 
 const { lessonSlug, moduleTitle, user } = Astro.props;
+
+const MODULE_LKPD_GUIDES: Record<string, { prompt: string; placeholder: string; tip?: string }> = {
+  'orientasi-pplg-02-profesi-peluang-karier': {
+    prompt: '1. Analisis Profil Profesi & Peran Tim Software Pilihan:',
+    placeholder: 'Uraikan 1 profesi PPLG yang paling kalian minati (tanggung jawab kerja, tech stack esensial, dan bagaimana peran tersebut berkolaborasi dengan profesi lain dalam siklus Agile)...',
+    tip: '💡 Petunjuk: Sertakan alasan pemilihan dan target keterampilan (hard skill & soft skill) yang ingin diasah.'
+  },
+  'orientasi-pplg-03-ekosistem-industri-pplg': {
+    prompt: '1. Analisis Komparasi Model Bisnis Ekosistem Software:',
+    placeholder: 'Bandingkan karakteristik Software House vs Product Company/SaaS. Jelaskan model bisnis yang diterapkan serta kelebihan dan tantangan bekerja di model tersebut...',
+    tip: '💡 Petunjuk: Ambil contoh studi kasus aplikasi riil yang kalian kenal (misal: SaaS, Software House agensi, atau Open Source).'
+  },
+  'orientasi-pplg-04-matriks-skill-jenjang-karier': {
+    prompt: '1. Pemetaan Matriks Skill T-Shaped & Target Jenjang Karier:',
+    placeholder: 'Petakan keahlian T-Shaped pribadi kalian: keahlian spesialis mendalam (vertikal) yang ingin dicapai, dan wawasan lintas disiplin (horizontal) untuk kolaborasi tim...',
+    tip: '💡 Petunjuk: Uraikan perbedaan tanggung jawab antara level Junior, Mid-Level, dan Senior/Tech Lead.'
+  },
+  'orientasi-pplg-05-job-fair-kelas': {
+    prompt: '1. Catatan Kunjungan Booth Job Fair & Elevator Pitch Diri:',
+    placeholder: 'Tuliskan rangkuman hasil wawancara minimal ke 2 booth profesi lain (rentang gaji riil, tech stack, tantangan) serta naskah Elevator Pitch 30-60 detik profil keahlian diri...',
+    tip: '💡 Petunjuk: Tunjukkan rasa percaya diri dalam mengomunikasikan kesiapan belajar dan keunggulan diri.'
+  },
+  'orientasi-pplg-06-rencana-minat-awal': {
+    prompt: '1. Rencana Minat Belajar & Target SMART Goal Portofolio:',
+    placeholder: 'Rumuskan target belajar coding semester ini menggunakan metode SMART (Specific, Measurable, Achievable, Relevant, Time-bound) pada jalur peminatan yang kalian pilih...',
+    tip: '💡 Petunjuk: Buat target yang realistis dengan batas waktu jelas (contoh: 1 website portofolio dalam 1 bulan).'
+  },
+  'orientasi-pplg-07-mind-map-profesi-pplg': {
+    prompt: '1. Deskripsi Arsitektur & Cabang Utama Mind Map Profesi:',
+    placeholder: 'Jelaskan cabang-cabang utama diagram Mind Map yang kalian buat (profesi inti, bahasa/framework, dan relasi kerja). Lampirkan file/tautan gambar diagram pada kolom evidence...',
+    tip: '💡 Petunjuk: Jelaskan alasan pemilihan cabang dan relasi kolaborasi antar peran.'
+  },
+  'orientasi-pplg-08-finalisasi-validasi-or01': {
+    prompt: '1. Rangkuman Kesiapan Asesmen Sumatif & Audit Portofolio OR-01:',
+    placeholder: 'Verifikasi checklist kelengkapan seluruh LKPD P1 s/d P7, pastikan folder Google Drive publik (Viewer), dan refleksikan pencapaian kompetensi menuju standar Level 2 (KKM 73)...',
+    tip: '💡 Petunjuk: Pastikan tidak ada tautan bukti yang rusak atau berstatus Request Access.'
+  },
+  'orientasi-pplg-09-app-audit-produk-digital': {
+    prompt: '1. Laporan Temuan App Audit & Uji Kualitas Produk Digital:',
+    placeholder: 'Tentukan 1 aplikasi yang diaudit. Uraikan hasil pengujian aspek Usability (UX), Performa respon aplikasi, dan keandalan sistem saat menangani kondisi error...',
+    tip: '💡 Petunjuk: Tuliskan temuan secara objektif berdasarkan pengalaman penggunaan langsung (User Journey).'
+  },
+  'orientasi-pplg-10-ui-ux-fungsi-produk': {
+    prompt: '1. Analisis Komparasi UI vs UX & Evaluasi Desain Komponen:',
+    placeholder: 'Bedah antarmuka visual (UI: konsistensi warna, tipografi, icon) dan kenyamanan interaksi (UX: kecepatan navigasi, kemudahan mencapai tujuan) pada aplikasi pilihan...',
+    tip: '💡 Petunjuk: Terapkan prinsip konsistensi dan standar Design System industri.'
+  },
+  'orientasi-pplg-11-framework-review-6-komponen': {
+    prompt: '1. Laporan Analisis Framework Review 6 Komponen Aplikasi:',
+    placeholder: 'Uraikan hasil evaluasi terstruktur: (1) Profil Produk & Target User, (2) UI/UX, (3) Analisis Fitur Utama, (4) Kinerja & Stabilitas, (5) Aksesibilitas, dan (6) Rekomendasi Solusi Engineering...',
+    tip: '💡 Petunjuk: Dukung setiap poin evaluasi dengan argumen teknis yang logis.'
+  },
+  'orientasi-pplg-12-latihan-analisis-anotasi-visual': {
+    prompt: '1. Catatan Rekayasa Anotasi Visual & Deskripsi Screenshot:',
+    placeholder: 'Jelaskan temuan kritis pada tangkapan layar (screenshot) beranotasi: kotak merah (bug/kendala UX), kotak hijau (keunggulan fitur), beserta deskripsi dampak bagi pengguna...',
+    tip: '💡 Petunjuk: Unggah berkas gambar screenshot beranotasi ke Google Drive portofolio.'
+  },
+  'orientasi-pplg-13-review-show-peer-feedback': {
+    prompt: '1. Log Evaluasi Peer Review Show & Catatan Umpan Balik:',
+    placeholder: 'Tuliskan masukan konstruktif yang kalian berikan kepada kelompok lain (metode Sandwich Feedback: Pujian -> Masukan Perbaikan -> Semangat) serta saran yang diterima dari rekan...',
+    tip: '💡 Petunjuk: Tunjukkan etika profesional dan keterbukaan dalam menerima kritik teknis.'
+  },
+  'orientasi-pplg-14-finalisasi-dokumen-review': {
+    prompt: '1. Ringkasan Eksekutif (Executive Summary) Laporan Dokumen Review:',
+    placeholder: 'Tuliskan Executive Summary laporan audit produk: skor total, daftar temuan prioritas utama (High Severity), dan usulan perbaikan fitur mendesak dari sudut pandang software engineer...',
+    tip: '💡 Petunjuk: Gunakan gaya bahasa ringkas, padat, dan berorientasi solusi praktis.'
+  },
+  'orientasi-pplg-15-pengumpulan-validasi-or02': {
+    prompt: '1. Checklist Validasi Asesmen Sumatif OR-02 & Berkas Portofolio:',
+    placeholder: 'Verifikasi kelengkapan dokumen PDF review produk 6 komponen, pastikan bukti visual terlampir rapi, dan tautan Google Drive siap diuji asesor untuk penilaian Level 2 (KKM 73)...',
+    tip: '💡 Petunjuk: Pastikan penamaan berkas PDF sesuai standar pengumpulan resmi.'
+  },
+  'orientasi-pplg-16-rekap-skill-clinic-refleksi': {
+    prompt: '1. Rekapitulasi Portofolio Semester & Evaluasi Sesi Skill Clinic:',
+    placeholder: 'Tuliskan rekap capaian seluruh modul Orientasi PPLG (Sprint 1 OR-01 & Sprint 2 OR-02), solusi atas kendala yang dibahas saat Skill Clinic, dan kesiapan melangkah ke materi kejuruan lanjutan...',
+    tip: '💡 Petunjuk: Refleksikan transformasi integritas dan kematangan pola pikir belajar kalian.'
+  },
+  'pengenalan-html5-smk': {
+    prompt: '1. Laporan Praktikum Struktur Semantik HTML5 & Kode Proyek:',
+    placeholder: 'Tuliskan penjelasan struktur halaman HTML5 yang kalian rancang (penggunaan header, main, section, footer) serta ringkasan logika dokumen...',
+    tip: '💡 Petunjuk: Lampirkan link repositori GitHub / file HTML pada kolom tautan evidence.'
+  },
+  'dasar-basis-data-sql': {
+    prompt: '1. Laporan Desain Tabel Relasional & Eksekusi Query SQL:',
+    placeholder: 'Uraikan skema tabel yang dirancang (nama tabel, primary key, foreign key) beserta perintah query SELECT, INSERT, UPDATE, atau DELETE yang diuji...',
+    tip: '💡 Petunjuk: Jelaskan mengapa relasi antar-tabel tersebut dibutuhkan dalam aplikasi.'
+  },
+  'konsep-oop-javascript': {
+    prompt: '1. Laporan Implementasi Paradigma OOP (Class & Object):',
+    placeholder: 'Jelaskan Class yang kalian buat, atribut (properties), method, serta implementasi konsep inheritance (pewarisan) atau encapsulation yang diterapkan...',
+    tip: '💡 Petunjuk: Sertakan cuplikan kode program atau link repo pada bukti karya.'
+  }
+};
+
+const lkpdGuide = MODULE_LKPD_GUIDES[lessonSlug] || {
+  prompt: `1. Ringkasan Temuan & Laporan Analisis Tugas "${moduleTitle}":`,
+  placeholder: `Tuliskan temuan analisis, hasil eksplorasi, atau ringkasan tugas sesuai petunjuk modul "${moduleTitle}" (wajib diketik sendiri secara mandiri)...`,
+  tip: '💡 Petunjuk: Jawab dengan jujur dan orisinal untuk mengasah pemahaman konsep.'
+};
 ---
 
 <div class="card p-6 md:p-8 rounded-2xl border-border bg-card shadow-sm space-y-6" id="general-lkpd-card" data-slug={lessonSlug}>
@@ -93,12 +192,17 @@ const { lessonSlug, moduleTitle, user } = Astro.props;
 
   <form id="form-general-lkpd" class="space-y-8">
     
-    <!-- Identitas Siswa -->
-    <div class="space-y-4 p-5 rounded-xl bg-secondary/30 border border-border">
-      <h3 class="text-sm font-bold text-foreground font-mono flex items-center gap-2">
-        <span class="w-6 h-6 rounded-full bg-primary/10 text-primary flex items-center justify-center text-xs">A</span>
-        IDENTITAS PESERTA DIDIK
-      </h3>
+    <!-- Identitas Siswa (Copy-Paste Diizinkan) -->
+    <div class="space-y-4 p-5 rounded-xl bg-secondary/30 border border-border" id="identity-section" data-allow-paste-container="true">
+      <div class="flex flex-wrap items-center justify-between gap-2">
+        <h3 class="text-sm font-bold text-foreground font-mono flex items-center gap-2">
+          <span class="w-6 h-6 rounded-full bg-primary/10 text-primary flex items-center justify-center text-xs">A</span>
+          IDENTITAS PESERTA DIDIK
+        </h3>
+        <span class="text-[10px] font-mono px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 font-medium">
+          📋 Copy-Paste Diperbolehkan
+        </span>
+      </div>
 
       <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <div>
@@ -108,9 +212,10 @@ const { lessonSlug, moduleTitle, user } = Astro.props;
             name="studentName" 
             id="gen_studentName"
             value={user?.name || ''} 
+            data-allow-paste="true"
             required 
             placeholder="Nama lengkap siswa"
-            class="w-full px-3 py-2 rounded-lg bg-card border border-border text-xs text-foreground focus:outline-none focus:border-primary"
+            class="w-full px-3 py-2 rounded-lg bg-card border border-border text-xs text-foreground focus:outline-none focus:border-primary allow-paste"
           />
         </div>
 
@@ -120,9 +225,10 @@ const { lessonSlug, moduleTitle, user } = Astro.props;
             type="text" 
             name="studentNis" 
             id="gen_studentNis"
+            data-allow-paste="true"
             required 
             placeholder="Contoh: 262710001"
-            class="w-full px-3 py-2 rounded-lg bg-card border border-border text-xs text-foreground focus:outline-none focus:border-primary font-mono"
+            class="w-full px-3 py-2 rounded-lg bg-card border border-border text-xs text-foreground focus:outline-none focus:border-primary font-mono allow-paste"
           />
         </div>
 
@@ -131,6 +237,7 @@ const { lessonSlug, moduleTitle, user } = Astro.props;
           <select 
             name="studentClass" 
             id="gen_studentClass"
+            data-allow-paste="true"
             required
             class="w-full px-3 py-2 rounded-lg bg-card border border-border text-xs text-foreground focus:outline-none focus:border-primary"
           >
@@ -146,6 +253,7 @@ const { lessonSlug, moduleTitle, user } = Astro.props;
             type="date" 
             name="submissionDate" 
             id="gen_submissionDate"
+            data-allow-paste="true"
             required 
             class="w-full px-3 py-2 rounded-lg bg-card border border-border text-xs text-foreground focus:outline-none focus:border-primary font-mono"
           />
@@ -153,24 +261,36 @@ const { lessonSlug, moduleTitle, user } = Astro.props;
       </div>
     </div>
 
-    <!-- Aktivitas LKPD Utama -->
+    <!-- Aktivitas LKPD Utama (Wajib Diketik Mandiri) -->
     <div class="space-y-4">
-      <h3 class="text-sm font-bold text-foreground font-mono flex items-center gap-2">
-        <span class="w-6 h-6 rounded-full bg-primary/10 text-primary flex items-center justify-center text-xs">B</span>
-        HASIL ANALISIS & LAPORAN AKTIVITAS
-      </h3>
+      <div class="flex flex-wrap items-center justify-between gap-2">
+        <h3 class="text-sm font-bold text-foreground font-mono flex items-center gap-2">
+          <span class="w-6 h-6 rounded-full bg-primary/10 text-primary flex items-center justify-center text-xs">B</span>
+          HASIL ANALISIS & LAPORAN AKTIVITAS
+        </h3>
+        <span class="text-[10px] font-mono px-2 py-0.5 rounded bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20 font-bold">
+          ✍️ Wajib Diketik Mandiri (No Copy-Paste)
+        </span>
+      </div>
 
       <div class="space-y-4">
         <div>
-          <label class="block text-xs font-semibold text-foreground mb-1">
-            1. Ringkasan Temuan / Analisis Tugas Materi:
-          </label>
+          <div class="flex items-center justify-between gap-2 mb-1">
+            <label class="block text-xs font-semibold text-foreground">
+              {lkpdGuide.prompt}
+            </label>
+            {lkpdGuide.tip && (
+              <span class="text-[11px] text-primary/90 font-mono hidden sm:inline-block">
+                {lkpdGuide.tip}
+              </span>
+            )}
+          </div>
           <textarea 
             name="analysisSummary" 
             id="gen_analysisSummary"
-            rows="4" 
+            rows="5"
             required
-            placeholder="Tuliskan temuan analisis, hasil eksplorasi, atau ringkasan tugas sesuai petunjuk modul ini..."
+            placeholder={lkpdGuide.placeholder}
             class="w-full px-3.5 py-2.5 rounded-xl bg-secondary/30 border border-border text-xs text-foreground focus:outline-none focus:border-primary leading-relaxed"
           ></textarea>
         </div>
@@ -179,16 +299,20 @@ const { lessonSlug, moduleTitle, user } = Astro.props;
           <label class="block text-xs font-semibold text-foreground mb-1">
             2. Bukti Karya / Evidence Tautan Google Drive atau Repository (Opsional):
           </label>
-          <input 
-            type="url" 
-            name="driveUrl" 
-            id="gen_driveUrl"
-            placeholder="https://drive.google.com/... atau https://github.com/..." 
-            class="w-full px-3 py-2.5 rounded-lg bg-card border border-border text-xs text-foreground focus:outline-none focus:border-primary font-mono"
-          />
-          <p class="text-[11px] text-muted-foreground mt-1">
-            💡 Tautan file bukti karya bersifat opsional untuk sekarang dan dapat dilengkapi menjelang akhir semester.
-          </p>
+          <div class="relative">
+            <input
+              type="url"
+              name="driveUrl"
+              id="gen_driveUrl"
+              data-allow-paste="true"
+              placeholder="https://drive.google.com/... atau https://github.com/..."
+              class="w-full px-3 py-2.5 rounded-lg bg-card border border-border text-xs text-foreground focus:outline-none focus:border-primary font-mono allow-paste"
+            />
+          </div>
+          <div class="flex items-center justify-between mt-1 text-[11px] text-muted-foreground">
+            <p>💡 Tautan file bukti karya bersifat opsional untuk sekarang dan dapat dilengkapi menjelang akhir semester.</p>
+            <span class="font-mono text-emerald-600 dark:text-emerald-400 shrink-0 ml-2">📋 Copy-Paste URL Diizinkan</span>
+          </div>
         </div>
       </div>
     </div>

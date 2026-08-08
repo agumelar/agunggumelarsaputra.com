@@ -26,4 +26,14 @@ for (const filename of orientasi.slice(1)) {
   assert.ok(lkpd.includes(`'${slug}'`), `Panduan LKPD belum dikonfigurasi untuk ${slug}.`);
 }
 
+for (const filename of orientasi.slice(1)) {
+  const slug = filename.replace(/\.md$/, '');
+  const checkpointStart = checkpoints.indexOf(`'${slug}'`);
+  const checkpointBlock = checkpoints.slice(checkpointStart, checkpoints.indexOf('\n  },', checkpointStart));
+  assert.match(checkpointBlock, /stage1Match:/, `${slug} harus memiliki ronde Puzzle Match.`);
+  assert.match(checkpointBlock, /stage2Detective:/, `${slug} harus memiliki ronde Mitos vs Fakta.`);
+  assert.match(checkpointBlock, /stage3Speed:/, `${slug} harus memiliki ronde Skenario Cepat.`);
+  assert.match(checkpointBlock, /xpReward:/, `${slug} harus memiliki reward XP.`);
+}
+
 console.log('Orientasi PPLG parity guard: PASS');
