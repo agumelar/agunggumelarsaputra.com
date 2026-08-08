@@ -1,0 +1,118 @@
+---
+import { getOrientasiInteractiveMaterial } from '../../utils/orientasiInteractiveMaterials.ts';
+import type { OrientasiSlug } from '../../utils/orientasiPplgPolicy.ts';
+
+interface Props {
+  lessonSlug: OrientasiSlug;
+  moduleTitle: string;
+}
+
+const { lessonSlug, moduleTitle } = Astro.props;
+const material = getOrientasiInteractiveMaterial(lessonSlug);
+---
+
+<section id="interactive-module-material" class="interactive-material" aria-labelledby="interactive-material-title">
+  <header class="interactive-material__header">
+    <p class="interactive-material__eyebrow">{material.eyebrow}</p>
+    <h2 id="interactive-material-title">{material.title}</h2>
+    <p>{material.summary}</p>
+    <p class="interactive-material__module">Aktivitas untuk: {moduleTitle}</p>
+  </header>
+
+  <div class="interactive-material__feedback" aria-live="polite" role="status"></div>
+
+  <div class="interactive-material__cards">
+    {material.activities.map((activity) => (
+      <article class="interactive-material__card" data-activity-id={activity.id}>
+        <p class="interactive-material__kind">{activity.kind}</p>
+        <h3>{activity.title}</h3>
+        <p>{activity.instruction}</p>
+
+        <div class="interactive-material__choices" aria-label={activity.title}>
+          {activity.items.map((item) => (
+            <button
+              type="button"
+              class="interactive-material__choice"
+              data-kind={activity.kind}
+              data-label={item.label}
+              data-detail={item.detail}
+              data-feedback={item.feedback}
+              aria-pressed={activity.kind === 'checklist' ? 'false' : undefined}
+            >
+              {item.label}
+            </button>
+          ))}
+        </div>
+
+        <p class="interactive-material__detail" hidden></p>
+        <p class="interactive-material__activity-feedback" hidden>{activity.feedback}</p>
+      </article>
+    ))}
+  </div>
+</section>
+
+<script>
+  const root = document.querySelector<HTMLElement>('#interactive-module-material');
+
+  if (root) {
+    const feedback = root.querySelector<HTMLElement>('[aria-live="polite"]');
+
+    root.querySelectorAll<HTMLButtonElement>('.interactive-material__choice').forEach((button) => {
+      button.addEventListener('click', () => {
+        const card = button.closest<HTMLElement>('[data-activity-id]');
+        if (!card || !feedback) return;
+
+        const { kind, label, detail, feedback: itemFeedback } = button.dataset;
+        const detailRegion = card.querySelector<HTMLElement>('.interactive-material__detail');
+        const activityFeedback = card.querySelector<HTMLElement>('.interactive-material__activity-feedback');
+
+        if (kind === 'checklist') {
+          const isPressed = button.getAttribute('aria-pressed') === 'true';
+          button.setAttribute('aria-pressed', String(!isPressed));
+          feedback.textContent = `${label}: ${!isPressed ? 'ditandai sebagai sudah dicek.' : 'tanda cek dibatalkan.'}`;
+          return;
+        }
+
+        card.querySelectorAll<HTMLButtonElement>('.interactive-material__choice').forEach((choice) => {
+          choice.setAttribute('aria-pressed', String(choice === button));
+        });
+
+        if (kind === 'explore' && detailRegion) {
+          detailRegion.textContent = `${label}: ${detail}`;
+          detailRegion.hidden = false;
+        }
+
+        if (activityFeedback) activityFeedback.hidden = false;
+        feedback.textContent = `${label}. ${itemFeedback}`;
+      });
+    });
+  }
+</script>
+
+<style>
+  .interactive-material {
+    margin-top: 2rem;
+    padding: 1.25rem;
+    color: #f3f4f6;
+    background: #111827;
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    border-radius: 0.75rem;
+  }
+
+  .interactive-material__header h2,
+  .interactive-material__card h3 { margin: 0; }
+  .interactive-material__header p { color: #d1d5db; }
+  .interactive-material__eyebrow,
+  .interactive-material__kind { color: #93c5fd; font: 600 0.75rem/1.4 "JetBrains Mono", monospace; letter-spacing: 0.06em; text-transform: uppercase; }
+  .interactive-material__module { font-size: 0.9rem; }
+  .interactive-material__feedback { min-height: 1.5rem; margin: 1rem 0; padding: 0.75rem; color: #e5e7eb; background: #090d16; border-left: 3px solid #60a5fa; }
+  .interactive-material__cards { display: grid; gap: 1rem; }
+  .interactive-material__card { padding: 1rem; background: #0f172a; border: 1px solid rgba(255, 255, 255, 0.12); border-radius: 0.5rem; }
+  .interactive-material__choices { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 0.875rem; }
+  .interactive-material__choice { padding: 0.55rem 0.75rem; color: #f3f4f6; cursor: pointer; background: #1f2937; border: 1px solid #475569; border-radius: 0.375rem; }
+  .interactive-material__choice:hover,
+  .interactive-material__choice[aria-pressed="true"] { background: #1e3a5f; border-color: #93c5fd; }
+  .interactive-material__choice:focus-visible { outline: 3px solid #fbbf24; outline-offset: 3px; }
+  .interactive-material__detail,
+  .interactive-material__activity-feedback { margin: 0.875rem 0 0; color: #d1d5db; }
+</style>
