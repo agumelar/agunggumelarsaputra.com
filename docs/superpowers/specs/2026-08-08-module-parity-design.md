@@ -1,6 +1,6 @@
 # Desain Penyamaan Modul Orientasi PPLG 02–16
 
-> **Status:** Diimplementasikan dan diverifikasi; deployment perubahan terbaru harus dicatat setelah Vercel membuat job baru
+> **Status:** Diimplementasikan, diverifikasi, dan dideploy ke production
 > **Tanggal:** 2026-08-08  
 > **Acuan utama:** Modul 01 — `orientasi-pplg-01-pengantar-skill-passport`
 
@@ -62,6 +62,12 @@ Jika dokumen handover belum cukup untuk membuat agen atau sesi berikutnya dapat 
 - Deployment production berhasil dan perubahan terdokumentasi lengkap untuk handover sesi berikutnya.
 
 ## Hasil verifikasi dan deployment (2026-08-08)
+
+### Katalog aktif Orientasi PPLG saja
+
+- Tiga konten bawaan di luar ruang lingkup (`pengenalan-html5-smk`, `dasar-basis-data-sql`, dan `konsep-oop-javascript`) dihapus dari koleksi Markdown, Quest, dan panduan LKPD.
+- Regression test filesystem sekarang mengharuskan `src/content/pembelajaran/` berisi tepat 16 slug `CANONICAL_ORIENTASI_SLUGS`; perubahan yang memasukkan materi mata pelajaran lain akan gagal pada suite Orientasi.
+- Verifikasi final lulus: suite Orientasi 10/10, parity guard PASS, dan Astro build exit 0. Deployment `dpl_HmmyLAphpkcsMXvFcFsiTEVshFUE` READY di `https://agunggumelarsaputra-bzwy6314z-agumelars-projects.vercel.app`, teralias ke production. Smoke beranda/katalog HTTP 200; katalog tidak memuat ketiga materi yang dihapus; checkpoint tanpa sesi HTTP 401.
 
 ### Security addendum: trust boundary dan concurrency submission
 

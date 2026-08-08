@@ -13,6 +13,7 @@ Format penulisan mengacu pada [Keep a Changelog](https://keepachangelog.com/id/1
 - Menghapus tiga materi bawaan di luar ruang lingkup Orientasi PPLG: `pengenalan-html5-smk`, `dasar-basis-data-sql`, dan `konsep-oop-javascript`.
 - Menghapus konfigurasi Quest dan panduan LKPD ketiganya, sehingga katalog konten publik, konfigurasi pembelajaran, navigasi, progress, validasi API, serta dokumentasi kini konsisten hanya pada 16 modul kanonik Orientasi PPLG.
 - Menambahkan regression test filesystem yang mewajibkan `src/content/pembelajaran/` memuat tepat 16 Markdown Orientasi PPLG. Materi HTML, SQL, dan OOP dapat ditambahkan kembali kelak sebagai mata pelajaran terpisah dengan kontrak, enrollment, dan policy server tersendiri—bukan sebagai bagian dari Orientasi PPLG.
+- Verifikasi release: `npm run test:orientasi` lulus 10/10, parity guard PASS, dan `npm run build` berhasil. Deployment `dpl_HmmyLAphpkcsMXvFcFsiTEVshFUE` READY di `https://agunggumelarsaputra-bzwy6314z-agumelars-projects.vercel.app` dan teralias ke `https://www.agunggumelarsaputra.com`; smoke beranda/katalog HTTP 200 serta checkpoint tanpa sesi HTTP 401.
 
 ### 2026-08-08 — Submission Trust Boundary & Exactly-Once Reward Fix
 - Memperkuat `/api/gamification/claim-checkpoint`: insert checkpoint dan atomic upsert XP kini dijalankan sebagai satu statement PostgreSQL berbasis data-modifying CTE. Error pada award XP akan me-rollback insert checkpoint, sehingga retry tetap dapat menerima reward tepat satu kali.
