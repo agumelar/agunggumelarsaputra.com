@@ -200,6 +200,8 @@ tags: ["PPLG", "Kurikulum Merdeka", "Skill Passport", "Kelas 10"]
 
 **Status production per 2026-08-08.** Final authority fix deployment `dpl_69TnjsE2Fqc4KCv6f7ZqygUArjQe` READY di `https://agunggumelarsaputra-g2dztreej-agumelars-projects.vercel.app` dan teralias ke `https://www.agunggumelarsaputra.com`. Lima tes policy lulus, guard parity PASS, Astro build berhasil, beranda publik HTTP 200, dan POST checkpoint tanpa login ditolak HTTP 401. Verifikasi interaksi terlindungi lengkap belum dilakukan karena tidak ada sesi siswa uji yang sah; lanjutkan dengan akun siswa terdaftar untuk menguji locked-state Modul 02, checkpoint → LKPD → refleksi, tombol selesai, dan terbukanya Modul 03. Jangan membypass autentikasi untuk menggantikan uji tersebut.
 
+**Status checkpoint atomicity per 2026-08-08.** Patch commit `dc14eaf` dideploy sebagai `dpl_7egFohXuhXB4jjVErKuogF3YBJFn` (READY) dan teralias ke domain production. Request pertama ke leaderboard publik menjalankan `ensureDbInitialized()` tanpa error runtime, beranda/leaderboard merespons HTTP 200, dan checkpoint tanpa sesi merespons HTTP 401. Vercel CLI menyajikan nilai secret database sebagai `[REDACTED]`, sehingga query katalog index dari mesin lokal tidak tersedia; keberhasilan jalur migrasi production diverifikasi melalui cold-runtime request dan ketiadaan log error bootstrap. Clean checkout masih memiliki masalah terpisah: reader tracked mengimpor `SmartMarkdownWrapper.astro`, tetapi file itu untracked. Jangan menghapus file lokal tersebut; selesaikan kepemilikan/commit-nya pada task terpisah.
+
 ---
 
 ## 5. Struktur Lengkap 16 Modul Pembelajaran (Sprint 1 & Sprint 2)

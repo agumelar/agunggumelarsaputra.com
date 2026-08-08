@@ -67,6 +67,7 @@ Jika dokumen handover belum cukup untuk membuat agen atau sesi berikutnya dapat 
 - Migrasi runtime mempertahankan baris duplikat lama yang sudah dinilai atau paling baru sebelum membuat index, dengan advisory/table lock agar inisialisasi serverless paralel tetap aman.
 - Duplikat submission historis dibersihkan, tetapi XP historis tidak dikurangi otomatis karena tidak ada reward ledger yang dapat membuktikan XP mana yang berasal dari race lama.
 - Regression contract berada di `tests/orientasi-checkpoint-atomicity.test.ts` dan harus lulus sebelum parity guard/build/deploy.
+- Release final: focused guard 1/1, suite Orientasi 6/6, parity PASS, build exit 0, dan deployment `dpl_7egFohXuhXB4jjVErKuogF3YBJFn` READY/teralias ke `www`. Smoke publik menghasilkan 200 untuk beranda/leaderboard dan 401 untuk checkpoint tanpa sesi.
 
 ### Final review fix: server authority dan pelestarian LKPD
 

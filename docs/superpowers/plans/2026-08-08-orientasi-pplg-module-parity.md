@@ -361,4 +361,4 @@ git commit -m "docs: hand over orientasi module parity release"
 - [x] Ganti `SELECT` → `INSERT` dengan `onConflictDoNothing(...).returning(...)`; award XP hanya bila insert mengembalikan row.
 - [x] Ganti XP read/modify/write dengan atomic upsert/increment.
 - [x] Jalankan focused guard kembali hingga lulus (GREEN).
-- [ ] Jalankan suite Orientasi, parity guard, dan build; deploy production; smoke test HTTP 200/401; catat deployment aktual di report release.
+- [x] Jalankan suite Orientasi, parity guard, dan build; deploy production; smoke test HTTP 200/401; catat deployment aktual di report release.
