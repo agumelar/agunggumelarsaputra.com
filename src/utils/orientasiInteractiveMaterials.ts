@@ -18,15 +18,44 @@ export interface InteractiveActivity {
   correctOrder?: readonly string[];
 }
 
+export interface LearningHero {
+  code: string;
+  sprint: string;
+  context: string;
+  objective: string;
+}
+
+export interface TeacherMessage {
+  title: 'Pesan Guru Pengampu RPL';
+  message: string;
+  signature: string;
+}
+
+export interface LearningScene {
+  id: string;
+  kind: InteractiveActivityKind;
+  title: string;
+  instruction: string;
+  items: InteractiveActivityItem[];
+  feedback: string;
+  correctOrder?: readonly string[];
+}
+
 export interface InteractiveMaterial {
   slug: OrientasiSlug;
   eyebrow: string;
   title: string;
   summary: string;
   activities: [InteractiveActivity, InteractiveActivity];
+  hero: LearningHero;
+  teacherMessage: TeacherMessage;
+  scenes: [LearningScene, LearningScene];
 }
 
-type InteractiveMaterialCatalog = Partial<Record<OrientasiSlug, InteractiveMaterial>>;
+type InteractiveMaterialSeed = Omit<InteractiveMaterial, 'hero' | 'teacherMessage' | 'scenes'>;
+type InteractiveMaterialCatalog = Partial<Record<OrientasiSlug, InteractiveMaterialSeed>>;
+type ActiveInteractiveOrientasiSlug = Exclude<OrientasiSlug, 'orientasi-pplg-01-pengantar-skill-passport'>;
+type LearningContext = Pick<InteractiveMaterial, 'hero' | 'teacherMessage'>;
 
 const item = (label: string, detail: string, feedback: string): InteractiveActivityItem => ({ label, detail, feedback });
 
@@ -138,6 +167,69 @@ const ORIENTASI_INTERACTIVE_MATERIALS: InteractiveMaterialCatalog = {
   }
 };
 
+const ORIENTASI_LEARNING_CONTEXTS: Record<ActiveInteractiveOrientasiSlug, LearningContext> = {
+  'orientasi-pplg-02-profesi-peluang-karier': {
+    hero: { code: 'OR-01', sprint: 'Sprint 1 · Pertemuan 2', context: 'Satu produk digital lahir dari delapan profesi yang bekerja dengan output dan tanggung jawab berbeda.', objective: 'Kenali peran PPLG lalu telusuri handoff kebutuhan fitur dari UI/UX, frontend, backend, QA, hingga layanan siap rilis.' },
+    teacherMessage: { title: 'Pesan Guru Pengampu RPL', message: 'Gunakan contoh aplikasi yang kalian pakai setiap hari untuk melihat bahwa desain, kode, pengujian, dan infrastruktur adalah kerja satu tim.', signature: 'Agung Gumelar Saputra, S.Tr.T. · Guru Pengampu RPL' },
+  },
+  'orientasi-pplg-03-ekosistem-industri-pplg': {
+    hero: { code: 'OR-01', sprint: 'Sprint 1 · Pertemuan 3', context: 'Industri PPLG hadir dalam startup, software house, enterprise, pekerjaan freelancer, dan tim internal lembaga.', objective: 'Bandingkan ritme kerja, model proyek, serta kebutuhan skill agar pilihan konteks karier didasarkan pada alasan yang nyata.' },
+    teacherMessage: { title: 'Pesan Guru Pengampu RPL', message: 'Tidak ada lingkungan kerja yang paling unggul untuk semua orang; kenali cara kalian belajar, berkolaborasi, dan memberi dampak.', signature: 'Agung Gumelar Saputra, S.Tr.T. · Guru Pengampu RPL' },
+  },
+  'orientasi-pplg-04-matriks-skill-jenjang-karier': {
+    hero: { code: 'OR-01', sprint: 'Sprint 1 · Pertemuan 4', context: 'Karier PPLG tumbuh melalui hard skill, soft skill, dan pengalaman bertahap dari kelas 10 hingga peran profesional.', objective: 'Petakan bekal teknis dan kolaboratif kalian dalam roadmap kesiapan karier yang berangkat dari fondasi belajar.' },
+    teacherMessage: { title: 'Pesan Guru Pengampu RPL', message: 'Portofolio yang kuat bukan hanya menunjukkan kemampuan teknis, tetapi juga bukti komunikasi, ketekunan, dan kerja tim.', signature: 'Agung Gumelar Saputra, S.Tr.T. · Guru Pengampu RPL' },
+  },
+  'orientasi-pplg-05-job-fair-kelas': {
+    hero: { code: 'OR-01', sprint: 'Sprint 1 · Pertemuan 5', context: 'Job fair kelas menjadi ruang untuk mempresentasikan profesi PPLG lewat booth, karya, tools, dan dialog antarteman.', objective: 'Siapkan booth profesi yang jujur dan informatif, lalu gunakan pertanyaan wawancara untuk mengeksplorasi realitas kerja.' },
+    teacherMessage: { title: 'Pesan Guru Pengampu RPL', message: 'Datanglah ke setiap booth dengan rasa ingin tahu; pertanyaan yang spesifik sering memberi arah belajar yang lebih jelas daripada tebakan.', signature: 'Agung Gumelar Saputra, S.Tr.T. · Guru Pengampu RPL' },
+  },
+  'orientasi-pplg-06-rencana-minat-awal': {
+    hero: { code: 'OR-01', sprint: 'Sprint 1 · Pertemuan 6', context: 'Minat karier perlu diterjemahkan menjadi target SMART dan tindakan awal yang menghasilkan bukti belajar selama tiga tahun.', objective: 'Rumusan minat menjadi rencana tiga tahun dengan target spesifik, terukur, realistis, relevan, dan berbatas waktu.' },
+    teacherMessage: { title: 'Pesan Guru Pengampu RPL', message: 'Mulailah dari karya kecil yang selesai tepat waktu, karena bukti kemajuan sederhana lebih berarti daripada rencana besar yang tidak dijalankan.', signature: 'Agung Gumelar Saputra, S.Tr.T. · Guru Pengampu RPL' },
+  },
+  'orientasi-pplg-07-mind-map-profesi-pplg': {
+    hero: { code: 'OR-01', sprint: 'Sprint 1 · Pertemuan 7', context: 'Mind map profesi menghubungkan node peran, tools, hasil karya, dan relasi kolaborasi dalam ekosistem PPLG.', objective: 'Bangun peta visual yang mudah dibaca lalu audit hierarki, label, garis penghubung, dan keterkaitan antarnode.' },
+    teacherMessage: { title: 'Pesan Guru Pengampu RPL', message: 'Peta yang baik membantu orang lain memahami ide kalian tanpa penjelasan panjang, maka utamakan hubungan yang jelas daripada hiasan.', signature: 'Agung Gumelar Saputra, S.Tr.T. · Guru Pengampu RPL' },
+  },
+  'orientasi-pplg-08-finalisasi-validasi-or01': {
+    hero: { code: 'OR-01', sprint: 'Sprint 1 · Pertemuan 8', context: 'Evidence OR-01 harus lengkap, tertata, berbentuk PDF, dan dapat dibuka publik oleh guru tanpa hambatan akses.', objective: 'Validasi mind map dan rencana minat melalui format evidence, nama file, folder, akses Public Viewer, serta pengujian tautan.' },
+    teacherMessage: { title: 'Pesan Guru Pengampu RPL', message: 'Karya yang baik belum siap dinilai bila penilai tidak dapat membukanya; uji tautan dari sudut pandang orang lain sebelum mengumpulkan.', signature: 'Agung Gumelar Saputra, S.Tr.T. · Guru Pengampu RPL' },
+  },
+  'orientasi-pplg-09-app-audit-produk-digital': {
+    hero: { code: 'OR-02', sprint: 'Sprint 2 · Pertemuan 9', context: 'App Audit mengajak kalian menilai aplikasi melalui target pengguna, fungsi utama, UI/UX, kelebihan, dan kekurangannya.', objective: 'Gunakan lensa audit untuk menemukan masalah user journey serta dampaknya, bukan sekadar memberi penilaian suka atau tidak suka.' },
+    teacherMessage: { title: 'Pesan Guru Pengampu RPL', message: 'Amati aplikasi seperti analis: catat siapa penggunanya, apa yang ingin dilakukan, dan bagian mana yang membantu atau menghambat mereka.', signature: 'Agung Gumelar Saputra, S.Tr.T. · Guru Pengampu RPL' },
+  },
+  'orientasi-pplg-10-ui-ux-fungsi-produk': {
+    hero: { code: 'OR-02', sprint: 'Sprint 2 · Pertemuan 10', context: 'Produk digital dapat dibandingkan dari UI yang terlihat, UX yang dirasakan, dan fungsi sistem yang harus bekerja benar.', objective: 'Bedakan tiga dimensi tersebut saat membandingkan aplikasi agar setiap temuan memiliki alasan penilaian yang tepat.' },
+    teacherMessage: { title: 'Pesan Guru Pengampu RPL', message: 'Jangan berhenti pada kalimat “aplikasinya bagus”; jelaskan apakah kekuatan atau masalahnya berada pada tampilan, alur, atau fungsi.', signature: 'Agung Gumelar Saputra, S.Tr.T. · Guru Pengampu RPL' },
+  },
+  'orientasi-pplg-11-framework-review-6-komponen': {
+    hero: { code: 'OR-02', sprint: 'Sprint 2 · Pertemuan 11', context: 'Framework review enam komponen menyusun identitas produk, target pengguna, fungsi, UI/UX, temuan, dan rekomendasi.', objective: 'Gunakan struktur review untuk memilih prioritas temuan berdasarkan observasi aplikasi dan bukti yang dapat diverifikasi.' },
+    teacherMessage: { title: 'Pesan Guru Pengampu RPL', message: 'Review yang profesional dibangun dari pengamatan yang runtut; pilih satu aplikasi, pahami penggunanya, lalu kumpulkan bukti sebelum menyimpulkan.', signature: 'Agung Gumelar Saputra, S.Tr.T. · Guru Pengampu RPL' },
+  },
+  'orientasi-pplg-12-latihan-analisis-anotasi-visual': {
+    hero: { code: 'OR-02', sprint: 'Sprint 2 · Pertemuan 12', context: 'Claim–Evidence–Reasoning membantu kalian menjadikan screenshot positif maupun negatif sebagai argumen review yang dapat diperiksa.', objective: 'Rangkai claim, bukti visual beranotasi, dan reasoning untuk menjelaskan dampak temuan terhadap pengalaman pengguna.' },
+    teacherMessage: { title: 'Pesan Guru Pengampu RPL', message: 'Screenshot bukan hiasan laporan: tandai elemen yang dibahas dan jelaskan mengapa elemen itu membantu atau mengganggu pengguna.', signature: 'Agung Gumelar Saputra, S.Tr.T. · Guru Pengampu RPL' },
+  },
+  'orientasi-pplg-13-review-show-peer-feedback': {
+    hero: { code: 'OR-02', sprint: 'Sprint 2 · Pertemuan 13', context: 'Review show melatih apresiasi, saran yang dapat ditindaklanjuti, dan Sandwich Feedback untuk menyempurnakan karya teman.', objective: 'Sampaikan umpan balik secara santun dengan urutan apresiasi, kritik solutif, dan dorongan untuk revisi.' },
+    teacherMessage: { title: 'Pesan Guru Pengampu RPL', message: 'Berikan komentar pada karya, bukan pribadi pembuatnya; masukan yang spesifik dan hangat membuat teman berani memperbaiki analisanya.', signature: 'Agung Gumelar Saputra, S.Tr.T. · Guru Pengampu RPL' },
+  },
+  'orientasi-pplg-14-finalisasi-dokumen-review': {
+    hero: { code: 'OR-02', sprint: 'Sprint 2 · Pertemuan 14', context: 'Dokumen review akhir perlu memenuhi standar struktur, layout, screenshot anotasi, dan rekomendasi yang solutif.', objective: 'Audit kualitas laporan lalu pilih tindakan perbaikan yang meningkatkan kelengkapan evidence dan keterbacaan dokumen.' },
+    teacherMessage: { title: 'Pesan Guru Pengampu RPL', message: 'Rapikan isi sebelum kosmetik: komponen yang lengkap dan bukti yang jelas akan membuat rekomendasi kalian lebih meyakinkan.', signature: 'Agung Gumelar Saputra, S.Tr.T. · Guru Pengampu RPL' },
+  },
+  'orientasi-pplg-15-pengumpulan-validasi-or02': {
+    hero: { code: 'OR-02', sprint: 'Sprint 2 · Pertemuan 15', context: 'Portofolio OR-02 dinyatakan siap bila evidence review lengkap, PDF berada di folder benar, dan tautan publik dapat diverifikasi.', objective: 'Jalankan prosedur validasi file, tautan, akses publik, dan klaim penyelesaian sebelum menyatakan portofolio terkumpul.' },
+    teacherMessage: { title: 'Pesan Guru Pengampu RPL', message: 'Pengumpulan bukan sekadar mengunggah file; pastikan nama, lokasi, akses, dan link evidence benar-benar siap digunakan oleh penilai.', signature: 'Agung Gumelar Saputra, S.Tr.T. · Guru Pengampu RPL' },
+  },
+  'orientasi-pplg-16-rekap-skill-clinic-refleksi': {
+    hero: { code: 'OR-01 & OR-02', sprint: 'Penutup Semester · Pertemuan 16', context: 'Skill Passport merekap level capaian OR-01 dan OR-02, dilanjutkan Skill Clinic serta refleksi atas perjalanan semester pertama.', objective: 'Gunakan evidence dan refleksi untuk menentukan komitmen perbaikan yang terukur menuju pembelajaran coding pada semester berikutnya.' },
+    teacherMessage: { title: 'Pesan Guru Pengampu RPL', message: 'Rayakan capaian kalian dengan jujur, lalu pilih satu kebiasaan dan satu karya yang akan diperbaiki agar semester berikutnya dimulai lebih kuat.', signature: 'Agung Gumelar Saputra, S.Tr.T. · Guru Pengampu RPL' },
+  },
+};
+
 const SEQUENCE_CORRECT_ORDERS: Record<string, readonly string[]> = {
   'or02-handoff': ['Product Manager', 'UI/UX Designer', 'Frontend/Mobile Developer', 'Backend Developer', 'QA Engineer', 'DevOps Engineer'],
   'or04-roadmap': ['Fondasi kelas 10', 'Pendalaman kelas 11', 'Portofolio kelas 12', 'Intern/Junior', 'Mid/Senior/Lead'],
@@ -149,13 +241,18 @@ const SEQUENCE_CORRECT_ORDERS: Record<string, readonly string[]> = {
 
 export function getOrientasiInteractiveMaterial(slug: OrientasiSlug): InteractiveMaterial {
   const material = ORIENTASI_INTERACTIVE_MATERIALS[slug];
-  if (!material) throw new Error(`Materi interaktif belum tersedia untuk ${slug}.`);
+  const learningContext = ORIENTASI_LEARNING_CONTEXTS[slug as ActiveInteractiveOrientasiSlug];
+  if (!material || !learningContext) throw new Error(`Materi interaktif belum tersedia untuk ${slug}.`);
+  const activities = material.activities.map((activity) => (
+    activity.kind === 'sequence'
+      ? { ...activity, correctOrder: SEQUENCE_CORRECT_ORDERS[activity.id] }
+      : activity
+  )) as InteractiveMaterial['activities'];
+
   return {
     ...material,
-    activities: material.activities.map((activity) => (
-      activity.kind === 'sequence'
-        ? { ...activity, correctOrder: SEQUENCE_CORRECT_ORDERS[activity.id] }
-        : activity
-    )) as InteractiveMaterial['activities'],
+    ...learningContext,
+    activities,
+    scenes: activities,
   };
 }
