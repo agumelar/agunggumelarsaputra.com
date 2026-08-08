@@ -10,6 +10,14 @@ Format penulisan mengacu pada [Keep a Changelog](https://keepachangelog.com/id/1
 - Opsi Hapus Akun siswa melalui panel Admin (`/admin/users`).
 - Generator PDF Otomatis untuk Rekap Portofolio Skill Passport Siswa.
 
+## [2.5.1] - 2026-08-08
+### Changed
+- **Penyempurnaan Tata Letak Modul Reader (`src/pages/pembelajaran/[...slug].astro`):**
+  - Memindahkan blok akordeon **"📜 Bacaan Rujukan Silabus & Catatan Kurikulum Lengkap"** ke posisi paling atas pada tab panel Materi (`#panel-materi`).
+  - Memperhalus visual outline summary & padding akordeon agar lebih elegan, bersih, dan mudah dibuka-tutup oleh siswa sebelum mendalami materi interaktif.
+
+---
+
 ## [2.5.0] - 2026-08-08
 ### Added
 - **Sistem Ekspor Rekap Nilai & Asesmen Resmi ke Format Excel (`.xlsx` via `exceljs`):**

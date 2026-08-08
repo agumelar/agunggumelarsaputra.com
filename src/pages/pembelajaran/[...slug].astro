@@ -157,6 +157,24 @@ const lessonSlug = entry.id || entry.slug;
         <!-- Tab Panel 1: Materi Pembelajaran -->
         <section id="panel-materi" class="tab-panel space-y-6">
           
+          <!-- Supplementary Curriculum Reference Accordion for Modul 1 (Paling Atas) -->
+          {isModul1 && (
+            <details class="group p-4 sm:p-5 rounded-2xl bg-secondary/30 border border-border/80 hover:border-border transition-all shadow-sm">
+              <summary class="cursor-pointer font-bold text-xs sm:text-sm text-foreground flex items-center justify-between list-none select-none outline-none">
+                <span class="flex items-center gap-2">
+                  <span class="text-base">📜</span>
+                  <span>Bacaan Rujukan Silabus & Catatan Kurikulum Lengkap</span>
+                </span>
+                <span class="group-open:rotate-180 transition-transform duration-200 text-muted-foreground text-xs font-mono">▼</span>
+              </summary>
+              <div class="pt-4 border-t border-border mt-3.5">
+                <article class="prose prose-invert max-w-none text-xs leading-relaxed">
+                  <Content />
+                </article>
+              </div>
+            </details>
+          )}
+
           {isModul1 ? (
             <InteractiveMaterialP1 user={user} />
           ) : (
@@ -193,24 +211,6 @@ const lessonSlug = entry.id || entry.slug;
                 xpReward={5}
               />
             </div>
-          )}
-
-          <!-- Supplementary Curriculum Reference Accordion for Modul 1 -->
-          {isModul1 && (
-            <details class="group p-5 rounded-2xl bg-secondary/20 border border-border transition-all">
-              <summary class="cursor-pointer font-bold text-xs text-foreground flex items-center justify-between list-none">
-                <span class="flex items-center gap-2">
-                  <span>📜</span>
-                  <span>Bacaan Rujukan Silabus & Catatan Kurikulum Lengkap</span>
-                </span>
-                <span class="group-open:rotate-180 transition-transform text-muted-foreground">▼</span>
-              </summary>
-              <div class="pt-4 border-t border-border mt-3">
-                <article class="prose prose-invert max-w-none text-xs leading-relaxed">
-                  <Content />
-                </article>
-              </div>
-            </details>
           )}
 
           <!-- Quick Navigation to Next Tab -->
