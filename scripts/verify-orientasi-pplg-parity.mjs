@@ -7,6 +7,7 @@ const root = resolve(fileURLToPath(new URL('..', import.meta.url)));
 const contentDirectory = resolve(root, 'src/content/pembelajaran');
 const reader = await readFile(resolve(root, 'src/pages/pembelajaran/[...slug].astro'), 'utf8');
 const interactiveRenderer = await readFile(resolve(root, 'src/components/modul/InteractiveModuleMaterial.astro'), 'utf8');
+const interactiveBehavior = await readFile(resolve(root, 'src/utils/interactiveModuleMaterialBehavior.ts'), 'utf8');
 const checkpoints = await readFile(resolve(root, 'src/utils/moduleCheckpoints.ts'), 'utf8');
 const lkpd = await readFile(resolve(root, 'src/components/modul/GeneralInteractiveLkpd.astro'), 'utf8');
 const antiCopyPasteGuardian = await readFile(resolve(root, 'src/components/modul/AntiCopyPasteGuardian.astro'), 'utf8');
@@ -99,7 +100,9 @@ assert.match(interactiveRenderer, /aria-pressed="false"/, 'Renderer harus member
 assert.match(interactiveRenderer, /interactive-material__item-detail">\{item\.detail\}/, 'Renderer harus menampilkan detail setiap item.');
 assert.match(interactiveRenderer, /data-correct-order/, 'Renderer urutan harus menerima urutan jawaban eksplisit.');
 assert.match(interactiveRenderer, /data-sequence-action="up"[\s\S]*data-sequence-action="down"/, 'Renderer urutan harus memiliki kontrol pindah keyboard-accessible.');
-assert.match(interactiveRenderer, /Periksa urutan[\s\S]*Urutan sudah tepat[\s\S]*Urutan belum tepat/, 'Renderer urutan harus memvalidasi jawaban dengan umpan balik jelas.');
+assert.match(interactiveRenderer, /getSequencePresentationItems\(activity\)/, 'Renderer urutan harus menyajikan item dalam urutan latihan yang dikonfigurasi.');
+assert.match(interactiveRenderer, /Periksa urutan[\s\S]*initializeInteractiveModuleMaterial/, 'Renderer urutan harus memasang perilaku validasi lokal.');
+assert.match(interactiveBehavior, /Urutan sudah tepat[\s\S]*Urutan belum tepat/, 'Perilaku urutan harus memvalidasi jawaban dengan umpan balik jelas.');
 assert.match(interactiveRenderer, /explore: 'Eksplorasi'[\s\S]*scenario: 'Pilih skenario'[\s\S]*sequence: 'Susun urutan'[\s\S]*checklist: 'Daftar cek'/, 'Label setiap jenis aktivitas harus dilokalkan.');
 
 for (const filename of orientasi.slice(1)) {

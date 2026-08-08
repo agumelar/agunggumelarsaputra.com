@@ -56,6 +56,10 @@ test('interactive material renderer keeps feedback local and accessible', async 
     new URL('../src/components/modul/InteractiveModuleMaterial.astro', import.meta.url),
     'utf8',
   );
+  const behaviorSource = await readFile(
+    new URL('../src/utils/interactiveModuleMaterialBehavior.ts', import.meta.url),
+    'utf8',
+  );
 
   assert.match(source, /aria-live="polite"/);
   assert.match(source, /data-activity-id/);
@@ -66,8 +70,10 @@ test('interactive material renderer keeps feedback local and accessible', async 
   assert.match(source, /data-sequence-action="up"/);
   assert.match(source, /data-sequence-action="down"/);
   assert.match(source, /Periksa urutan/);
-  assert.match(source, /Urutan sudah tepat/);
-  assert.match(source, /Urutan belum tepat/);
+  assert.match(source, /getSequencePresentationItems\(activity\)/);
+  assert.match(source, /initializeInteractiveModuleMaterial/);
+  assert.match(behaviorSource, /Urutan sudah tepat/);
+  assert.match(behaviorSource, /Urutan belum tepat/);
   assert.match(source, /explore: 'Eksplorasi'[\s\S]*scenario: 'Pilih skenario'[\s\S]*sequence: 'Susun urutan'[\s\S]*checklist: 'Daftar cek'/);
   assert.doesNotMatch(source, /localStorage/);
   assert.doesNotMatch(source, /fetch\s*\(/);
