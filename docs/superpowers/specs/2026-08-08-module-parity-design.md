@@ -60,6 +60,14 @@ Jika dokumen handover belum cukup untuk membuat agen atau sesi berikutnya dapat 
 
 ## Hasil verifikasi dan deployment (2026-08-08)
 
+### Final review fix: server authority dan pelestarian LKPD
+
+- Batas kepercayaan dipindahkan ke server: enrollment aktif, prerequisite, serta checkpoint → LKPD → refleksi → completion dibaca dari database oleh policy bersama. Browser event/localStorage hanya memperbarui UX setelah response sukses.
+- Daftar tepat 16 slug kanonik menjadi sumber navigasi/progress reader dan validasi checkpoint. Endpoint checkpoint menurunkan `quizId` dan reward 15 XP dari policy, bukan payload klien.
+- Tugas Modul 02–16 dirender dari skema terstruktur. Struktur asli Modul 02 (tiga profesi + action plan) dan Modul 12 (dua latihan screenshot CER) menjadi regression fixture eksplisit.
+- Verifikasi wajib kini mencakup `npm run test:orientasi` sebelum guard parity dan build.
+- Final fix deployment `dpl_69TnjsE2Fqc4KCv6f7ZqygUArjQe` berstatus READY di [deployment URL](https://agunggumelarsaputra-g2dztreej-agumelars-projects.vercel.app) dan dialiaskan ke [domain production](https://www.agunggumelarsaputra.com). Smoke test beranda menghasilkan HTTP 200; klaim checkpoint tanpa login ditolak HTTP 401.
+
 - `npm run verify:orientasi-parity` selesai dengan exit code `0` dan keluaran `Orientasi PPLG parity guard: PASS`.
 - `npm run build` selesai dengan exit code `0`; Astro menghasilkan server build dengan adapter `@astrojs/vercel`.
 - Vercel production deployment `dpl_49za4gEgo3PWAY6AiGkk2cUEiug2` READY di [deployment URL](https://agunggumelarsaputra-1l124rpo0-agumelars-projects.vercel.app) dan dialiaskan ke [domain production](https://www.agunggumelarsaputra.com).

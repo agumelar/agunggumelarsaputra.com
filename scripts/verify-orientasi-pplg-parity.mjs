@@ -9,12 +9,18 @@ const reader = await readFile(resolve(root, 'src/pages/pembelajaran/[...slug].as
 const checkpoints = await readFile(resolve(root, 'src/utils/moduleCheckpoints.ts'), 'utf8');
 const lkpd = await readFile(resolve(root, 'src/components/modul/GeneralInteractiveLkpd.astro'), 'utf8');
 const antiCopyPasteGuardian = await readFile(resolve(root, 'src/components/modul/AntiCopyPasteGuardian.astro'), 'utf8');
+const checkpointRoute = await readFile(resolve(root, 'src/pages/api/gamification/claim-checkpoint.ts'), 'utf8');
+const submissionRoute = await readFile(resolve(root, 'src/pages/api/submissions/save.ts'), 'utf8');
+const completionRoute = await readFile(resolve(root, 'src/pages/api/progress/complete-lesson.ts'), 'utf8');
+const { CANONICAL_ORIENTASI_SLUGS, getApprovedCheckpoint } = await import('../src/utils/orientasiPplgPolicy.ts');
+const { getOrientasiLkpdSchema } = await import('../src/utils/orientasiLkpdSchemas.ts');
 const files = await readdir(contentDirectory);
 const orientasi = files
   .filter((name) => /^orientasi-pplg-(0[1-9]|1[0-6])-.*\.md$/.test(name))
   .sort();
 
 assert.equal(orientasi.length, 16, 'Harus ada tepat 16 Markdown Modul Orientasi PPLG.');
+assert.deepEqual(orientasi.map((name) => name.replace(/\.md$/, '')), CANONICAL_ORIENTASI_SLUGS, 'Markdown Orientasi harus sama persis dengan katalog kanonik.');
 assert.match(reader, /<InteractiveKnowledgeCheck/, 'Reader harus memasang checkpoint bersama.');
 assert.match(reader, /<GeneralInteractiveLkpd/, 'Reader harus memasang LKPD generik untuk Modul 02–16.');
 assert.match(reader, /<InteractiveReflectionForm[\s\S]*moduleTitle=\{entry\.data\.title\}/, 'Refleksi harus menerima judul modul.');
@@ -26,6 +32,14 @@ assert.match(reader, /window\.addEventListener\('checkpoint-passed'/, 'Checkpoin
 assert.match(reader, /window\.addEventListener\('lkpd-submitted'/, 'LKPD harus membuka refleksi.');
 assert.match(reader, /isCurrentModuleLocked/, 'Reader harus memeriksa gating modul.');
 assert.match(reader, /user\?\.role !== 'admin'/, 'Admin harus mempertahankan bypass gating.');
+assert.match(reader, /selectCanonicalOrientasiModules\(allModules\)/, 'Sidebar, prerequisite, next, dan progress harus memakai katalog 16 modul kanonik.');
+assert.doesNotMatch(reader, /localStorage\.getItem\(`ags_(checkpoint|lkpd|reflection)_/, 'localStorage tidak boleh mengotorisasi tahapan belajar.');
+assert.match(checkpointRoute, /getApprovedCheckpoint\(lessonSlug\)/, 'Checkpoint harus memvalidasi slug dan reward dari katalog server.');
+assert.doesNotMatch(checkpointRoute, /Number\(xpReward\)|xpReward\s*=\s*10/, 'Checkpoint tidak boleh mempercayai reward dari klien.');
+for (const route of [checkpointRoute, submissionRoute, completionRoute]) {
+  assert.match(route, /authorizeOrientasiAction\(/, 'Setiap endpoint mutasi harus menjalankan otorisasi alur Orientasi di server.');
+  assert.match(route, /getOrientasiServerState\(/, 'Setiap endpoint mutasi harus membaca state progres/enrollment dari server.');
+}
 assert.doesNotMatch(antiCopyPasteGuardian, /'groupmembers'|'studentgroup'|'token'|'tokencode'|'email'|'password'|'search'|'query'|'evidenceurl'|'repositoryurl'|'repourl'/, 'Hanya identitas siswa dan evidence yang digunakan form boleh diizinkan di dalam form pembelajaran.');
 assert.doesNotMatch(antiCopyPasteGuardian, /el instanceof HTMLInputElement && el\.type === 'url'/, 'Tidak semua input URL boleh menerima paste.');
 assert.match(antiCopyPasteGuardian, /'studentname'[\s\S]*'studentnis'[\s\S]*'studentclass'[\s\S]*'submissiondate'[\s\S]*'driveurl'[\s\S]*'evidencedriveurl'/, 'Identitas siswa dan URL evidence harus tetap diizinkan.');
@@ -36,6 +50,11 @@ for (const filename of orientasi.slice(1)) {
   assert.ok(checkpoints.includes(`'${slug}'`), `Checkpoint belum dikonfigurasi untuk ${slug}.`);
   assert.ok(lkpd.includes(`'${slug}'`), `Panduan LKPD belum dikonfigurasi untuk ${slug}.`);
 }
+
+assert.equal(getApprovedCheckpoint('slug-arbitrer'), null, 'Slug arbitrer harus ditolak policy checkpoint.');
+assert.equal(getApprovedCheckpoint(CANONICAL_ORIENTASI_SLUGS[1]).xpReward, 15, 'Reward checkpoint harus berasal dari policy server.');
+assert.equal(getOrientasiLkpdSchema(CANONICAL_ORIENTASI_SLUGS[1]).sections[0].fields.length, 12, 'Modul 02 harus mempertahankan tabel tiga profesi.');
+assert.equal(getOrientasiLkpdSchema(CANONICAL_ORIENTASI_SLUGS[11]).sections.length, 2, 'Modul 12 harus mempertahankan dua latihan CER screenshot.');
 
 for (const filename of orientasi.slice(1)) {
   const slug = filename.replace(/\.md$/, '');

@@ -2,34 +2,34 @@ import type { APIRoute } from 'astro';
 import { db, isDbConfigured, ensureDbInitialized } from '../../../db';
 import { userSubmissions, userGamification } from '../../../db/schema';
 import { eq, and } from 'drizzle-orm';
+import { authorizeOrientasiAction, getApprovedCheckpoint } from '../../../utils/orientasiPplgPolicy.ts';
+import { getOrientasiServerState } from '../../../utils/orientasiPplgServer.ts';
 
 export const POST: APIRoute = async ({ request, locals }) => {
   if (!locals.user) {
-    return new Response(JSON.stringify({ 
-      success: true, 
-      guest: true, 
-      xpEarned: 10, 
-      message: 'Checkpoint berhasil diselesaikan (Mode Tamu).' 
-    }), { status: 200 });
+    return new Response(JSON.stringify({ error: 'Harap masuk (login) untuk mencatat checkpoint.' }), { status: 401 });
   }
 
   if (!isDbConfigured()) {
-    return new Response(JSON.stringify({ 
-      success: true, 
-      offline: true, 
-      xpEarned: 10, 
-      message: 'Checkpoint tercatat secara lokal.' 
-    }), { status: 200 });
+    return new Response(JSON.stringify({ error: 'Database belum terhubung di server.' }), { status: 503 });
   }
 
   try {
     await ensureDbInitialized();
     const userId = locals.user.userId;
-    const body = await request.json();
-    const { lessonSlug, quizId, xpReward = 10, tokenId } = body;
+    const { lessonSlug } = await request.json();
+    const checkpoint = getApprovedCheckpoint(lessonSlug);
+    if (!checkpoint) return new Response(JSON.stringify({ error: 'Slug checkpoint Orientasi PPLG tidak valid.' }), { status: 400 });
 
-    if (!lessonSlug) {
-      return new Response(JSON.stringify({ error: 'Slug modul wajib disertakan.' }), { status: 400 });
+    const serverState = await getOrientasiServerState(userId, checkpoint.lessonSlug);
+    const authorization = authorizeOrientasiAction({
+      lessonSlug: checkpoint.lessonSlug,
+      action: 'checkpoint',
+      role: locals.user.role,
+      ...serverState,
+    });
+    if (!authorization.allowed) {
+      return new Response(JSON.stringify({ error: authorization.error }), { status: authorization.status });
     }
 
     // Cek apakah checkpoint modul ini sudah pernah di-claim oleh user
@@ -37,7 +37,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
       .from(userSubmissions)
       .where(and(
         eq(userSubmissions.userId, userId),
-        eq(userSubmissions.lessonSlug, lessonSlug),
+        eq(userSubmissions.lessonSlug, checkpoint.lessonSlug),
         eq(userSubmissions.submissionType, 'checkpoint')
       ))
       .limit(1);
@@ -47,17 +47,17 @@ export const POST: APIRoute = async ({ request, locals }) => {
 
     if (!existing) {
       isFirstTime = true;
-      xpEarned = Number(xpReward) || 10;
+      xpEarned = checkpoint.xpReward;
 
       await db.insert(userSubmissions).values({
         userId,
-        tokenId: tokenId ? Number(tokenId) : null,
-        lessonSlug,
+        tokenId: serverState.enrollmentTokenId,
+        lessonSlug: checkpoint.lessonSlug,
         submissionType: 'checkpoint',
-        formData: JSON.stringify({ quizId, passed: true, autoGraded: true, timestamp: new Date().toISOString() }),
+        formData: JSON.stringify({ quizId: checkpoint.quizId, passed: true, autoGraded: true, timestamp: new Date().toISOString() }),
         score: 100,
         teacherScore: 100,
-        teacherLevel: 2,
+        teacherLevel: 'Level 2',
         teacherFeedback: 'Selesai otomatis via Gamified Checkpoint Quest',
         gradedAt: new Date(),
         status: 'verified',

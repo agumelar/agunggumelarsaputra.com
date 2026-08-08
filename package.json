@@ -8,7 +8,8 @@
     "build": "astro build",
     "preview": "astro preview",
     "astro": "astro",
-    "verify:orientasi-parity": "node scripts/verify-orientasi-pplg-parity.mjs"
+    "verify:orientasi-parity": "node --experimental-strip-types scripts/verify-orientasi-pplg-parity.mjs",
+    "test:orientasi": "node --experimental-strip-types --test tests/orientasi-*.test.ts"
   },
   "dependencies": {
     "@astrojs/mdx": "^7.0.5",

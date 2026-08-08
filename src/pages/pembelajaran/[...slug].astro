@@ -13,6 +13,8 @@ import SmartMarkdownWrapper from '../../components/modul/SmartMarkdownWrapper.as
 import { db, isDbConfigured, ensureDbInitialized } from '../../db';
 import { userSubmissions, userProgress } from '../../db/schema';
 import { eq, and } from 'drizzle-orm';
+import { isCanonicalOrientasiSlug, selectCanonicalOrientasiModules } from '../../utils/orientasiPplgPolicy.ts';
+import { getOrientasiServerState } from '../../utils/orientasiPplgServer.ts';
 
 const { slug } = Astro.params;
 const allModules = await getCollection('pembelajaran');
@@ -24,34 +26,35 @@ if (!entry) {
 
 const user = Astro.locals.user;
 const { Content } = await render(entry);
-const sortedSidebarModules = allModules.sort((a, b) => a.data.order - b.data.order);
 const isModul1 = (entry.id || entry.slug) === 'orientasi-pplg-01-pengantar-skill-passport';
 const lessonSlug = entry.id || entry.slug;
+const isOrientasiModule = isCanonicalOrientasiSlug(lessonSlug);
+const sortedSidebarModules = selectCanonicalOrientasiModules(allModules);
 
 // Fetch user completed lessons and submission states from database
 let completedSlugs: string[] = [];
 let hasPassedCheckpoint = false;
 let hasSubmittedLkpd = false;
 let hasSubmittedReflection = false;
+let hasOrientasiEnrollment = user?.role === 'admin';
 
 if (user && isDbConfigured()) {
   try {
     await ensureDbInitialized();
-    const progressList = await db.select({
-      lessonSlug: userProgress.lessonSlug,
-    }).from(userProgress).where(eq(userProgress.userId, user.userId));
-
-    completedSlugs = progressList.map(p => p.lessonSlug);
-
-    const existingSubs = await db.select({
-      submissionType: userSubmissions.submissionType,
-      status: userSubmissions.status,
-    })
-    .from(userSubmissions)
-    .where(and(
-      eq(userSubmissions.userId, user.userId),
-      eq(userSubmissions.lessonSlug, lessonSlug)
-    ));
+    let existingSubs: Array<{ submissionType: string }> = [];
+    if (isOrientasiModule) {
+      const serverState = await getOrientasiServerState(user.userId, lessonSlug);
+      completedSlugs = serverState.completedSlugs;
+      existingSubs = serverState.submissionTypes.map((submissionType) => ({ submissionType }));
+      hasOrientasiEnrollment = serverState.isEnrolled || user.role === 'admin';
+    } else {
+      const progressList = await db.select({ lessonSlug: userProgress.lessonSlug })
+        .from(userProgress).where(eq(userProgress.userId, user.userId));
+      completedSlugs = progressList.map(p => p.lessonSlug);
+      existingSubs = await db.select({ submissionType: userSubmissions.submissionType })
+        .from(userSubmissions)
+        .where(and(eq(userSubmissions.userId, user.userId), eq(userSubmissions.lessonSlug, lessonSlug)));
+    }
 
     hasSubmittedLkpd = existingSubs.some(s => s.submissionType === 'lkpd');
     hasSubmittedReflection = existingSubs.some(s => s.submissionType === 'reflection');
@@ -64,11 +67,11 @@ if (user && isDbConfigured()) {
 // Sequential Module Gating Logic
 const currentIndex = sortedSidebarModules.findIndex((m) => (m.id || m.slug) === slug);
 const prevModule = currentIndex > 0 ? sortedSidebarModules[currentIndex - 1] : null;
-const nextModule = currentIndex < sortedSidebarModules.length - 1 ? sortedSidebarModules[currentIndex + 1] : null;
+const nextModule = currentIndex >= 0 && currentIndex < sortedSidebarModules.length - 1 ? sortedSidebarModules[currentIndex + 1] : null;
 
 const isCurrentModuleCompleted = completedSlugs.includes(lessonSlug);
 // Modul 1 selalu terbuka. Modul N hanya terkunci jika user bukan admin dan modul N-1 belum selesai
-const isCurrentModuleLocked = user?.role !== 'admin' && prevModule !== null && !completedSlugs.includes(prevModule.id || prevModule.slug);
+const isCurrentModuleLocked = isOrientasiModule && user?.role !== 'admin' && (!hasOrientasiEnrollment || (prevModule !== null && !completedSlugs.includes(prevModule.id || prevModule.slug)));
 
 const totalCompletedModules = sortedSidebarModules.filter(m => completedSlugs.includes(m.id || m.slug)).length;
 const progressPercentage = sortedSidebarModules.length > 0 ? Math.round((totalCompletedModules / sortedSidebarModules.length) * 100) : 0;
@@ -271,10 +274,12 @@ const progressPercentage = sortedSidebarModules.length > 0 ? Math.round((totalCo
                 AKSES MODUL BELUM TERBUKA
               </div>
               <h2 class="text-2xl font-extrabold text-foreground tracking-tight">
-                Selesaikan Modul {prevModule?.data.order} Terlebih Dahulu
+                {!hasOrientasiEnrollment ? 'Enrollment Orientasi PPLG Diperlukan' : `Selesaikan Modul ${prevModule?.data.order} Terlebih Dahulu`}
               </h2>
               <p class="text-xs sm:text-sm text-muted-foreground leading-relaxed max-w-lg mx-auto">
-                Untuk menjamin pemahaman konsep yang terstruktur dan tuntas, kamu perlu menyelesaikan kuis, lembar kerja, dan jurnal refleksi pada <strong>Modul {prevModule?.data.order}: {prevModule?.data.title}</strong> sebelum membuka modul ini.
+                {!hasOrientasiEnrollment
+                  ? 'Masuk dan klaim token akses resmi dari Guru Pengampu RPL pada halaman silabus sebelum memulai modul.'
+                  : <>Untuk menjamin pemahaman konsep yang terstruktur dan tuntas, kamu perlu menyelesaikan kuis, lembar kerja, dan jurnal refleksi pada <strong>Modul {prevModule?.data.order}: {prevModule?.data.title}</strong> sebelum membuka modul ini.</>}
               </p>
             </div>
 
@@ -500,12 +505,10 @@ const progressPercentage = sortedSidebarModules.length > 0 ? Math.round((totalCo
     const closeLockToast = document.getElementById('close-lock-toast');
 
     // Progression state tracking
-    let isCheckpointPassed = container?.getAttribute('data-init-checkpoint') === 'true' ||
-                             localStorage.getItem(`ags_checkpoint_${slug}`) === 'true';
-    let isLkpdSubmitted = container?.getAttribute('data-init-lkpd') === 'true' ||
-                          localStorage.getItem(`ags_lkpd_${slug}`) === 'true';
-    let isReflectionSubmitted = container?.getAttribute('data-init-reflection') === 'true' ||
-                                localStorage.getItem(`ags_reflection_${slug}`) === 'true';
+    // Server-rendered state is authoritative. localStorage is written only as a display cache.
+    let isCheckpointPassed = container?.getAttribute('data-init-checkpoint') === 'true';
+    let isLkpdSubmitted = container?.getAttribute('data-init-lkpd') === 'true';
+    let isReflectionSubmitted = container?.getAttribute('data-init-reflection') === 'true';
 
     // Show toast message when clicking locked tab
     function showLockWarning(msg: string) {
@@ -655,6 +658,7 @@ const progressPercentage = sortedSidebarModules.length > 0 ? Math.round((totalCo
           })
         });
         const data = await res.json();
+        if (!res.ok || !data.success) throw new Error(data.error || 'Progres modul ditolak server.');
         markLessonComplete(slug);
         localStorage.setItem(`ags_completed_${slug}`, 'true');
 
@@ -674,15 +678,9 @@ const progressPercentage = sortedSidebarModules.length > 0 ? Math.round((totalCo
           }, 1200);
         }
       } catch (e) {
-        markLessonComplete(slug);
-        localStorage.setItem(`ags_completed_${slug}`, 'true');
-        btnComplete.textContent = '🎉 Modul Selesai!';
-        const nextSlug = btnComplete.getAttribute('data-next-slug');
-        if (nextSlug) {
-          setTimeout(() => {
-            window.location.href = `/pembelajaran/${nextSlug}`;
-          }, 1000);
-        }
+        btnComplete.removeAttribute('data-processing');
+        btnComplete.textContent = 'Coba Lagi: Tandai Selesai';
+        alert(e instanceof Error ? e.message : 'Progres modul gagal disimpan.');
       }
     });
   </script>

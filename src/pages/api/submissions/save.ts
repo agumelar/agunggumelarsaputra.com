@@ -2,6 +2,8 @@ import type { APIRoute } from 'astro';
 import { db, isDbConfigured, ensureDbInitialized } from '../../../db';
 import { userSubmissions, userGamification } from '../../../db/schema';
 import { eq, and } from 'drizzle-orm';
+import { authorizeOrientasiAction, isCanonicalOrientasiSlug } from '../../../utils/orientasiPplgPolicy.ts';
+import { getOrientasiServerState } from '../../../utils/orientasiPplgServer.ts';
 
 export const POST: APIRoute = async ({ request, locals }) => {
   if (!locals.user) {
@@ -20,6 +22,28 @@ export const POST: APIRoute = async ({ request, locals }) => {
 
     if (!lessonSlug || !submissionType || !formData) {
       return new Response(JSON.stringify({ error: 'Data formulir tidak lengkap.' }), { status: 400 });
+    }
+
+    if (typeof lessonSlug === 'string' && lessonSlug.startsWith('orientasi-pplg-') && !isCanonicalOrientasiSlug(lessonSlug)) {
+      return new Response(JSON.stringify({ error: 'Slug Modul Orientasi PPLG tidak valid.' }), { status: 400 });
+    }
+
+    let trustedTokenId = tokenId ? Number(tokenId) : null;
+    if (isCanonicalOrientasiSlug(lessonSlug)) {
+      if (submissionType !== 'lkpd' && submissionType !== 'reflection') {
+        return new Response(JSON.stringify({ error: 'Jenis submission Orientasi PPLG tidak valid.' }), { status: 400 });
+      }
+      const serverState = await getOrientasiServerState(userId, lessonSlug);
+      const authorization = authorizeOrientasiAction({
+        lessonSlug,
+        action: submissionType,
+        role: locals.user.role,
+        ...serverState,
+      });
+      if (!authorization.allowed) {
+        return new Response(JSON.stringify({ error: authorization.error }), { status: authorization.status });
+      }
+      trustedTokenId = serverState.enrollmentTokenId;
     }
 
     const jsonFormData = typeof formData === 'string' ? formData : JSON.stringify(formData);
@@ -55,7 +79,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
         .set({
           formData: jsonFormData,
           driveUrl: driveUrl || existing.driveUrl,
-          tokenId: tokenId ? Number(tokenId) : existing.tokenId,
+          tokenId: trustedTokenId ?? existing.tokenId,
           score: score !== undefined ? Number(score) : existing.score,
           status: isRemedialResubmit ? 'submitted' : existing.status,
           updatedAt: new Date(),
@@ -66,7 +90,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
       const [inserted] = await db.insert(userSubmissions)
         .values({
           userId,
-          tokenId: tokenId ? Number(tokenId) : null,
+          tokenId: trustedTokenId,
           lessonSlug,
           submissionType,
           formData: jsonFormData,

@@ -17,6 +17,15 @@ Format penulisan mengacu pada [Keep a Changelog](https://keepachangelog.com/id/1
 - Production dideploy pada `https://agunggumelarsaputra-1l124rpo0-agumelars-projects.vercel.app` dan dialiaskan ke `https://www.agunggumelarsaputra.com`; pemeriksaan halaman publik tidak menemukan regresi.
 - Batas verifikasi: alur terlindungi Modul 02 (locked state, checkpoint → LKPD → refleksi, tombol selesai, dan unlock Modul 03) belum diuji di production karena tidak tersedia sesi siswa uji yang sah. Uji tersebut harus dilakukan dengan akun siswa dan enrollment yang legitimate.
 
+### 2026-08-08 — Orientasi PPLG Server Authority & Structured LKPD Fix
+- Memindahkan otorisasi checkpoint → LKPD → refleksi → completion ke policy server bersama. Ketiga endpoint mutasi kini memeriksa login, enrollment aktif, modul prasyarat, submission tahap sebelumnya, dan slug kanonik terhadap state database; `localStorage` hanya menjadi cache tampilan.
+- `/api/gamification/claim-checkpoint` tidak lagi menerima `xpReward`, `quizId`, atau `tokenId` sebagai sumber kebenaran. Slug, ID Quest, token enrollment, dan reward 15 XP diturunkan dari katalog server; guest, database offline, dan slug arbitrer ditolak.
+- Sidebar, denominator progres, prasyarat, serta tautan modul sebelumnya/berikutnya di reader dibatasi tepat pada 16 slug Orientasi PPLG kanonik.
+- Mengganti satu textarea generik dengan skema LKPD terstruktur per Modul 02–16. Modul 02 kembali memiliki tiga profil profesi lengkap serta prioritas/dua langkah aksi; Modul 12 kembali memiliki latihan CER positif dan negatif dengan screenshot evidence terpisah.
+- Menambahkan lima tes perilaku `npm run test:orientasi` serta memperkuat `npm run verify:orientasi-parity` untuk kontrak authority server, katalog kanonik, reward checkpoint, dan struktur LKPD.
+- Verifikasi final lulus (5/5 tes, parity guard PASS, Astro server build exit 0) dan deployment production `dpl_69TnjsE2Fqc4KCv6f7ZqygUArjQe` READY di `https://agunggumelarsaputra-g2dztreej-agumelars-projects.vercel.app`, teralias ke `https://www.agunggumelarsaputra.com`. Smoke test publik mendapat HTTP 200 dan endpoint checkpoint tanpa login mendapat HTTP 401.
+- Batas verifikasi tetap: interaksi lengkap dengan akun siswa/enrollment sah belum tersedia pada sesi ini.
+
 ## [2.6.6] - 2026-08-08
 ### Added & Enhanced
 - **Sistem Proteksi Integritas Belajar Anti Copy-Paste (`AntiCopyPasteGuardian.astro`):**
