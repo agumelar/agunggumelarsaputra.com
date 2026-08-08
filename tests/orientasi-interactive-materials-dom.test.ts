@@ -10,6 +10,26 @@ const sequenceActivity = material.activities.find((activity) => activity.kind ==
 assert.ok(sequenceActivity?.correctOrder);
 const correctOrder = [...sequenceActivity.correctOrder];
 
+function renderSceneFixture() {
+  const root = document.createElement('section');
+  root.innerHTML = `<aside data-teacher-message></aside><div role="status" aria-live="polite"></div><button class="interactive-material__choice" data-kind="explore" data-label="Frontend Developer" data-detail="Mengubah desain menjadi antarmuka web responsif." data-feedback="Frontend menghubungkan rancangan ke antarmuka." aria-pressed="false">Frontend Developer</button>`;
+  return root;
+}
+
+test('scene choice announces feedback and preserves the teacher message outside details', () => {
+  const window = new Window();
+  globalThis.document = window.document;
+  const root = renderSceneFixture();
+
+  initializeInteractiveModuleMaterial(root);
+  root.querySelector<HTMLButtonElement>('[data-label="Frontend Developer"]')!.click();
+
+  assert.match(root.querySelector('[role="status"]')!.textContent!, /Frontend/);
+  assert.equal(root.querySelector('[data-teacher-message]')!.closest('details'), null);
+  assert.equal(root.querySelector('[aria-pressed]')!.getAttribute('aria-pressed'), 'true');
+  window.close();
+});
+
 test('sequence renderer script reorders, validates, and keeps selection state accessible', () => {
   const window = new Window();
   const document = window.document;

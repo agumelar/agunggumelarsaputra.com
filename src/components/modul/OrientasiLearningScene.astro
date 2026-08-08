@@ -1,0 +1,104 @@
+---
+import TeacherMessageCard from './TeacherMessageCard.astro';
+import { getSequencePresentationItems } from '../../utils/interactiveModuleMaterialBehavior.ts';
+import {
+  getOrientasiInteractiveMaterial,
+  type LearningHero,
+  type LearningScene,
+  type TeacherMessage,
+} from '../../utils/orientasiInteractiveMaterials.ts';
+import type { OrientasiSlug } from '../../utils/orientasiPplgPolicy.ts';
+
+interface Props {
+  lessonSlug: OrientasiSlug;
+  moduleTitle?: string;
+}
+
+const { lessonSlug, moduleTitle } = Astro.props;
+const material = getOrientasiInteractiveMaterial(lessonSlug);
+const hero: LearningHero = material.hero;
+const teacherMessage: TeacherMessage = material.teacherMessage;
+const scenes: [LearningScene, LearningScene] = material.scenes;
+const kindLabels = { explore: 'Jelajahi fakta', scenario: 'Cermati situasi', sequence: 'Susun alur', checklist: 'Tandai kesiapan' } as const;
+---
+
+<section id="orientasi-learning-scene" class="learning-scene" aria-labelledby="learning-scene-title">
+  <header class="learning-scene__hero">
+    <div class="learning-scene__meta" aria-label="Konteks modul">
+      <span>{hero.code}</span><span>{hero.sprint}</span><span>Orientasi PPLG · Fase E</span>
+    </div>
+    <p class="learning-scene__context">{hero.context}</p>
+    <h2 id="learning-scene-title">{moduleTitle ?? material.title}</h2>
+    <div class="learning-scene__objective">
+      <span aria-hidden="true">◎</span>
+      <div><strong>Target yang dapat diamati</strong><p>{hero.objective}</p></div>
+    </div>
+  </header>
+
+  <TeacherMessageCard teacherMessage={teacherMessage} />
+
+  <div class="learning-scene__feedback" aria-live="polite" role="status"></div>
+
+  <div class="learning-scene__cards">
+    {scenes.map((scene, index) => (
+      <article class="learning-scene__card" data-activity-id={`${lessonSlug}-scene-${index + 1}`} aria-labelledby={`scene-${index + 1}`}>
+        <div class="learning-scene__card-heading">
+          <p><span aria-hidden="true">{index === 0 ? '01' : '02'}</span>{kindLabels[scene.kind]}</p>
+          <h3 id={`scene-${index + 1}`}>{scene.title}</h3>
+          <p class="learning-scene__instruction">{scene.instruction}</p>
+        </div>
+
+        {scene.kind === 'sequence' ? (
+          <div class="learning-scene__sequence" data-sequence data-correct-order={JSON.stringify(scene.correctOrder)}>
+            <p class="learning-scene__hint">Mulai dari kartu yang paling bawah; gunakan tombol Naik/Turun untuk menyusun kembali.</p>
+            <ol data-sequence-list aria-label={`Urutan untuk ${scene.title}`}>
+              {getSequencePresentationItems(scene).map((item) => (
+                <li data-sequence-item data-item-label={item.label}>
+                  <div><strong>{item.label}</strong><p>{item.detail}</p></div>
+                  <div class="learning-scene__controls" aria-label={`Kontrol urutan ${item.label}`}>
+                    <button type="button" data-sequence-action="up" aria-label={`Pindahkan ${item.label} ke atas`}>↑ Naik</button>
+                    <button type="button" data-sequence-action="down" aria-label={`Pindahkan ${item.label} ke bawah`}>↓ Turun</button>
+                  </div>
+                </li>
+              ))}
+            </ol>
+            <button class="learning-scene__validate interactive-material__validate-sequence" type="button">Periksa urutan</button>
+          </div>
+        ) : (
+          <div class="learning-scene__items" aria-label={scene.title}>
+            {scene.items.map((item) => (
+              <div class="learning-scene__item">
+                <div><strong>{item.label}</strong><p>{item.detail}</p></div>
+                <button type="button" class="interactive-material__choice" data-kind={scene.kind} data-label={item.label} data-detail={item.detail} data-feedback={item.feedback} aria-pressed="false">Lihat kaitannya</button>
+              </div>
+            ))}
+          </div>
+        )}
+        <p class="interactive-material__activity-feedback" hidden>{scene.feedback}</p>
+      </article>
+    ))}
+  </div>
+</section>
+
+<script>
+  import { initializeInteractiveModuleMaterial } from '../../utils/interactiveModuleMaterialBehavior.ts';
+  const root = document.querySelector<HTMLElement>('#orientasi-learning-scene');
+  if (root) initializeInteractiveModuleMaterial(root);
+</script>
+
+<style>
+  .learning-scene { display: grid; gap: 1rem; margin-top: 2rem; color: #f3f4f6; }
+  .learning-scene__hero { padding: clamp(1.25rem, 4vw, 2rem); background: #111827; border: 1px solid #475569; border-top: 4px solid #38bdf8; border-radius: 0.9rem; }
+  .learning-scene__meta { display: flex; flex-wrap: wrap; gap: 0.45rem; color: #bfdbfe; font: 700 0.72rem/1.3 "JetBrains Mono", monospace; letter-spacing: 0.04em; text-transform: uppercase; }
+  .learning-scene__meta span { padding: 0.3rem 0.5rem; background: #1e293b; border: 1px solid #475569; border-radius: 999px; }
+  .learning-scene__context { max-width: 65ch; margin: 1rem 0 0; color: #cbd5e1; line-height: 1.6; }
+  .learning-scene__hero h2 { max-width: 24ch; margin: 0.75rem 0 0; font-size: clamp(1.7rem, 4vw, 2.55rem); line-height: 1.08; }
+  .learning-scene__objective { display: grid; grid-template-columns: auto 1fr; gap: 0.75rem; max-width: 68ch; margin-top: 1.25rem; padding: 0.95rem; background: #0f1d31; border: 1px solid #3b82f6; border-radius: 0.6rem; }
+  .learning-scene__objective > span { color: #fbbf24; font-size: 1.5rem; }.learning-scene__objective strong { color: #fde68a; }.learning-scene__objective p { margin: 0.25rem 0 0; color: #dbeafe; line-height: 1.55; }
+  .learning-scene__feedback { min-height: 1.4rem; padding: 0.8rem 1rem; color: #dbeafe; background: #0f172a; border: 1px solid #334155; border-left: 3px solid #38bdf8; border-radius: 0.45rem; }
+  .learning-scene__cards { display: grid; gap: 1rem; }.learning-scene__card { padding: clamp(1rem, 3vw, 1.5rem); background: #111827; border: 1px solid #475569; border-radius: 0.75rem; }
+  .learning-scene__card-heading > p { display: flex; align-items: center; gap: 0.45rem; margin: 0; color: #7dd3fc; font: 700 0.75rem/1.3 "JetBrains Mono", monospace; text-transform: uppercase; }.learning-scene__card-heading > p span { color: #fbbf24; }.learning-scene__card h3 { margin: 0.7rem 0 0; font-size: 1.25rem; }.learning-scene__instruction { margin: 0.45rem 0 0; color: #cbd5e1; line-height: 1.55; }
+  .learning-scene__items, .learning-scene__sequence ol { display: grid; gap: 0.7rem; margin: 1rem 0 0; padding: 0; list-style: none; }.learning-scene__item, .learning-scene__sequence li { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 0.9rem; align-items: center; padding: 0.9rem; background: #0b1220; border: 1px solid #334155; border-radius: 0.55rem; }.learning-scene__item strong, .learning-scene__sequence strong { color: #f8fafc; }.learning-scene__item p, .learning-scene__sequence li p { margin: 0.3rem 0 0; color: #cbd5e1; line-height: 1.45; }
+  .learning-scene__hint { margin: 1rem 0 0; color: #bfdbfe; }.learning-scene__controls { display: flex; flex-wrap: wrap; gap: 0.4rem; }.learning-scene button { padding: 0.55rem 0.7rem; color: #f8fafc; font-weight: 700; cursor: pointer; background: #1e293b; border: 1px solid #64748b; border-radius: 0.4rem; }.learning-scene button:hover, .learning-scene button[aria-pressed="true"] { background: #1e3a5f; border-color: #7dd3fc; }.learning-scene button:focus-visible { outline: 3px solid #fbbf24; outline-offset: 3px; }.learning-scene__validate { margin-top: 0.85rem; }.interactive-material__activity-feedback { margin: 0.8rem 0 0; color: #dbeafe; }
+  @media (max-width: 38rem) { .learning-scene__item, .learning-scene__sequence li { grid-template-columns: 1fr; }.learning-scene__item > button { justify-self: start; } }
+</style>

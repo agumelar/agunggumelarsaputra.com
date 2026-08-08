@@ -1,6 +1,8 @@
 import type { InteractiveActivity, InteractiveActivityItem } from './orientasiInteractiveMaterials.ts';
 
-export function getSequencePresentationItems(activity: InteractiveActivity): InteractiveActivityItem[] {
+type SequencePresentationSource = Pick<InteractiveActivity, 'kind' | 'items'>;
+
+export function getSequencePresentationItems(activity: SequencePresentationSource): InteractiveActivityItem[] {
   return activity.kind === 'sequence' ? [...activity.items].reverse() : activity.items;
 }
 
@@ -10,10 +12,11 @@ export function initializeInteractiveModuleMaterial(root: HTMLElement): void {
   root.querySelectorAll<HTMLButtonElement>('.interactive-material__choice').forEach((button) => {
     button.addEventListener('click', () => {
       const card = button.closest<HTMLElement>('[data-activity-id]');
-      if (!card || !feedback) return;
+      if (!feedback) return;
 
       const { kind, label, feedback: itemFeedback } = button.dataset;
-      const activityFeedback = card.querySelector<HTMLElement>('.interactive-material__activity-feedback');
+      const choiceScope = card ?? root;
+      const activityFeedback = choiceScope.querySelector<HTMLElement>('.interactive-material__activity-feedback');
 
       if (kind === 'checklist') {
         const isPressed = button.getAttribute('aria-pressed') === 'true';
@@ -22,7 +25,7 @@ export function initializeInteractiveModuleMaterial(root: HTMLElement): void {
         return;
       }
 
-      card.querySelectorAll<HTMLButtonElement>('.interactive-material__choice').forEach((choice) => {
+      choiceScope.querySelectorAll<HTMLButtonElement>('.interactive-material__choice').forEach((choice) => {
         choice.setAttribute('aria-pressed', String(choice === button));
       });
       if (activityFeedback) activityFeedback.hidden = false;
