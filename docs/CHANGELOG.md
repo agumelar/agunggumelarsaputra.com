@@ -9,6 +9,16 @@ Format penulisan mengacu pada [Keep a Changelog](https://keepachangelog.com/id/1
 - Opsi Hapus Akun siswa melalui panel Admin (`/admin/users`).
 - Generator PDF Otomatis untuk Rekap Portofolio Skill Passport Siswa.
 
+### 2026-08-08 — Rilis Materi Interaktif Formatif Orientasi PPLG 02–16
+- Menambahkan katalog server-side `src/utils/orientasiInteractiveMaterials.ts` untuk 15 slug kanonik Modul 02–16, masing-masing dengan tepat dua aktivitas kontekstual; reader memasangnya melalui `InteractiveModuleMaterial.astro` sementara Markdown tetap menjadi bacaan rujukan dan Modul 01 tidak berubah.
+- Renderer menggunakan tombol native, state aksesibel, `data-*`, dan script Astro scoped tanpa dependency client atau data eksternal. Batas formatif bersifat ketat: aktivitas tidak menyimpan data, tidak memanggil API, tidak memakai storage browser, tidak memberi XP, dan tidak mengubah gating atau membuka LKPD; hanya Quest checkpoint yang tetap menjadi gerbang progres/reward.
+- `SmartMarkdownWrapper.astro` adalah dependency reader yang tracked. Clean checkout wajib dapat menjalankan build tanpa menyalin file dari workspace lokal secara manual.
+- Verifikasi rilis: `npm run test:orientasi` lulus 13/13, `npm run verify:orientasi-parity` PASS, dan `npm run build` menyelesaikan Astro server build (exit 0).
+- Deployment `dpl_CMVnY7i2RtM2SWyz299bzXssAkT2` memang READY, tetapi hanya pada proyek standalone `orientasi-interactive-materials` di `https://orientasi-interactive-materials-5i6fvi902-agumelars-projects.vercel.app` dengan alias `https://orientasi-interactive-materials.vercel.app`; ini **bukan** deployment atau alias production kanonik `agunggumelarsaputra.com`.
+- Koreksi smoke: request tanpa sesi ke `/pembelajaran` mengikuti redirect ke login; status akhirnya tidak membuktikan isi katalog. Karena itu tidak ada klaim valid bahwa katalog terproteksi bebas nama HTML/SQL/OOP dari pemeriksaan guest ini. `POST /api/gamification/claim-checkpoint` tanpa sesi tetap HTTP 401.
+- Upaya deploy ulang ke proyek kanonik menciptakan `dpl_A8KAA1B3dC9oZb4XPcrEvUUnDW2Z` (`https://agunggumelarsaputra-qdw4qvsy3-agumelars-projects.vercel.app`), namun CLI timeout dan `vercel inspect` melaporkan status `UNKNOWN`, bukan READY. Alias yang tercatat hanya hostname otomatis Vercel, bukan `www.agunggumelarsaputra.com`; jangan menyebutnya rilis kanonik. Domain kanonik saat ini merespons `/` HTTP 200, sedangkan `/pembelajaran` tanpa sesi HTTP 302 ke login.
+- Batas verifikasi: interaksi lengkap dan inspeksi katalog terproteksi tetap memerlukan akun siswa yang legitimate dan sudah enrollment. Tidak ada akun palsu atau bypass autentikasi yang digunakan pada rilis ini.
+
 ### 2026-08-08 — Penetapan Katalog Orientasi PPLG Saja
 - Menghapus tiga materi bawaan di luar ruang lingkup Orientasi PPLG: `pengenalan-html5-smk`, `dasar-basis-data-sql`, dan `konsep-oop-javascript`.
 - Menghapus konfigurasi Quest dan panduan LKPD ketiganya, sehingga katalog konten publik, konfigurasi pembelajaran, navigasi, progress, validasi API, serta dokumentasi kini konsisten hanya pada 16 modul kanonik Orientasi PPLG.

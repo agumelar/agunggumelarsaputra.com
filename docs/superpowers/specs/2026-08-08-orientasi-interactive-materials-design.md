@@ -1,6 +1,6 @@
 # Desain Materi Interaktif Orientasi PPLG Modul 02–16
 
-> **Status:** Disetujui untuk spesifikasi; menunggu review dokumen sebelum implementasi
+> **Status:** Implementasi terverifikasi; rilis kanonik tertunda (deployment kanonik belum READY)
 > **Tanggal:** 2026-08-08
 > **Acuan mutu:** `InteractiveMaterialP1.astro` pada Modul 01
 
@@ -55,6 +55,14 @@ Menyamakan kedalaman eksplorasi materi Modul 02–16 dengan Modul 01 tanpa menya
 2. Jalankan `npm run test:orientasi`, `npm run verify:orientasi-parity`, dan `npm run build`.
 3. Uji visual pada akun siswa sah bila tersedia; tanpa sesi siswa, pemeriksaan produksi hanya terbatas pada halaman publik dan build.
 4. Catat perubahan, hasil test, deployment, serta batas verifikasi pada `docs/CHANGELOG.md` dan `docs/ARCHITECTURE_AND_HANDOVER.md`.
+
+### Hasil rilis 2026-08-08
+
+- `npm run test:orientasi` lulus 13/13; `npm run verify:orientasi-parity` menghasilkan PASS; `npm run build` menyelesaikan Astro server build dengan exit 0.
+- Deployment `dpl_CMVnY7i2RtM2SWyz299bzXssAkT2` READY hanya untuk proyek standalone di `https://orientasi-interactive-materials-5i6fvi902-agumelars-projects.vercel.app` dan alias `https://orientasi-interactive-materials.vercel.app`; bukan deployment kanonik.
+- Deploy ulang ke proyek kanonik menciptakan `dpl_A8KAA1B3dC9oZb4XPcrEvUUnDW2Z` di `https://agunggumelarsaputra-qdw4qvsy3-agumelars-projects.vercel.app`, tetapi `npx vercel --prod --yes` timeout dan `vercel inspect` menunjukkan status `UNKNOWN`; alias `www.agunggumelarsaputra.com` belum dikonfirmasi untuk job ini. Status desain tidak boleh dinaikkan menjadi rilis sampai ada job kanonik READY.
+- Smoke tanpa autentikasi hanya membuktikan domain kanonik `/` HTTP 200 dan `/pembelajaran` HTTP 302 ke login; redirect tersebut tidak membuktikan konten katalog terproteksi. POST checkpoint tanpa sesi HTTP 401.
+- Batas yang disengaja: alur interaksi dan inspeksi katalog terproteksi memerlukan siswa legitimate yang telah enrollment. Rilis ini tidak membuat akun palsu dan tidak membypass autentikasi.
 
 ## Keputusan eksplisit
 
