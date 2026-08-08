@@ -168,6 +168,30 @@ tags: ["PPLG", "Kurikulum Merdeka", "Skill Passport", "Kelas 10"]
 3. **Bilah Progres Mata Pelajaran:**
    - Bilah progres dinamis (% & rasio modul selesai dari total 16 pertemuan) ditampilkan di header reader modul dan katalog utama `/pembelajaran/orientasi-pplg`.
 
+### 4.3 Module Parity Verification & Continuation
+
+**Sumber kebenaran.** `orientasi-pplg-01-pengantar-skill-passport` adalah acuan perilaku dan mutu untuk seluruh modul Orientasi PPLG. Keputusan ruang lingkup dan kontrak yang disetujui dicatat di `docs/superpowers/specs/2026-08-08-module-parity-design.md`; keduanya wajib dibaca sebelum menambah atau mengubah Modul 02–16.
+
+**Kontrak bersama yang tidak boleh diputus.** Reader `src/pages/pembelajaran/[...slug].astro` memasang `InteractiveKnowledgeCheck`, `GeneralInteractiveLkpd`, `InteractiveReflectionForm`, `KktpGuideCard`, `LiveScoreWidget`, dan `AntiCopyPasteGuardian`. State awal dari server diteruskan melalui `data-init-checkpoint`, `data-init-lkpd`, dan `data-init-reflection`. `InteractiveKnowledgeCheck` mengklaim reward melalui `POST /api/gamification/claim-checkpoint` lalu memancarkan `checkpoint-passed`; listener reader membuka LKPD. `GeneralInteractiveLkpd` menyimpan `submissionType: 'lkpd'` melalui `POST /api/submissions/save` lalu memancarkan `lkpd-submitted`; listener reader membuka refleksi. Refleksi menyimpan `submissionType: 'reflection'` ke endpoint yang sama. Hanya `#btn-complete-lesson` di panel refleksi yang boleh memanggil `POST /api/progress/complete-lesson` dan mengaktifkan navigasi modul berikutnya.
+
+**Integritas dan akses.** Siswa tidak boleh melewati checkpoint, LKPD, refleksi, atau prasyarat modul. Reader menggunakan `isCurrentModuleLocked` dengan kondisi bypass `user?.role !== 'admin'`. `AntiCopyPasteGuardian` memblokir paste, drop, `Ctrl/Cmd+V`, dan `Shift+Insert` pada jawaban pembelajaran; hanya identitas (`gen_studentName`, `gen_studentNis`, `gen_studentClass`, `gen_submissionDate`) dan URL bukti (`gen_driveUrl`/URL evidence bertanda `data-allow-paste="true"`) yang boleh ditempel.
+
+**Urutan verifikasi wajib.** Jalankan `npm run verify:orientasi-parity` sebelum `npm run build`. Guard memeriksa 16 Markdown, katalog Quest/LKPD Modul 02–16, posisi tombol selesai, event pembuka tab, dan kontrak gating. Setelah keduanya berhasil, deploy dengan `vercel --prod --yes`.
+
+**Checklist modul baru/perubahan modul.**
+
+- [ ] Markdown memiliki frontmatter valid dan panduan aktivitas yang mempertahankan konteks materi.
+- [ ] Quest tiga tahap spesifik modul tersedia di `MODULE_GAMIFIED_QUESTS`.
+- [ ] Panduan LKPD spesifik modul tersedia di `MODULE_LKPD_GUIDES`.
+- [ ] Prompt refleksi dan indikator KKTP menerima judul/konteks modul.
+- [ ] Anti-paste diterapkan pada jawaban, dengan pengecualian identitas dan URL bukti saja.
+- [ ] Gating prasyarat, urutan event checkpoint/LKPD, dan lokasi tunggal tombol selesai tetap utuh.
+- [ ] Changelog, spesifikasi, dan handover diperbarui.
+- [ ] `npm run verify:orientasi-parity` lalu `npm run build` berhasil.
+- [ ] Production dideploy dan halaman publik diperiksa.
+
+**Status production per 2026-08-08.** Deployment `dpl_49za4gEgo3PWAY6AiGkk2cUEiug2` READY di `https://agunggumelarsaputra-1l124rpo0-agumelars-projects.vercel.app` dan teralias ke `https://www.agunggumelarsaputra.com`. Guard parity dan Astro build berhasil, serta beranda publik tampak normal. Verifikasi interaksi terlindungi belum dilakukan karena tidak ada sesi siswa uji yang sah; lanjutkan dengan akun siswa terdaftar untuk menguji locked-state Modul 02, checkpoint → LKPD → refleksi, tombol selesai, dan terbukanya Modul 03. Jangan membypass autentikasi untuk menggantikan uji tersebut.
+
 ---
 
 ## 5. Struktur Lengkap 16 Modul Pembelajaran (Sprint 1 & Sprint 2)
@@ -207,6 +231,7 @@ node dev-server.mjs
 
 ### Build Check & Verifikasi:
 ```bash
+npm run verify:orientasi-parity
 npm run build
 ```
 
@@ -225,6 +250,6 @@ SITE_URL="https://agunggumelarsaputra.com"
 ```
 
 ### Perintah Build & Deploy:
-1. Pastikan server lokal berjalan lancar: `node dev-server.mjs`
+1. Jalankan guard kesetaraan: `npm run verify:orientasi-parity`
 2. Validasi TypeScript & Content Collections: `npm run build`
-3. Deploy ke Vercel: `vercel --prod`
+3. Deploy ke Vercel: `vercel --prod --yes`

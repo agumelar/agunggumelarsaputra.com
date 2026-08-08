@@ -9,6 +9,22 @@ Format penulisan mengacu pada [Keep a Changelog](https://keepachangelog.com/id/1
 - Opsi Hapus Akun siswa melalui panel Admin (`/admin/users`).
 - Generator PDF Otomatis untuk Rekap Portofolio Skill Passport Siswa.
 
+### 2026-08-08 — Orientasi PPLG Module Parity Release
+- Kontrak pengalaman Modul 01 diterapkan pada seluruh Modul Orientasi PPLG 02–16: checkpoint Quest tiga tahap per modul, LKPD, jurnal refleksi, dan panduan KKTP kini menerima konteks materi masing-masing tanpa mengganti substansi Markdown.
+- Reader bersama mempertahankan gating sekuensial antar-modul, urutan checkpoint → LKPD → refleksi → penyelesaian di `#btn-complete-lesson`, indikator progres 16 pertemuan, serta bypass untuk admin.
+- `AntiCopyPasteGuardian` tetap memblokir paste, drop, `Ctrl/Cmd+V`, dan `Shift+Insert` pada jawaban belajar; identitas siswa dan URL bukti tetap diizinkan untuk ditempel.
+- Verifikasi deterministik berhasil: `npm run verify:orientasi-parity` menghasilkan `Orientasi PPLG parity guard: PASS`, lalu `npm run build` menyelesaikan Astro server build (exit code 0).
+- Production dideploy pada `https://agunggumelarsaputra-1l124rpo0-agumelars-projects.vercel.app` dan dialiaskan ke `https://www.agunggumelarsaputra.com`; pemeriksaan halaman publik tidak menemukan regresi.
+- Batas verifikasi: alur terlindungi Modul 02 (locked state, checkpoint → LKPD → refleksi, tombol selesai, dan unlock Modul 03) belum diuji di production karena tidak tersedia sesi siswa uji yang sah. Uji tersebut harus dilakukan dengan akun siswa dan enrollment yang legitimate.
+
+## [2.6.6] - 2026-08-08
+### Added & Enhanced
+- **Sistem Proteksi Integritas Belajar Anti Copy-Paste (`AntiCopyPasteGuardian.astro`):**
+  - **Penonaktifan Paste pada Isian Belajar:** Menonaktifkan fungsi *paste*, *drag-and-drop text*, dan shortcut keyboard (`Ctrl+V`, `Cmd+V`, `Shift+Insert`) pada seluruh `textarea` dan `input` jawaban tugas LKPD, kuis deskriptif, dan jurnal refleksi.
+  - **Animasi & Umpan Balik Visual (*Shake Animation & Toast Warning*):** Menampilkan animasi getar (*shake warning*) pada kolom input yang dicegat beserta notifikasi *toast floating* yang elegan dan informatif: *"Wajib Diketik Mandiri (No Paste) — Untuk mengasah pemahaman konsep dan integritas belajar, isian ini wajib diketik sendiri."*
+  - **Pengecualian Cerdas Kolom Identitas Siswa & URL Bukti:** Mempertahankan kebebasan *copy-paste* khusus pada kolom data identitas siswa (`Nama Lengkap`, `NIS / NISN`, `Kelas`, `Tanggal Pengerjaan`) serta kolom `URL Link Google Drive Portofolio / Repository`.
+  - **Anotasi & Badge Visual:** Menambahkan penanda visual *"📋 Copy-Paste Diperbolehkan"* pada Bagian Identitas dan *"✍️ Wajib Diketik Mandiri (No Copy-Paste)"* pada Bagian LKPD dan Refleksi.
+
 ## [2.6.5] - 2026-08-08
 ### Added & Enhanced
 - **Sistem Pembelajaran Sekuensial & Gating Modul Otomatis (*Sequential Module Progression*):**

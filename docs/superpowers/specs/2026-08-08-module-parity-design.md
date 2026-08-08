@@ -1,6 +1,6 @@
 # Desain Penyamaan Modul Orientasi PPLG 02–16
 
-> **Status:** Disetujui untuk ditinjau sebelum perencanaan implementasi  
+> **Status:** Diimplementasikan, diverifikasi, dan dideploy ke production
 > **Tanggal:** 2026-08-08  
 > **Acuan utama:** Modul 01 — `orientasi-pplg-01-pengantar-skill-passport`
 
@@ -57,3 +57,11 @@ Jika dokumen handover belum cukup untuk membuat agen atau sesi berikutnya dapat 
 - Tidak ada bypass siswa terhadap urutan tab atau gating modul.
 - Build `npm run build` berhasil.
 - Deployment production berhasil dan perubahan terdokumentasi lengkap untuk handover sesi berikutnya.
+
+## Hasil verifikasi dan deployment (2026-08-08)
+
+- `npm run verify:orientasi-parity` selesai dengan exit code `0` dan keluaran `Orientasi PPLG parity guard: PASS`.
+- `npm run build` selesai dengan exit code `0`; Astro menghasilkan server build dengan adapter `@astrojs/vercel`.
+- Vercel production deployment `dpl_49za4gEgo3PWAY6AiGkk2cUEiug2` READY di [deployment URL](https://agunggumelarsaputra-1l124rpo0-agumelars-projects.vercel.app) dan dialiaskan ke [domain production](https://www.agunggumelarsaputra.com).
+- Pemeriksaan halaman publik pada domain production berhasil: beranda memuat judul, navigasi, hero, dan katalog modul tanpa regresi yang terlihat.
+- Tidak ada sesi siswa uji yang sah pada saat release. Karena itu, pengujian production atas locked-state Modul 02, checkpoint → LKPD → refleksi, `#btn-complete-lesson`, dan terbukanya Modul 03 masih merupakan pekerjaan lanjutan yang harus dilakukan melalui akun siswa terdaftar dan enrollment legitimate—tanpa bypass autentikasi.
