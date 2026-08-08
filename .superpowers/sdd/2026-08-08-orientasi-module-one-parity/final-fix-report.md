@@ -14,6 +14,7 @@ Implementation and local verification are complete for every item in `final-fix-
 6. `TeacherMessageCard` and `OrientasiLearningScene` IDs are derived from `lessonSlug`; each `aria-labelledby` relationship resolves uniquely when multiple instances are combined. The client initializer processes every `[data-learning-scene]` root.
 7. Module 05 now implements its approved intentional map using only its Markdown source: an interest/goal-based booth route followed by strong-versus-weak interview-question decisions.
 8. The parity verification script now guards `OrientasiLearningScene` and no longer treats the retired renderer as the source of truth.
+9. Review hardening makes scene initialization idempotent with a `WeakSet`: rescanning the document does not duplicate listeners on existing roots, while roots added later still initialize. The no-side-effect guard now includes the imported active behavior source as well as component source and rendered HTML.
 
 ## TDD evidence
 
@@ -27,6 +28,8 @@ Initial focused RED run failed for the intended missing contracts:
 - Module 05 lacked an explicit goal-based route and weak-question decisions.
 
 After minimal production changes, the focused suite passed 10/10. The new tests exercise the real compiled/rendered Astro component rather than a hand-authored markup fixture.
+
+The follow-up review regression reproduced duplicate handlers by initializing the same roots twice: scenario/checklist state toggled back to `false`, and a sequence control moved two positions. After the idempotency guard, the same tests pass while also proving that a late-added root initializes. A temporary unreachable `fetch('/api/progress')` mutation in the active behavior source made the no-side-effect test fail as intended; the mutation was removed immediately after that RED proof.
 
 ## Verification evidence
 
@@ -44,4 +47,4 @@ The truthful release record remains unchanged: deployment `dpl_EiYNktHu2XLAsiHfG
 
 ## Concern
 
-The active-markup harness includes a small test-only compatibility fallback because the installed `@astrojs/compiler-rs` emits `createMetadata` while the installed `astro/compiler-runtime` does not export it. The fallback only supplies compiler metadata during isolated component rendering; the normal project build remains the authoritative compiler integration check and passes independently.
+The active-markup harness includes a small test-only compatibility fallback because the installed `@astrojs/compiler-rs` emits `createMetadata` while the installed `astro/compiler-runtime` does not export it. The fallback only supplies compiler metadata during isolated component rendering; it now asserts that every expected compiler rewrite occurs exactly once (and that generated style/relative imports are fully handled). The normal project build remains the authoritative compiler integration check and passes independently.

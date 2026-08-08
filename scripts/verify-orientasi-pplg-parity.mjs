@@ -116,9 +116,11 @@ assert.match(learningScene, /getSequencePresentationItems\(scene\)/, 'Renderer a
 assert.match(learningScene, /Periksa urutan[\s\S]*initializeInteractiveModuleMaterials\(document\)/, 'Renderer aktif harus memasang validasi lokal pada semua root scene.');
 assert.match(interactiveBehavior, /Urutan sudah tepat[\s\S]*Urutan belum tepat/, 'Perilaku urutan harus memvalidasi jawaban dengan umpan balik jelas.');
 assert.match(interactiveBehavior, /querySelectorAll<HTMLElement>\('\[data-learning-scene\]'\)/, 'Initializer harus mencakup setiap instance scene.');
+assert.match(interactiveBehavior, /WeakSet<HTMLElement>[\s\S]*initializedRoots\.has\(root\)[\s\S]*initializedRoots\.add\(root\)/, 'Initializer scene harus idempotent agar listener tidak terpasang dua kali.');
 assert.match(teacherMessageCard, /teacher-message-\$\{lessonSlug\}/, 'ID kartu pesan guru harus diturunkan dari lessonSlug.');
 assert.match(learningScene, /orientasi-learning-scene-\$\{lessonSlug\}/, 'ID renderer aktif harus diturunkan dari lessonSlug.');
 assert.doesNotMatch(learningScene, /fetch\s*\(|localStorage|sessionStorage|\/api\/|\bXP\b|href=|data-switch-tab/i, 'Renderer aktif harus tetap lokal tanpa API, storage, XP, atau navigasi.');
+assert.doesNotMatch(interactiveBehavior, /fetch\s*\(|localStorage|sessionStorage|\/api\/|\bXP\b|href=|data-switch-tab|checkpoint|progress|enrollment|locked/i, 'Perilaku interaktif aktif harus tetap lokal tanpa API, storage, XP, navigasi, atau gating.');
 
 for (const filename of orientasi.slice(1)) {
   const slug = filename.replace(/\.md$/, '');

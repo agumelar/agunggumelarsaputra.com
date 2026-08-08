@@ -14,7 +14,7 @@ const correctOrder = [...sequenceActivity.correctOrder];
 
 test('all rendered learning-scene instances initialize scenario and checklist state with local feedback', async () => {
   const window = new Window();
-  globalThis.document = window.document;
+  const document = window.document;
   const componentUrl = new URL('../src/components/modul/OrientasiLearningScene.astro', import.meta.url);
   const scenario = await renderAstroComponent(componentUrl, {
     lessonSlug: 'orientasi-pplg-03-ekosistem-industri-pplg',
@@ -26,16 +26,24 @@ test('all rendered learning-scene instances initialize scenario and checklist st
     moduleTitle: 'Rencana Minat Awal',
     moduleDuration: '2 JP (90 Menit)',
   });
+  const lateChecklist = await renderAstroComponent(componentUrl, {
+    lessonSlug: 'orientasi-pplg-14-finalisasi-dokumen-review',
+    moduleTitle: 'Finalisasi Dokumen Review',
+    moduleDuration: '2 JP (90 Menit)',
+  });
   document.body.innerHTML = scenario.html + checklist.html;
 
   assert.equal(typeof interactiveBehavior.initializeInteractiveModuleMaterials, 'function');
   interactiveBehavior.initializeInteractiveModuleMaterials(document);
+  document.body.insertAdjacentHTML('beforeend', lateChecklist.html);
+  interactiveBehavior.initializeInteractiveModuleMaterials(document);
 
   const roots = document.querySelectorAll<HTMLElement>('[data-learning-scene]');
-  assert.equal(roots.length, 2);
+  assert.equal(roots.length, 3);
   const scenarioButton = roots[0].querySelector<HTMLButtonElement>('[data-kind="scenario"]');
   const checklistButton = roots[1].querySelector<HTMLButtonElement>('[data-kind="checklist"]');
-  assert.ok(scenarioButton && checklistButton);
+  const lateChecklistButton = roots[2].querySelector<HTMLButtonElement>('[data-kind="checklist"]');
+  assert.ok(scenarioButton && checklistButton && lateChecklistButton);
 
   scenarioButton.click();
   assert.equal(scenarioButton.getAttribute('aria-pressed'), 'true');
@@ -55,6 +63,12 @@ test('all rendered learning-scene instances initialize scenario and checklist st
   assert.match(
     checklistButton.closest('[data-activity-id]')!.querySelector('[role="status"]')!.textContent!,
     /tanda cek dibatalkan/,
+  );
+  lateChecklistButton.click();
+  assert.equal(lateChecklistButton.getAttribute('aria-pressed'), 'true');
+  assert.match(
+    lateChecklistButton.closest('[data-activity-id]')!.querySelector('[role="status"]')!.textContent!,
+    /ditandai sebagai sudah dicek/,
   );
   window.close();
 });
@@ -90,6 +104,7 @@ test('sequence renderer script reorders, validates, and keeps selection state ac
   const root = document.querySelector<HTMLElement>('#interactive-module-material');
   assert.ok(root);
   initializeInteractiveModuleMaterial(root);
+  initializeInteractiveModuleMaterial(root);
 
   const sequenceLabels = () => [...root.querySelectorAll<HTMLElement>('[data-sequence-item]')]
     .map((item) => item.dataset.itemLabel);
@@ -113,8 +128,11 @@ test('sequence renderer script reorders, validates, and keeps selection state ac
   assert.match(feedback.textContent, /paling bawah/);
   assert.deepEqual(sequenceLabels(), [...correctOrder].reverse());
 
+  const expectedSingleMove = [...correctOrder].reverse();
+  const middleIndex = expectedSingleMove.indexOf(middleLabel);
+  [expectedSingleMove[middleIndex], expectedSingleMove[middleIndex + 1]] = [expectedSingleMove[middleIndex + 1], expectedSingleMove[middleIndex]];
   clickSequence(middleLabel, 'down');
-  assert.notDeepEqual(sequenceLabels(), [...correctOrder].reverse());
+  assert.deepEqual(sequenceLabels(), expectedSingleMove);
   clickSequence(middleLabel, 'up');
   assert.deepEqual(sequenceLabels(), [...correctOrder].reverse());
 

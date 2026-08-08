@@ -2,6 +2,8 @@ import type { InteractiveActivity, InteractiveActivityItem } from './orientasiIn
 
 type SequencePresentationSource = Pick<InteractiveActivity, 'kind' | 'items'>;
 
+const initializedRoots = new WeakSet<HTMLElement>();
+
 export function getSequencePresentationItems(activity: SequencePresentationSource): InteractiveActivityItem[] {
   return activity.kind === 'sequence' ? [...activity.items].reverse() : activity.items;
 }
@@ -21,6 +23,9 @@ function revealActivityFeedback(control: HTMLElement): void {
 }
 
 export function initializeInteractiveModuleMaterial(root: HTMLElement): void {
+  if (initializedRoots.has(root)) return;
+  initializedRoots.add(root);
+
   root.querySelectorAll<HTMLButtonElement>('.interactive-material__choice').forEach((button) => {
     button.addEventListener('click', () => {
       const card = button.closest<HTMLElement>('[data-activity-id]');

@@ -134,7 +134,11 @@ test('active Astro renderer exposes duration, item-specific controls, local stat
   assert.ok(sequence.querySelector('[data-sequence-action="down"]'));
   assert.ok(sequence.querySelector('.interactive-material__validate-sequence'));
 
-  const activeArtifact = `${sequenceRender.source}\n${sequenceRender.html}`;
+  const behaviorSource = await readFile(
+    new URL('../src/utils/interactiveModuleMaterialBehavior.ts', import.meta.url),
+    'utf8',
+  );
+  const activeArtifact = `${sequenceRender.source}\n${sequenceRender.html}\n${behaviorSource}`;
   assert.doesNotMatch(activeArtifact, /fetch\s*\(|localStorage|sessionStorage|\/api\/|\bXP\b|href=|data-switch-tab|checkpoint|progress|enrollment|locked/i);
   window.close();
 });
