@@ -540,9 +540,19 @@ const passRate = totalExamsTaken > 0 ? Math.round((passingExams / totalExamsTake
                             data-token-code={t.token}
                             data-token-title={t.title}
                             class="view-report-btn px-2.5 py-1.5 rounded-md text-xs font-medium bg-cyan-600 hover:bg-cyan-500 text-white transition-colors flex items-center gap-1"
+                            title="Tinjau & Cetak Rekapitulasi Sesi"
                           >
                             <span>📊 Rekap</span>
                           </button>
+
+                          <a 
+                            href={`/api/admin/tokens/export-excel?tokenId=${t.id}`}
+                            class="px-2.5 py-1.5 rounded-md text-xs font-medium bg-emerald-600/90 hover:bg-emerald-500 text-white transition-colors flex items-center gap-1 shadow-sm"
+                            title="Unduh File Excel Resmi (.xlsx)"
+                            download
+                          >
+                            <span>📥 Excel</span>
+                          </a>
 
                           <button 
                             type="button"
@@ -589,7 +599,7 @@ const passRate = totalExamsTaken > 0 ? Math.round((passingExams / totalExamsTake
           </p>
         </div>
 
-        <div class="flex items-center gap-3">
+        <div class="flex flex-wrap items-center gap-3">
           <div class="flex items-center gap-1.5 text-xs font-mono">
             <span class="px-2.5 py-1 rounded bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20 font-semibold">
               ⏳ {pendingLkpd} Menunggu
@@ -598,6 +608,15 @@ const passRate = totalExamsTaken > 0 ? Math.round((passingExams / totalExamsTake
               ✓ {gradedLkpd} Dinilai
             </span>
           </div>
+
+          <a 
+            href="/api/admin/submissions/export-excel"
+            class="px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-medium text-xs transition-colors flex items-center gap-1.5 shadow-sm"
+            title="Unduh Rekap Lengkap Nilai LKPD Siswa ke Format Excel (.xlsx)"
+            download
+          >
+            <span>📥 Rekap LKPD (.xlsx)</span>
+          </a>
         </div>
       </div>
 
@@ -781,7 +800,7 @@ const passRate = totalExamsTaken > 0 ? Math.round((passingExams / totalExamsTake
           </p>
         </div>
 
-        <div class="flex items-center gap-3">
+        <div class="flex flex-wrap items-center gap-3">
           <div class="flex items-center gap-1.5 text-xs font-mono">
             <span class="px-2.5 py-1 rounded bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20 font-semibold">
               ⏳ {pendingReflections} Baru
@@ -790,6 +809,15 @@ const passRate = totalExamsTaken > 0 ? Math.round((passingExams / totalExamsTake
               ✓ {reviewedReflections} Ditinjau
             </span>
           </div>
+
+          <a 
+            href="/api/admin/reflections/export-excel"
+            class="px-3 py-1.5 rounded-lg bg-pink-600 hover:bg-pink-500 text-white font-medium text-xs transition-colors flex items-center gap-1.5 shadow-sm"
+            title="Unduh Rekap Lengkap Jurnal Refleksi Siswa ke Format Excel (.xlsx)"
+            download
+          >
+            <span>📥 Rekap Refleksi (.xlsx)</span>
+          </a>
         </div>
       </div>
 
@@ -1309,8 +1337,17 @@ const passRate = totalExamsTaken > 0 ? Math.round((passingExams / totalExamsTake
         <div class="flex items-center gap-2">
           <button 
             type="button" 
+            id="download-excel-report-btn"
+            class="px-3.5 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-semibold text-xs transition-colors flex items-center gap-1.5 shadow-sm"
+            title="Unduh Lembar Rekap Nilai Siswa ke Format Excel Resmi (.xlsx)"
+          >
+            <span>📥 Unduh Excel (.xlsx)</span>
+          </button>
+          <button 
+            type="button" 
             id="print-report-btn"
             class="px-3 py-1.5 rounded-lg bg-secondary hover:bg-accent text-foreground font-medium text-xs border border-border transition-colors flex items-center gap-1.5"
+            title="Pratinjau & Cetak Laporan (Print View)"
           >
             <span>🖨️ Cetak Rekap</span>
           </button>
@@ -1318,6 +1355,7 @@ const passRate = totalExamsTaken > 0 ? Math.round((passingExams / totalExamsTake
             type="button" 
             id="close-report-modal-btn"
             class="p-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
+            title="Tutup Jendela"
           >
             ✕
           </button>
@@ -1846,6 +1884,7 @@ const passRate = totalExamsTaken > 0 ? Math.round((passingExams / totalExamsTake
   const reportModal = document.getElementById('report-modal');
   const closeReportModalBtn = document.getElementById('close-report-modal-btn');
   const printReportBtn = document.getElementById('print-report-btn');
+  const downloadExcelReportBtn = document.getElementById('download-excel-report-btn');
   const modalTokenCode = document.getElementById('report-modal-token-code');
   const modalTargetClass = document.getElementById('report-modal-target-class');
   const modalTitle = document.getElementById('report-modal-title');
@@ -1855,6 +1894,8 @@ const passRate = totalExamsTaken > 0 ? Math.round((passingExams / totalExamsTake
   const statPass = document.getElementById('stat-pass');
   const reportTbody = document.getElementById('report-students-tbody');
 
+  let currentActiveReportTokenId: string | null = null;
+
   closeReportModalBtn?.addEventListener('click', () => {
     reportModal?.classList.add('hidden');
   });
@@ -1863,11 +1904,18 @@ const passRate = totalExamsTaken > 0 ? Math.round((passingExams / totalExamsTake
     window.print();
   });
 
+  downloadExcelReportBtn?.addEventListener('click', () => {
+    if (currentActiveReportTokenId) {
+      window.location.href = `/api/admin/tokens/export-excel?tokenId=${currentActiveReportTokenId}`;
+    }
+  });
+
   document.querySelectorAll('.view-report-btn').forEach(btn => {
     btn.addEventListener('click', async () => {
       const tokenId = btn.getAttribute('data-view-report-token-id');
       const tokenCode = btn.getAttribute('data-token-code') || '';
       const tokenTitle = btn.getAttribute('data-token-title') || '';
+      currentActiveReportTokenId = tokenId;
 
       if (modalTokenCode) modalTokenCode.textContent = tokenCode;
       if (modalTitle) modalTitle.textContent = tokenTitle;

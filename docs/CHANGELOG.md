@@ -10,6 +10,25 @@ Format penulisan mengacu pada [Keep a Changelog](https://keepachangelog.com/id/1
 - Opsi Hapus Akun siswa melalui panel Admin (`/admin/users`).
 - Generator PDF Otomatis untuk Rekap Portofolio Skill Passport Siswa.
 
+## [2.5.0] - 2026-08-08
+### Added
+- **Sistem Ekspor Rekap Nilai & Asesmen Resmi ke Format Excel (`.xlsx` via `exceljs`):**
+  - **Desain Laporan Profesional Guru (High-Craft Format):**
+    - Kop Resmi Lembaga (SMK Negeri 1 Rongga - Konsentrasi Keahlian PPLG).
+    - Metadata Sesi Belajar (Guru Pengampu, Mata Pelajaran, Token Akses, Kelas Target, KKM 73, Tanggal Ekspor).
+    - Kotak Ringkasan Statistik (Total Peserta, Peserta Ujian, Rata-rata Skor, Persentase Ketuntasan).
+    - Tabel Data Siswa Berwarna Navy Modern (`#1E293B`), zebra-striping, conditional badge (Kompeten / Belum Kompeten / Menunggu), alignment rapi, dan auto-column fit.
+    - Blok Tanda Tangan Resmi Pengesahan Guru Pengampu (`Agung Gumelar Saputra, S.Tr.T.`).
+  - **Ekspor Rekap Sesi / Token Belajar:**
+    - Endpoint API `/api/admin/tokens/export-excel` untuk mengunduh rekap evaluasi per token sesi/ujian.
+    - Tombol `📥 Excel` langsung pada tabel manajemen token dan tombol `📥 Unduh Excel (.xlsx)` pada modal rekapitulasi.
+  - **Ekspor Rekap Hasil LKPD Siswa:**
+    - Endpoint API `/api/admin/submissions/export-excel` untuk mengunduh seluruh data penilaian tugas kerja praktik / LKPD siswa lengkap dengan skor, status KKM (73), dan catatan evaluasi guru.
+    - Tombol `📥 Rekap LKPD (.xlsx)` pada header seksi Penilaian LKPD.
+  - **Ekspor Rekap Jurnal Refleksi Pembelajaran:**
+    - Endpoint API `/api/admin/reflections/export-excel` untuk mengunduh seluruh jurnal suara siswa (Q1 s/d Q4) dan umpan balik guru.
+    - Tombol `📥 Rekap Refleksi (.xlsx)` pada header seksi Jurnal Refleksi.
+
 ---
 
 ## [2.4.4] - 2026-08-07
