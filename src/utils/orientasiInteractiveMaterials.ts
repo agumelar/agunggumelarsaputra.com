@@ -15,6 +15,7 @@ export interface InteractiveActivity {
   instruction: string;
   items: InteractiveActivityItem[];
   feedback: string;
+  correctOrder?: readonly string[];
 }
 
 export interface InteractiveMaterial {
@@ -137,8 +138,24 @@ const ORIENTASI_INTERACTIVE_MATERIALS: InteractiveMaterialCatalog = {
   }
 };
 
+const SEQUENCE_CORRECT_ORDERS: Record<string, readonly string[]> = {
+  'or02-handoff': ['Product Manager', 'UI/UX Designer', 'Frontend/Mobile Developer', 'Backend Developer', 'QA Engineer', 'DevOps Engineer'],
+  'or04-roadmap': ['Fondasi kelas 10', 'Pendalaman kelas 11', 'Portofolio kelas 12', 'Intern/Junior', 'Mid/Senior/Lead'],
+  'or08-validation': ['Ekspor PDF', 'Terapkan nama file', 'Unggah ke folder', 'Atur Public Viewer', 'Uji link'],
+  'or11-priority': ['Pilih satu aplikasi', 'Catat identitas', 'Kenali pengguna', 'Petakan fungsi', 'Kumpulkan bukti'],
+  'or13-sandwich': ['Apresiasi', 'Kritik solutif', 'Dorongan lanjut'],
+  'or15-submission': ['Periksa nama file', 'Unggah PDF', 'Atur akses', 'Salin link', 'Klaim penyelesaian'],
+};
+
 export function getOrientasiInteractiveMaterial(slug: OrientasiSlug): InteractiveMaterial {
   const material = ORIENTASI_INTERACTIVE_MATERIALS[slug];
   if (!material) throw new Error(`Materi interaktif belum tersedia untuk ${slug}.`);
-  return material;
+  return {
+    ...material,
+    activities: material.activities.map((activity) => (
+      activity.kind === 'sequence'
+        ? { ...activity, correctOrder: SEQUENCE_CORRECT_ORDERS[activity.id] }
+        : activity
+    )) as InteractiveMaterial['activities'],
+  };
 }
