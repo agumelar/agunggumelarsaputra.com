@@ -10,6 +10,17 @@ Format penulisan mengacu pada [Keep a Changelog](https://keepachangelog.com/id/1
 - Generator PDF Otomatis untuk Rekap Portofolio Skill Passport Siswa.
 - Rollout materi interaktif berstandar Modul 01 untuk Modul 03 s.d. Modul 16.
 
+### 2026-08-09 — Redesign Katalog Pembelajaran & Enroll Token Fix
+- **Redesign UI/UX Katalog Pembelajaran (`/pembelajaran`):** Mengadopsi desain modern dan minimalis terinspirasi dari `kelasfullstack.id`. Hero section baru dengan gradient halus, border tipis, *glassmorphism*, dan transisi *hover* (shadow, transform) pada kartu modul.
+- **Relokasi Gamification Widget:** Widget profil gamifikasi (XP, Streak, Lencana) dipindahkan ke posisi paling atas agar menjadi pusat perhatian utama bagi siswa setelah login.
+- **Perbaikan Alur Enroll Token:** Menghapus form pendaftaran token dari halaman utama katalog untuk mengurangi *clutter*, dan memastikannya terpusat di dalam halaman silabus spesifik (`/pembelajaran/orientasi-pplg`).
+- **Bug Fix API Enroll Token:** Memperbaiki *payload request* (`token` menjadi `tokenCode`) dan properti respons (`data.session` menjadi `data.token`) pada komponen Javascript `orientasi-pplg.astro`.
+
+### 2026-08-08 — Penilaian LKPD Database & Penambahan Aturan Pembelajaran Agent (/learn)
+- Menjalankan peninjauan dan penilaian LKPD siswa pada database production (`user_submissions`). Penilaian disimpan dengan standar KKTP (Level 0 - 4), skor KKM 73, serta catatan feedback evaluasi guru.
+- Menambahkan Seksi 5.2 (**Alur Penilaian & Evaluasi LKPD oleh Guru**) ke dalam [`AGENTS.md`](file:///mnt/d/DATA/PROJEK/agunggumelarsaputra.com/AGENTS.md).
+- Membuat workspace rule baru [`.agents/rules/lkpd-grading.md`](file:///mnt/d/DATA/PROJEK/agunggumelarsaputra.com/.agents/rules/lkpd-grading.md) untuk memastikan sesi AI mendatang otomatis mengenali kriteria penilaian LKPD, pemisahan data test vs riil, serta format laporan tabel.
+
 ### 2026-08-08 — Standarisasi & Peluncuran Materi Interaktif Kaya Modul 02 (Profesi & Sinergi Tim PPLG)
 - Mengintegrasikan materi ajar presentasi (`Media_Ajar_Pertemuan_2_Profesi_PPLG.pptx`) ke dalam komponen pembelajaran interaktif kaya `InteractiveMaterialP2.astro` untuk Modul 02 (`/pembelajaran/orientasi-pplg-02-profesi-peluang-karier`).
 - Fitur Interaktif Modul 02:

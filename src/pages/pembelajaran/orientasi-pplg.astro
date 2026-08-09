@@ -5,6 +5,7 @@ import { getCollection } from 'astro:content';
 import { db, isDbConfigured, ensureDbInitialized } from '../../db';
 import { enrollmentTokens, userEnrollments, userProgress } from '../../db/schema';
 import { eq, and, desc } from 'drizzle-orm';
+import { canAccessAdminPanel } from '../../utils/auth';
 
 const user = Astro.locals.user;
 
@@ -28,6 +29,7 @@ if (user && isDbConfigured()) {
       id: userEnrollments.id,
       token: enrollmentTokens.token,
       title: enrollmentTokens.title,
+      targetType: enrollmentTokens.targetType,
       targetClass: enrollmentTokens.targetClass,
       targetSlug: enrollmentTokens.targetSlug,
       enrolledAt: userEnrollments.enrolledAt,
@@ -36,7 +38,7 @@ if (user && isDbConfigured()) {
       .where(eq(userEnrollments.userId, user.userId));
 
     userEnrollmentData = enrollments.find(e => 
-      e.targetSlug === 'orientasi-pplg' || e.targetSlug === 'all' || e.title.toLowerCase().includes('orientasi')
+      e.targetType === 'orientasi-pplg' || e.targetType === 'all' || e.targetSlug === 'orientasi-pplg' || e.targetSlug === 'all' || e.title.toLowerCase().includes('orientasi')
     );
     if (userEnrollmentData) {
       isEnrolled = true;
@@ -193,7 +195,7 @@ const progressPercentage = orientasiModules.length > 0 ? Math.round((totalComple
             {sprint1Modules.map((mod) => {
               const modIndex = orientasiModules.findIndex(m => (m.id || m.slug) === (mod.id || mod.slug));
               const isDone = completedSlugs.includes(mod.id || mod.slug);
-              const isLocked = user?.role !== 'admin' && modIndex > 0 && !completedSlugs.includes(orientasiModules[modIndex - 1].id || orientasiModules[modIndex - 1].slug);
+              const isLocked = !canAccessAdminPanel(user?.role) && modIndex > 0 && !completedSlugs.includes(orientasiModules[modIndex - 1].id || orientasiModules[modIndex - 1].slug);
               const prevMod = modIndex > 0 ? orientasiModules[modIndex - 1] : null;
 
               if (isLocked) {
@@ -304,7 +306,7 @@ const progressPercentage = orientasiModules.length > 0 ? Math.round((totalComple
             {sprint2Modules.map((mod) => {
               const modIndex = orientasiModules.findIndex(m => (m.id || m.slug) === (mod.id || mod.slug));
               const isDone = completedSlugs.includes(mod.id || mod.slug);
-              const isLocked = user?.role !== 'admin' && modIndex > 0 && !completedSlugs.includes(orientasiModules[modIndex - 1].id || orientasiModules[modIndex - 1].slug);
+              const isLocked = !canAccessAdminPanel(user?.role) && modIndex > 0 && !completedSlugs.includes(orientasiModules[modIndex - 1].id || orientasiModules[modIndex - 1].slug);
               const prevMod = modIndex > 0 ? orientasiModules[modIndex - 1] : null;
 
               if (isLocked) {
@@ -518,13 +520,13 @@ const progressPercentage = orientasiModules.length > 0 ? Math.round((totalComple
         const res = await fetch('/api/enroll', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ token })
+          body: JSON.stringify({ tokenCode: token })
         });
 
         const data = await res.json();
 
         if (res.ok && data.success) {
-          courseEnrollAlert.textContent = `🎉 Berhasil! Anda terdaftar di sesi ${data.session.title} (${data.session.targetClass}).`;
+          courseEnrollAlert.textContent = `🎉 Berhasil! Anda terdaftar di sesi ${data.token.title} (${data.token.targetClass}).`;
           courseEnrollAlert.className = 'text-xs font-medium px-3 py-2 rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 block';
           setTimeout(() => {
             window.location.reload();
