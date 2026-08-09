@@ -3,6 +3,20 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
 import { getCollection, render } from 'astro:content';
 import InteractiveMaterialP1 from '../../components/modul/InteractiveMaterialP1.astro';
 import InteractiveMaterialP2 from '../../components/modul/InteractiveMaterialP2.astro';
+import InteractiveMaterialP3 from '../../components/modul/InteractiveMaterialP3.astro';
+import InteractiveMaterialP4 from '../../components/modul/InteractiveMaterialP4.astro';
+import InteractiveMaterialP5 from '../../components/modul/InteractiveMaterialP5.astro';
+import InteractiveMaterialP6 from '../../components/modul/InteractiveMaterialP6.astro';
+import InteractiveMaterialP7 from '../../components/modul/InteractiveMaterialP7.astro';
+import InteractiveMaterialP8 from '../../components/modul/InteractiveMaterialP8.astro';
+import InteractiveMaterialP9 from '../../components/modul/InteractiveMaterialP9.astro';
+import InteractiveMaterialP10 from '../../components/modul/InteractiveMaterialP10.astro';
+import InteractiveMaterialP11 from '../../components/modul/InteractiveMaterialP11.astro';
+import InteractiveMaterialP12 from '../../components/modul/InteractiveMaterialP12.astro';
+import InteractiveMaterialP13 from '../../components/modul/InteractiveMaterialP13.astro';
+import InteractiveMaterialP14 from '../../components/modul/InteractiveMaterialP14.astro';
+import InteractiveMaterialP15 from '../../components/modul/InteractiveMaterialP15.astro';
+import InteractiveMaterialP16 from '../../components/modul/InteractiveMaterialP16.astro';
 import InteractiveLkpdP1 from '../../components/modul/InteractiveLkpdP1.astro';
 import GeneralInteractiveLkpd from '../../components/modul/GeneralInteractiveLkpd.astro';
 import InteractiveReflectionForm from '../../components/modul/InteractiveReflectionForm.astro';
@@ -19,6 +33,7 @@ import { eq, and } from 'drizzle-orm';
 import { isCanonicalOrientasiSlug, selectCanonicalOrientasiModules } from '../../utils/orientasiPplgPolicy.ts';
 import { getOrientasiInteractiveMaterial } from '../../utils/orientasiInteractiveMaterials.ts';
 import { getOrientasiServerState } from '../../utils/orientasiPplgServer.ts';
+import { canAccessAdminPanel } from '../../utils/auth.ts';
 
 const { slug } = Astro.params;
 const allModules = await getCollection('pembelajaran');
@@ -32,6 +47,20 @@ const user = Astro.locals.user;
 const { Content } = await render(entry);
 const isModul1 = (entry.id || entry.slug) === 'orientasi-pplg-01-pengantar-skill-passport';
 const isModul2 = (entry.id || entry.slug) === 'orientasi-pplg-02-profesi-peluang-karier';
+const isModul3 = (entry.id || entry.slug) === 'orientasi-pplg-03-ekosistem-industri-pplg';
+const isModul4 = (entry.id || entry.slug) === 'orientasi-pplg-04-matriks-skill-jenjang-karier';
+const isModul5 = (entry.id || entry.slug) === 'orientasi-pplg-05-job-fair-kelas';
+const isModul6 = (entry.id || entry.slug) === 'orientasi-pplg-06-rencana-minat-awal';
+const isModul7 = (entry.id || entry.slug) === 'orientasi-pplg-07-mind-map-profesi-pplg';
+const isModul8 = (entry.id || entry.slug) === 'orientasi-pplg-08-finalisasi-validasi-or01';
+const isModul9 = (entry.id || entry.slug) === 'orientasi-pplg-09-app-audit-produk-digital';
+const isModul10 = (entry.id || entry.slug) === 'orientasi-pplg-10-ui-ux-fungsi-produk';
+const isModul11 = (entry.id || entry.slug) === 'orientasi-pplg-11-framework-review-6-komponen';
+const isModul12 = (entry.id || entry.slug) === 'orientasi-pplg-12-latihan-analisis-anotasi-visual';
+const isModul13 = (entry.id || entry.slug) === 'orientasi-pplg-13-review-show-peer-feedback';
+const isModul14 = (entry.id || entry.slug) === 'orientasi-pplg-14-finalisasi-dokumen-review';
+const isModul15 = (entry.id || entry.slug) === 'orientasi-pplg-15-pengumpulan-validasi-or02';
+const isModul16 = (entry.id || entry.slug) === 'orientasi-pplg-16-rekap-skill-clinic-refleksi';
 const lessonSlug = entry.id || entry.slug;
 const isOrientasiModule = isCanonicalOrientasiSlug(lessonSlug);
 const orientasiMaterial = isOrientasiModule && !isModul1
@@ -44,7 +73,7 @@ let completedSlugs: string[] = [];
 let hasPassedCheckpoint = false;
 let hasSubmittedLkpd = false;
 let hasSubmittedReflection = false;
-let hasOrientasiEnrollment = user?.role === 'admin';
+let hasOrientasiEnrollment = canAccessAdminPanel(user?.role);
 
 if (user && isDbConfigured()) {
   try {
@@ -54,7 +83,7 @@ if (user && isDbConfigured()) {
       const serverState = await getOrientasiServerState(user.userId, lessonSlug);
       completedSlugs = serverState.completedSlugs;
       existingSubs = serverState.submissionTypes.map((submissionType) => ({ submissionType }));
-      hasOrientasiEnrollment = serverState.isEnrolled || user.role === 'admin';
+      hasOrientasiEnrollment = serverState.isEnrolled || canAccessAdminPanel(user.role);
     } else {
       const progressList = await db.select({ lessonSlug: userProgress.lessonSlug })
         .from(userProgress).where(eq(userProgress.userId, user.userId));
@@ -79,7 +108,7 @@ const nextModule = currentIndex >= 0 && currentIndex < sortedSidebarModules.leng
 
 const isCurrentModuleCompleted = completedSlugs.includes(lessonSlug);
 // Modul 1 selalu terbuka. Modul N hanya terkunci jika user bukan admin dan modul N-1 belum selesai
-const isCurrentModuleLocked = isOrientasiModule && user?.role !== 'admin' && (!hasOrientasiEnrollment || (prevModule !== null && !completedSlugs.includes(prevModule.id || prevModule.slug)));
+const isCurrentModuleLocked = isOrientasiModule && !canAccessAdminPanel(user?.role) && (!hasOrientasiEnrollment || (prevModule !== null && !completedSlugs.includes(prevModule.id || prevModule.slug)));
 
 const totalCompletedModules = sortedSidebarModules.filter(m => completedSlugs.includes(m.id || m.slug)).length;
 const progressPercentage = sortedSidebarModules.length > 0 ? Math.round((totalCompletedModules / sortedSidebarModules.length) * 100) : 0;
@@ -148,11 +177,11 @@ const progressPercentage = sortedSidebarModules.length > 0 ? Math.round((totalCo
       )}
 
       {!isCurrentModuleLocked && (
-        <div class="pt-4 border-t border-border flex flex-wrap gap-2" id="module-tab-nav">
+        <div class="pt-4 border-t border-border flex overflow-x-auto snap-x snap-mandatory hide-scrollbar gap-2 pb-2 -mx-2 px-2 sm:mx-0 sm:px-0" id="module-tab-nav">
           <button
             type="button"
             data-tab="materi"
-            class="module-tab-btn active-tab px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 border"
+            class="module-tab-btn active-tab px-4 py-3 sm:py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 border flex-shrink-0 snap-center min-h-[44px] sm:min-h-0"
           >
             <span>📖</span>
             <span>1. Materi & Visual</span>
@@ -162,7 +191,7 @@ const progressPercentage = sortedSidebarModules.length > 0 ? Math.round((totalCo
             type="button"
             data-tab="lkpd"
             id="tab-btn-lkpd"
-            class={`module-tab-btn px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 border ${!hasPassedCheckpoint ? 'tab-locked opacity-75' : ''}`}
+            class={`module-tab-btn px-4 py-3 sm:py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 border flex-shrink-0 snap-center min-h-[44px] sm:min-h-0 ${!hasPassedCheckpoint ? 'tab-locked opacity-75' : ''}`}
           >
             <span id="tab-icon-lkpd">{hasPassedCheckpoint ? '📝' : '🔒'}</span>
             <span>2. Form LKPD Interaktif</span>
@@ -173,7 +202,7 @@ const progressPercentage = sortedSidebarModules.length > 0 ? Math.round((totalCo
             type="button"
             data-tab="refleksi"
             id="tab-btn-refleksi"
-            class={`module-tab-btn px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 border ${!hasSubmittedLkpd ? 'tab-locked opacity-75' : ''}`}
+            class={`module-tab-btn px-4 py-3 sm:py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 border flex-shrink-0 snap-center min-h-[44px] sm:min-h-0 ${!hasSubmittedLkpd ? 'tab-locked opacity-75' : ''}`}
           >
             <span id="tab-icon-refleksi">{hasSubmittedLkpd ? '💭' : '🔒'}</span>
             <span>3. Jurnal Refleksi</span>
@@ -183,7 +212,7 @@ const progressPercentage = sortedSidebarModules.length > 0 ? Math.round((totalCo
           <button
             type="button"
             data-tab="kktp"
-            class="module-tab-btn px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 border"
+            class="module-tab-btn px-4 py-3 sm:py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 border flex-shrink-0 snap-center min-h-[44px] sm:min-h-0"
           >
             <span>🎯</span>
             <span>4. Panduan Kriteria Guru</span>
@@ -217,13 +246,13 @@ const progressPercentage = sortedSidebarModules.length > 0 ? Math.round((totalCo
             <span class="text-[10px] text-primary font-mono font-bold">Sprint 1 & 2</span>
           </div>
 
-          <nav class="space-y-1 text-sm max-h-[50vh] overflow-y-auto pr-1">
+          <nav class="space-y-1 text-sm max-h-[35vh] lg:max-h-[50vh] overflow-y-auto pr-1">
             {sortedSidebarModules.map((mod, idx) => {
               const modSlug = mod.id || mod.slug;
               const currentSlug = entry.id || entry.slug;
               const isCurrent = modSlug === currentSlug;
               const isModDone = completedSlugs.includes(modSlug);
-              const isModLocked = user?.role !== 'admin' && idx > 0 && !completedSlugs.includes(sortedSidebarModules[idx - 1].id || sortedSidebarModules[idx - 1].slug);
+              const isModLocked = !canAccessAdminPanel(user?.role) && idx > 0 && !completedSlugs.includes(sortedSidebarModules[idx - 1].id || sortedSidebarModules[idx - 1].slug);
 
               if (isModLocked) {
                 return (
@@ -311,24 +340,7 @@ const progressPercentage = sortedSidebarModules.length > 0 ? Math.round((totalCo
         ) : (
           <>
             <section id="panel-materi" class="tab-panel space-y-6">
-              {isModul1 && (
-                <details data-reference-material class="group p-4 sm:p-5 rounded-2xl bg-secondary/30 border border-border/80 hover:border-border transition-all shadow-sm">
-                  <summary class="cursor-pointer font-bold text-xs sm:text-sm text-foreground flex items-center justify-between list-none select-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-amber-400 focus-visible:outline-offset-4">
-                    <span class="flex items-center gap-2">
-                      <span class="text-base">📜</span>
-                      <span>Bacaan Rujukan Silabus & Catatan Kurikulum Lengkap</span>
-                    </span>
-                    <span class="group-open:rotate-180 transition-transform duration-200 text-muted-foreground text-xs font-mono">▼</span>
-                  </summary>
-                  <div class="pt-4 border-t border-border mt-3.5">
-                    <article class="prose prose-invert max-w-none text-xs leading-relaxed">
-                      <Content />
-                    </article>
-                  </div>
-                </details>
-              )}
-
-              {isModul2 && (
+              {(isModul1 || isModul2 || isModul3 || isModul4 || isModul5 || isModul6 || isModul7 || isModul8 || isModul9 || isModul10 || isModul11 || isModul12 || isModul13 || isModul14 || isModul15 || isModul16) && (
                 <details data-reference-material class="group p-4 sm:p-5 rounded-2xl bg-secondary/30 border border-border/80 hover:border-border transition-all shadow-sm">
                   <summary class="cursor-pointer font-bold text-xs sm:text-sm text-foreground flex items-center justify-between list-none select-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-amber-400 focus-visible:outline-offset-4">
                     <span class="flex items-center gap-2">
@@ -355,13 +367,125 @@ const progressPercentage = sortedSidebarModules.length > 0 ? Math.round((totalCo
                   />
                   <InteractiveMaterialP2 user={user} />
                 </>
+              ) : isModul3 ? (
+                <>
+                  <TeacherMessageCard
+                    lessonSlug={lessonSlug}
+                    teacherMessage={orientasiMaterial!.teacherMessage}
+                  />
+                  <InteractiveMaterialP3 user={user} />
+                </>
+              ) : isModul4 ? (
+                <>
+                  <TeacherMessageCard
+                    lessonSlug={lessonSlug}
+                    teacherMessage={orientasiMaterial!.teacherMessage}
+                  />
+                  <InteractiveMaterialP4 user={user} />
+                </>
+              ) : isModul5 ? (
+                <>
+                  <TeacherMessageCard
+                    lessonSlug={lessonSlug}
+                    teacherMessage={orientasiMaterial!.teacherMessage}
+                  />
+                  <InteractiveMaterialP5 user={user} />
+                </>
+              ) : isModul6 ? (
+                <>
+                  <TeacherMessageCard
+                    lessonSlug={lessonSlug}
+                    teacherMessage={orientasiMaterial!.teacherMessage}
+                  />
+                  <InteractiveMaterialP6 user={user} />
+                </>
+              ) : isModul7 ? (
+                <>
+                  <TeacherMessageCard
+                    lessonSlug={lessonSlug}
+                    teacherMessage={orientasiMaterial!.teacherMessage}
+                  />
+                  <InteractiveMaterialP7 user={user} />
+                </>
+              ) : isModul8 ? (
+                <>
+                  <TeacherMessageCard
+                    lessonSlug={lessonSlug}
+                    teacherMessage={orientasiMaterial!.teacherMessage}
+                  />
+                  <InteractiveMaterialP8 user={user} />
+                </>
+              ) : isModul9 ? (
+                <>
+                  <TeacherMessageCard
+                    lessonSlug={lessonSlug}
+                    teacherMessage={orientasiMaterial!.teacherMessage}
+                  />
+                  <InteractiveMaterialP9 user={user} />
+                </>
+              ) : isModul10 ? (
+                <>
+                  <TeacherMessageCard
+                    lessonSlug={lessonSlug}
+                    teacherMessage={orientasiMaterial!.teacherMessage}
+                  />
+                  <InteractiveMaterialP10 user={user} />
+                </>
+              ) : isModul11 ? (
+                <>
+                  <TeacherMessageCard
+                    lessonSlug={lessonSlug}
+                    teacherMessage={orientasiMaterial!.teacherMessage}
+                  />
+                  <InteractiveMaterialP11 user={user} />
+                </>
+              ) : isModul12 ? (
+                <>
+                  <TeacherMessageCard
+                    lessonSlug={lessonSlug}
+                    teacherMessage={orientasiMaterial!.teacherMessage}
+                  />
+                  <InteractiveMaterialP12 user={user} />
+                </>
+              ) : isModul13 ? (
+                <>
+                  <TeacherMessageCard
+                    lessonSlug={lessonSlug}
+                    teacherMessage={orientasiMaterial!.teacherMessage}
+                  />
+                  <InteractiveMaterialP13 user={user} />
+                </>
+              ) : isModul14 ? (
+                <>
+                  <TeacherMessageCard
+                    lessonSlug={lessonSlug}
+                    teacherMessage={orientasiMaterial!.teacherMessage}
+                  />
+                  <InteractiveMaterialP14 user={user} />
+                </>
+              ) : isModul15 ? (
+                <>
+                  <TeacherMessageCard
+                    lessonSlug={lessonSlug}
+                    teacherMessage={orientasiMaterial!.teacherMessage}
+                  />
+                  <InteractiveMaterialP15 user={user} />
+                </>
+              ) : isModul16 ? (
+                <>
+                  <TeacherMessageCard
+                    lessonSlug={lessonSlug}
+                    teacherMessage={orientasiMaterial!.teacherMessage}
+                  />
+                  <InteractiveMaterialP16 user={user} />
+                </>
               ) : !isOrientasiModule ? (
                 <SmartMarkdownWrapper>
                   <Content />
                 </SmartMarkdownWrapper>
               ) : null}
 
-              {isOrientasiModule && !isModul1 && !isModul2 && (
+              {isOrientasiModule && !isModul1 && !isModul2 && !isModul3 && !isModul4 && !isModul5 && !isModul6 && !isModul7 && !isModul8 && !isModul9 && !isModul10 && !isModul11 && !isModul12 && !isModul13 && !isModul14 && !isModul15 && !isModul16 && (
                 <>
                   <details data-reference-material class="group p-4 sm:p-5 rounded-2xl bg-secondary/30 border border-border/80 hover:border-border transition-all shadow-sm">
                     <summary class="cursor-pointer font-bold text-xs sm:text-sm text-foreground flex items-center justify-between list-none select-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-amber-400 focus-visible:outline-offset-4">
@@ -546,6 +670,13 @@ const progressPercentage = sortedSidebarModules.length > 0 ? Math.round((totalCo
     .tab-locked {
       cursor: not-allowed;
     }
+    .hide-scrollbar {
+      -ms-overflow-style: none;  /* IE and Edge */
+      scrollbar-width: none;  /* Firefox */
+    }
+    .hide-scrollbar::-webkit-scrollbar {
+      display: none;
+    }
   </style>
 
   <script>
@@ -554,7 +685,7 @@ const progressPercentage = sortedSidebarModules.length > 0 ? Math.round((totalCo
     const container = document.getElementById('module-container');
     const slug = container?.getAttribute('data-slug') || '';
     const userRole = container?.getAttribute('data-user-role') || 'student';
-    const isAdmin = userRole === 'admin';
+    const isAdmin = userRole === 'admin' || userRole === 'superadmin' || userRole === 'teacher';
     const tabBtns = document.querySelectorAll('.module-tab-btn');
     const tabPanels = document.querySelectorAll('.tab-panel');
     const btnComplete = document.getElementById('btn-complete-lesson');

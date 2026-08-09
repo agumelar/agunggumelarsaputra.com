@@ -140,6 +140,24 @@
 3. **Bilah Progres Mata Pelajaran:**
    - Setiap modul menampilkan progress bar horizontal di header yang menghitung total modul selesai dibagi 16 modul Orientasi PPLG secara *real-time*.
 
+4. **Integritas Pengerjaan & Proteksi Anti Copy-Paste (Mutlak):**
+   - Seluruh isian jawaban LKPD, kuis deskriptif, dan jurnal refleksi siswa **DILARANG COPY-PASTE** dan **WAJIB DIKETIK MANDIRI**.
+   - Sistem dilengkapi proteksi otomatis (`AntiCopyPasteGuardian.astro`) yang memblokir `paste`, `drop`, dan kombinasi tombol `Ctrl+V`/`Cmd+V`/`Shift+Insert` pada textarea dan input isian pembelajaran serta memberikan notifikasi toast peringatan.
+   - **PENGECUALIAN:** Bagian **Identitas Siswa** (`studentName`, `studentNis`, `studentClass`, `submissionDate`) dan **URL Bukti Google Drive / Repository** (`driveUrl`, `evidenceDriveUrl`) tetap **DIPERBOLEHKAN COPY-PASTE**.
+
+### 5.2 Alur Penilaian & Evaluasi LKPD oleh Guru (KKTP & Status Workflow)
+1. **Status Transition**: `submitted` ➔ `graded` (Nilai disimpan ke `teacher_score`, `teacher_level`, `teacher_feedback`, `graded_at`).
+2. **KKM Threshold (73)**:
+   - **Skor ≥ 73 (Tuntas)**: Terkunci permanen dari resubmission siswa (`HTTP 403 Forbidden`).
+   - **Skor < 73 (Remedial)**: Akses tetap terbuka. Jika siswa mengirimkan perbaikan, status otomatis kembali dari `graded` ke `submitted`.
+3. **Skala Rubrik KKTP**:
+   - `Level 0 (Belum Berkembang)`: Teks acak/kosong, drive url rusak/terkunci (< 73, Remedial)
+   - `Level 1 (Mulai Berkembang)`: Data contoh default / peniruan tanpa analisis mandiri (< 73, Remedial)
+   - `Level 2 (Mencoba ★)`: Tuntas KKM minimal (≥ 73)
+   - `Level 3 (Mandiri ★★)`: Analisis mendalam & orisinal (≥ 85)
+   - `Level 4 (Mahir & Mandiri ★★★)`: Standar industri & sangat komprehensif (≥ 95)
+
+
 ---
 
 ## 6. Lokasi Sumber Materi Pembelajaran (DOCX to MD)

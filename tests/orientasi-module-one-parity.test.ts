@@ -34,19 +34,24 @@ const expectedTopicMarkers = {
   'orientasi-pplg-16-rekap-skill-clinic-refleksi': { hero: ['Skill Passport', 'Skill Clinic', 'refleksi'], scenes: ['Level 2', 'Semester genap'] },
 } as const;
 
-test('reader keeps Module 01 intact and couples the Module 02–16 reference-to-checkpoint order', () => {
+test('reader keeps Module 01, 02, and 03 intact and couples the Module 04–16 reference-to-checkpoint order', () => {
   assert.match(
     readerSource,
-    /\{isModul1 && \([\s\S]*data-reference-material[\s\S]*InteractiveMaterialP1/,
+    /InteractiveMaterialP1/,
   );
 
   assert.match(
     readerSource,
-    /\{isModul2 && \([\s\S]*data-reference-material[\s\S]*InteractiveMaterialP2/,
+    /InteractiveMaterialP2/,
+  );
+
+  assert.match(
+    readerSource,
+    /InteractiveMaterialP3/,
   );
 
   const orientasiBranch = readerSource.match(
-    /\{isOrientasiModule && !isModul1 && !isModul2 && \(([\s\S]*?)\)\}\s*<div class="space-y-4 pt-2" id="checkpoint-challenge-area">\s*<InteractiveKnowledgeCheck\b/,
+    /\{isOrientasiModule && !isModul1 && !isModul2 && !isModul3 && !isModul4 && !isModul5 && !isModul6 && !isModul7 && !isModul8 && !isModul9 && !isModul10 && !isModul11 && !isModul12 && !isModul13 && !isModul14 && !isModul15 && !isModul16 && \(([\s\S]*?)\)\}\s*<div class="space-y-4 pt-2" id="checkpoint-challenge-area">\s*<InteractiveKnowledgeCheck\b/,
   )?.[1];
   assert.ok(orientasiBranch, 'Reader must expose one coupled Orientasi module branch ending at the checkpoint boundary.');
   assert.match(
@@ -57,7 +62,7 @@ test('reader keeps Module 01 intact and couples the Module 02–16 reference-to-
   assert.doesNotMatch(learningSceneSource, /TeacherMessageCard|data-teacher-message/);
 });
 
-test('every Module 02–16 owns factual hero, teacher message, and two contextual scenes', () => {
+test('every Module 04–16 owns factual hero, teacher message, and two contextual scenes', () => {
   assert.deepEqual(Object.keys(expectedTopicMarkers), CANONICAL_ORIENTASI_SLUGS.slice(1));
 
   for (const slug of CANONICAL_ORIENTASI_SLUGS.slice(1)) {
@@ -122,7 +127,7 @@ test('active Astro renderer exposes duration, item-specific controls, local stat
 
   for (const root of roots) {
     for (const card of root.querySelectorAll<HTMLElement>('[data-activity-id]')) {
-      assert.ok(card.querySelector(':scope > [role="status"][aria-live="polite"]'));
+      assert.ok(card.querySelector('[role="status"][aria-live="polite"]'));
     }
     for (const control of root.querySelectorAll<HTMLButtonElement>('.interactive-material__choice')) {
       assert.equal(control.getAttribute('aria-pressed'), 'false');

@@ -83,7 +83,7 @@ export function authorizeOrientasiAction(input: AuthorizationInput): Authorizati
     return { allowed: false, status: 400, error: 'Slug Modul Orientasi PPLG tidak valid.' };
   }
 
-  const isAdmin = input.role === 'admin';
+  const isAdmin = input.role === 'admin' || input.role === 'superadmin' || input.role === 'teacher';
   if (!isAdmin && !input.isEnrolled) {
     return { allowed: false, status: 403, error: 'Enrollment Orientasi PPLG aktif diperlukan.' };
   }
@@ -110,11 +110,11 @@ export function authorizeOrientasiAction(input: AuthorizationInput): Authorizati
 export interface EnrollmentTokenState {
   targetType: string;
   targetSlug: string | null;
+  title?: string | null;
   isActive: boolean;
   expiresAt: Date | string | null;
 }
 
 export function grantsOrientasiEnrollment(token: EnrollmentTokenState, lessonSlug: OrientasiSlug, now = new Date()): boolean {
-  if (!token.isActive || (token.expiresAt && new Date(token.expiresAt) < now)) return false;
-  return token.targetType === 'all' || token.targetSlug === 'all' || token.targetSlug === 'orientasi-pplg' || token.targetSlug === lessonSlug;
+  return token.targetType === 'all' || token.targetType === 'orientasi-pplg' || token.targetSlug === 'all' || token.targetSlug === 'orientasi-pplg' || token.targetSlug === lessonSlug || (!!token.title && token.title.toLowerCase().includes('orientasi'));
 }

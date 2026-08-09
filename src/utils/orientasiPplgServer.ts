@@ -15,6 +15,7 @@ export async function getOrientasiServerState(userId: number, lessonSlug: Orient
       tokenId: enrollmentTokens.id,
       targetType: enrollmentTokens.targetType,
       targetSlug: enrollmentTokens.targetSlug,
+      title: enrollmentTokens.title,
       isActive: enrollmentTokens.isActive,
       expiresAt: enrollmentTokens.expiresAt,
     })

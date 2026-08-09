@@ -92,12 +92,17 @@ const { lessonSlug, user } = Astro.props;
 
   <form id="form-lkpd-p1" class="space-y-8">
     
-    <!-- Bagian A: Identitas Peserta Didik -->
-    <div class="space-y-4 p-5 rounded-xl bg-secondary/30 border border-border">
-      <h3 class="text-sm font-bold text-foreground font-mono flex items-center gap-2">
-        <span class="w-6 h-6 rounded-full bg-primary/10 text-primary flex items-center justify-center text-xs">A</span>
-        IDENTITAS PESERTA DIDIK
-      </h3>
+    <!-- Bagian A: Identitas Peserta Didik (Copy-Paste Diizinkan) -->
+    <div class="space-y-4 p-5 rounded-xl bg-secondary/30 border border-border" id="identity-section" data-allow-paste-container="true">
+      <div class="flex flex-wrap items-center justify-between gap-2">
+        <h3 class="text-sm font-bold text-foreground font-mono flex items-center gap-2">
+          <span class="w-6 h-6 rounded-full bg-primary/10 text-primary flex items-center justify-center text-xs">A</span>
+          IDENTITAS PESERTA DIDIK
+        </h3>
+        <span class="text-[10px] font-mono px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 font-medium">
+          📋 Copy-Paste Diperbolehkan
+        </span>
+      </div>
 
       <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <div>
@@ -107,9 +112,10 @@ const { lessonSlug, user } = Astro.props;
             name="studentName" 
             id="studentName"
             value={user?.name || ''} 
+            data-allow-paste="true"
             required 
             placeholder="Nama lengkap siswa"
-            class="w-full px-3 py-2 rounded-lg bg-card border border-border text-xs text-foreground focus:outline-none focus:border-primary"
+            class="w-full px-3 py-2 rounded-lg bg-card border border-border text-xs text-foreground focus:outline-none focus:border-primary allow-paste"
           />
         </div>
 
@@ -119,9 +125,10 @@ const { lessonSlug, user } = Astro.props;
             type="text" 
             name="studentNis" 
             id="studentNis"
+            data-allow-paste="true"
             required 
             placeholder="Contoh: 242510001"
-            class="w-full px-3 py-2 rounded-lg bg-card border border-border text-xs text-foreground focus:outline-none focus:border-primary font-mono"
+            class="w-full px-3 py-2 rounded-lg bg-card border border-border text-xs text-foreground focus:outline-none focus:border-primary font-mono allow-paste"
           />
         </div>
 
@@ -130,6 +137,7 @@ const { lessonSlug, user } = Astro.props;
           <select 
             name="studentClass" 
             id="studentClass"
+            data-allow-paste="true"
             required 
             class="w-full px-3 py-2 rounded-lg bg-card border border-border text-xs text-foreground focus:outline-none focus:border-primary"
           >
@@ -145,6 +153,7 @@ const { lessonSlug, user } = Astro.props;
             type="date" 
             name="submissionDate" 
             id="submissionDate"
+            data-allow-paste="true"
             required 
             class="w-full px-3 py-2 rounded-lg bg-card border border-border text-xs text-foreground focus:outline-none focus:border-primary font-mono"
           />
@@ -154,12 +163,15 @@ const { lessonSlug, user } = Astro.props;
 
     <!-- Bagian B: Petunjuk Pengerjaan -->
     <div class="p-4 rounded-xl bg-primary/5 border border-primary/20 space-y-1.5 text-xs text-muted-foreground">
-      <div class="font-bold text-foreground flex items-center gap-1.5">
-        <span>📌 Petunjuk Pengisian:</span>
+      <div class="font-bold text-foreground flex items-center justify-between">
+        <span class="flex items-center gap-1.5">📌 Petunjuk Pengisian:</span>
+        <span class="text-[10px] font-mono px-2 py-0.5 rounded bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20 font-bold">
+          ✍️ Wajib Diketik Mandiri (No Copy-Paste)
+        </span>
       </div>
       <ol class="list-decimal list-inside space-y-1 leading-relaxed">
         <li>Amati minimal <strong>3 aplikasi digital</strong> yang sering kalian gunakan di HP atau laptop.</li>
-        <li>Tuliskan fitur utama dan perkiraan peran profesi pengembang software di balik aplikasi tersebut.</li>
+        <li>Tuliskan fitur utama dan perkiraan peran profesi pengembang software di balik aplikasi tersebut (wajib diketik sendiri).</li>
         <li>Kalian bisa menambahkan baris baru dengan tombol <em>"+ Tambah Baris Aplikasi"</em>.</li>
         <li>Tekan tombol <strong>"Kirim LKPD P1"</strong> untuk menyimpan jawaban secara permanen ke akun kalian dan mendapatkan reward XP!</li>
       </ol>
@@ -168,10 +180,15 @@ const { lessonSlug, user } = Astro.props;
     <!-- Bagian C: Tabel Audit Profesi & Produk Digital -->
     <div class="space-y-4">
       <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-        <h3 class="text-sm font-bold text-foreground font-mono flex items-center gap-2">
-          <span class="w-6 h-6 rounded-full bg-primary/10 text-primary flex items-center justify-center text-xs">B</span>
-          AUDIT PRODUK DIGITAL & PERAN PROFESI TI
-        </h3>
+        <div class="flex items-center gap-2">
+          <h3 class="text-sm font-bold text-foreground font-mono flex items-center gap-2">
+            <span class="w-6 h-6 rounded-full bg-primary/10 text-primary flex items-center justify-center text-xs">B</span>
+            AUDIT PRODUK DIGITAL & PERAN PROFESI TI
+          </h3>
+          <span class="text-[10px] font-mono px-2 py-0.5 rounded bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20 font-semibold hidden sm:inline-block">
+            ✍️ Wajib Diketik Sendiri
+          </span>
+        </div>
 
         <button 
           type="button" 
@@ -340,11 +357,15 @@ const { lessonSlug, user } = Astro.props;
               type="url" 
               name="driveUrl" 
               id="driveUrl"
+              data-allow-paste="true"
               placeholder="https://drive.google.com/drive/folders/..." 
-              class="w-full px-3 py-2.5 rounded-lg bg-card border border-border text-xs text-foreground focus:outline-none focus:border-primary font-mono"
+              class="w-full px-3 py-2.5 rounded-lg bg-card border border-border text-xs text-foreground focus:outline-none focus:border-primary font-mono allow-paste"
             />
           </div>
-          <p id="drive-url-feedback" class="text-[11px] text-muted-foreground mt-1"></p>
+          <div class="flex items-center justify-between mt-1 text-[11px] text-muted-foreground">
+            <p id="drive-url-feedback"></p>
+            <span class="font-mono text-emerald-600 dark:text-emerald-400">📋 Copy-Paste URL Diizinkan</span>
+          </div>
         </div>
       </div>
     </div>

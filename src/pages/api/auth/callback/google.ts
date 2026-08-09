@@ -49,7 +49,7 @@ export const GET: APIRoute = async ({ request, url, cookies, redirect }) => {
 
     if (!existingUser) {
       [existingUser] = await db.insert(users).values({
-        name: googleUser.name || 'Siswa PPLG',
+        name: googleUser.name || 'Siswa RPL',
         email: cleanEmail,
         googleId: googleUser.sub,
         role: assignedRole,

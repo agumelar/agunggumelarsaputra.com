@@ -20,7 +20,8 @@ const {
 <html lang="id" class="dark">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=1.0, user-scalable=0" />
+    <meta name="theme-color" content="#090d16" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     
     <!-- Primary Meta Tags -->
@@ -54,7 +55,7 @@ const {
   </head>
   <body class="min-h-screen bg-background text-foreground font-sans antialiased flex flex-col selection:bg-blue-500/30 selection:text-blue-400">
     <Navigation />
-    <main class="flex-1">
+    <main class="flex-1 pb-safe">
       <slot />
     </main>
     <Footer />

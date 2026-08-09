@@ -4,8 +4,10 @@ import { db, isDbConfigured, ensureDbInitialized } from '../../db';
 import { users, userGamification } from '../../db/schema';
 import { eq, desc } from 'drizzle-orm';
 
+import { canAccessAdminPanel } from '../../utils/auth';
+
 const user = Astro.locals.user;
-if (!user || user.role !== 'admin') {
+if (!user || !canAccessAdminPanel(user.role)) {
   return Astro.redirect('/login?redirect=/admin/proyektor-leaderboard');
 }
 
