@@ -87,7 +87,7 @@ if (dbReady) {
   dbErrorNotice = 'Database Postgres belum terhubung. Silakan atur variabel POSTGRES_URL di Vercel Dashboard (Settings > Environment Variables) agar sistem autentikasi & rekap nilai tersimpan permanen.';
 }
 
-// 4. Fetch All Learning Modules from Content Collection
+// Fetch All Learning Modules
 let allModules: any[] = [];
 try {
   allModules = await getCollection('pembelajaran');
@@ -96,7 +96,7 @@ try {
   allModules = [];
 }
 
-// 5. Level Calculation
+// Calculate level and progress
 const levelInfo = calculateLevel(stats.xp || 0);
 const currentLevelMinXp = levelInfo.currentLevelMinXp;
 const nextLevelXp = levelInfo.nextLevelXp;
@@ -104,10 +104,7 @@ const currentLevelProgress = Math.max(0, (stats.xp || 0) - currentLevelMinXp);
 const levelRange = Math.max(1, nextLevelXp - currentLevelMinXp);
 const xpProgressPercent = Math.min(100, Math.round((currentLevelProgress / levelRange) * 100));
 
-// Highest Exam Score
-const highestScore = examHistory.length > 0 
-  ? Math.max(...examHistory.map(h => h.score)) 
-  : 0;
+const highestScore = examHistory.length > 0 ? Math.max(...examHistory.map(h => h.score)) : 0;
 
 function getLevelTitle(lvl: number) {
   if (lvl >= 10) return 'Principal Software Architect';
@@ -120,14 +117,23 @@ function getLevelTitle(lvl: number) {
 
 const isSuperAdminUser = isSuperAdmin(dbUser.role) || isSuperAdminEmail(dbUser.email);
 const isTeacherOrAdmin = canAccessAdminPanel(dbUser.role);
+
+// Pre-filter submissions by type
+const subLkpd = lkpdSubmissions.filter(s => s.submissionType === 'lkpd');
+const subRefleksi = lkpdSubmissions.filter(s => s.submissionType === 'reflection');
+const subKuis = lkpdSubmissions.filter(s => s.submissionType === 'checkpoint');
+
+// Calculate resume modules
+const remainingModules = allModules.filter(mod => !completedLessons.some(c => c.lessonSlug === mod.slug));
+const resumeModules = remainingModules.slice(0, 2);
 ---
 
 <DashboardLayout title="Portal Belajar Siswa" activeNav="/dashboard">
-  <div class="space-y-6">
+  <div class="space-y-8 max-w-7xl mx-auto pb-12">
 
-    <!-- Database Warning Banner (Only visible if DB is unconfigured or failed) -->
+    <!-- DB Warning Banner -->
     {dbErrorNotice && (
-      <div class="p-4 rounded-xl bg-amber-500/10 border border-amber-500/25 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-xs">
+      <div class="p-4 rounded-xl bg-amber-500/10 border border-amber-500/25 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-xs shadow-lg">
         <div class="flex items-center gap-3">
           <span class="text-xl">⚠️</span>
           <div>
@@ -135,24 +141,17 @@ const isTeacherOrAdmin = canAccessAdminPanel(dbUser.role);
             <p class="text-muted-foreground mt-0.5">{dbErrorNotice}</p>
           </div>
         </div>
-        <a 
-          href="https://vercel.com" 
-          target="_blank" 
-          rel="noopener noreferrer"
-          class="btn btn-sm bg-secondary hover:bg-accent text-foreground border border-border rounded-lg text-xs font-mono font-medium whitespace-nowrap self-end sm:self-auto"
-        >
+        <a href="https://vercel.com" target="_blank" rel="noopener noreferrer" class="btn btn-sm bg-secondary hover:bg-accent text-foreground border border-border rounded-lg text-xs font-mono font-medium whitespace-nowrap self-end sm:self-auto">
           Buka Vercel Settings ↗
         </a>
       </div>
     )}
 
-    <!-- Super Admin / Guru Banner Alert (if applicable) -->
+    <!-- Admin Banner -->
     {isTeacherOrAdmin && (
-      <div class="p-4 rounded-xl bg-amber-500/10 border border-amber-500/25 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+      <div class="p-4 rounded-xl bg-amber-500/10 border border-amber-500/25 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-lg hover:shadow-amber-500/5 transition-all">
         <div class="flex items-center gap-3">
-          <div class="w-9 h-9 rounded-lg bg-amber-500/20 text-amber-500 flex items-center justify-center font-bold text-base flex-shrink-0">
-            👑
-          </div>
+          <div class="w-9 h-9 rounded-lg bg-amber-500/20 text-amber-500 flex items-center justify-center font-bold text-base flex-shrink-0">👑</div>
           <div>
             <div class="text-xs font-bold text-foreground flex items-center gap-2">
               <span>Akses Khusus Pengampu Terdeteksi</span>
@@ -161,9 +160,7 @@ const isTeacherOrAdmin = canAccessAdminPanel(dbUser.role);
               </span>
             </div>
             <p class="text-xs text-muted-foreground mt-0.5">
-              {isSuperAdminUser 
-                ? "Anda memiliki wewenang penuh memonitor nilai ujian, menerbitkan token sesi, dan mengelola pengguna."
-                : "Anda memiliki akses untuk memonitor hasil pengerjaan soal siswa, nilai ujian, serta aktivitas belajar di Panel Guru."}
+              {isSuperAdminUser ? "Anda memiliki wewenang penuh mengelola kelas." : "Anda dapat memonitor hasil belajar."}
             </p>
           </div>
         </div>
@@ -173,14 +170,16 @@ const isTeacherOrAdmin = canAccessAdminPanel(dbUser.role);
       </div>
     )}
 
-    <!-- Welcome Hero Banner -->
-    <div class="rounded-xl bg-card border border-border p-6 shadow-sm">
-      <div class="flex flex-col md:flex-row md:items-center justify-between gap-6">
-        <div class="space-y-2">
-          <div class="inline-flex items-center gap-2 px-2.5 py-0.5 rounded-md bg-secondary border border-border text-foreground text-xs font-mono">
-            <span class="font-semibold text-primary">Student Learning Portal</span>
+    <!-- Premium Hero Banner -->
+    <div class="relative overflow-hidden rounded-3xl bg-gradient-to-br from-card via-card to-primary/10 border border-white/5 shadow-xl hover:shadow-primary/5 transition-all">
+      <div class="absolute inset-0 bg-[url('/noise.png')] opacity-[0.03] mix-blend-overlay"></div>
+      <div class="relative p-6 sm:p-8 flex flex-col md:flex-row md:items-center justify-between gap-6">
+        <div class="space-y-3 relative z-10">
+          <div class="inline-flex items-center gap-2 px-2.5 py-0.5 rounded-full bg-secondary/80 backdrop-blur-md border border-white/5 text-foreground text-xs font-mono">
+            <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+            <span class="font-semibold">Student Hub</span>
             <span class="text-muted-foreground">•</span>
-            <span class="text-muted-foreground">SMKN 1 Rongga</span>
+            <span>SMKN 1 Rongga</span>
             {dbUser?.studentClass && (
               <>
                 <span class="text-muted-foreground">•</span>
@@ -188,251 +187,284 @@ const isTeacherOrAdmin = canAccessAdminPanel(dbUser.role);
               </>
             )}
           </div>
-          <h1 class="text-2xl sm:text-3xl font-bold text-foreground tracking-tight">
-            Halo, {user.name} 👋
+          <h1 class="text-3xl md:text-4xl font-black text-foreground tracking-tight">
+            Halo, <span class="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-emerald-400">{user.name} 👋</span>
           </h1>
           <p class="text-xs sm:text-sm text-muted-foreground max-w-xl leading-relaxed">
-            Selamat datang di pusat pembelajaran interaktif Rekayasa Perangkat Lunak. Terus tingkatkan kemampuan koding dan persiapkan dirimu menghadapi Ujian Kejuruan TKA PPLG.
+            Terus tingkatkan kemampuan koding dan persiapkan dirimu menghadapi Ujian Kejuruan TKA PPLG.
           </p>
         </div>
 
-        <!-- Quick Streak & Level Card -->
-        <div class="flex items-center gap-3.5 bg-secondary/50 p-3.5 rounded-lg border border-border flex-shrink-0">
-          <div class="w-10 h-10 rounded-lg bg-amber-500/10 border border-amber-500/25 flex items-center justify-center text-xl flex-shrink-0">
-            🔥
-          </div>
-          <div class="space-y-0.5">
-            <div class="text-[11px] text-muted-foreground font-mono">Daily Streak</div>
-            <div class="text-sm font-bold text-foreground font-mono">{stats.streakDays || 1} Hari Beruntun</div>
-            <div class="text-[10px] text-emerald-600 dark:text-emerald-400 font-medium">Aktif Hari Ini</div>
+        <!-- Daily Streak Glass Card -->
+        <div class="relative z-10 flex items-center gap-4 bg-white/5 backdrop-blur-md p-4 rounded-2xl border border-white/10 shadow-lg">
+          <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center text-2xl shadow-inner">🔥</div>
+          <div class="space-y-0.5 pr-2">
+            <div class="text-[10px] text-muted-foreground font-mono font-bold uppercase tracking-widest">Daily Streak</div>
+            <div class="text-lg font-black text-foreground font-mono">{stats.streakDays || 1} Hari</div>
+            <div class="text-[10px] text-emerald-400 font-semibold tracking-wide">Aktif Hari Ini ✓</div>
           </div>
         </div>
       </div>
     </div>
 
-    <!-- Gamification KPI Cards (4 Columns) -->
-    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+    <!-- 4 Glassmorphism KPI Cards -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
       
-      <!-- Card 1: Experience Points -->
-      <div class="card p-5 rounded-xl border-border bg-card space-y-3">
-        <div class="flex items-center justify-between">
-          <span class="text-xs font-medium text-muted-foreground">Total Experience</span>
-          <div class="w-7 h-7 rounded-md bg-amber-500/10 text-amber-500 flex items-center justify-center font-bold text-xs">⚡</div>
-        </div>
-        <div class="space-y-1.5">
-          <div class="text-2xl font-bold text-foreground font-mono tracking-tight">
-            {stats.xp} <span class="text-xs font-sans font-normal text-muted-foreground">XP</span>
+      <!-- XP Card -->
+      <div class="group p-5 rounded-2xl border border-white/5 bg-card relative overflow-hidden shadow-lg hover:shadow-xl hover:shadow-amber-500/10 transition-all hover:-translate-y-1">
+        <div class="absolute inset-0 bg-gradient-to-br from-amber-500/5 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
+        <div class="relative z-10 space-y-4">
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Experience</span>
+            <div class="w-8 h-8 rounded-lg bg-amber-500/10 text-amber-500 flex items-center justify-center font-bold shadow-inner">⚡</div>
           </div>
-          <!-- Progress Bar to Next Level -->
-          <div class="space-y-1 pt-1">
-            <div class="w-full bg-secondary rounded-full h-1.5 overflow-hidden">
-              <div class="bg-amber-500 h-full rounded-full transition-all duration-300" style={`width: ${xpProgressPercent}%`}></div>
+          <div class="space-y-2">
+            <div class="text-3xl font-black text-foreground font-mono tracking-tight">
+              {stats.xp} <span class="text-xs font-sans font-medium text-muted-foreground">XP</span>
             </div>
-            <div class="flex justify-between text-[10px] text-muted-foreground font-mono">
-              <span>Berikutnya: {nextLevelXp} XP</span>
-              <span>{xpProgressPercent}%</span>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Card 2: Level Belajar -->
-      <div class="card p-5 rounded-xl border-border bg-card space-y-3">
-        <div class="flex items-center justify-between">
-          <span class="text-xs font-medium text-muted-foreground">Tingkat Level</span>
-          <div class="w-7 h-7 rounded-md bg-emerald-500/10 text-emerald-500 flex items-center justify-center font-bold text-xs">🏅</div>
-        </div>
-        <div class="space-y-0.5">
-          <div class="text-2xl font-bold text-foreground font-mono tracking-tight">
-            Level {stats.level}
-          </div>
-          <p class="text-xs text-muted-foreground truncate">{getLevelTitle(stats.level)}</p>
-        </div>
-      </div>
-
-      <!-- Card 3: Modul Selesai -->
-      <div class="card p-5 rounded-xl border-border bg-card space-y-3">
-        <div class="flex items-center justify-between">
-          <span class="text-xs font-medium text-muted-foreground">Modul Diselesaikan</span>
-          <div class="w-7 h-7 rounded-md bg-primary/10 text-primary flex items-center justify-center font-bold text-xs">📚</div>
-        </div>
-        <div class="space-y-0.5">
-          <div class="text-2xl font-bold text-foreground font-mono tracking-tight">
-            {completedLessons.length} <span class="text-xs font-sans font-normal text-muted-foreground">/ {allModules.length || 3}</span>
-          </div>
-          <a href="/pembelajaran" class="text-xs text-primary font-medium hover:underline block">
-            Buka Katalog Modul →
-          </a>
-        </div>
-      </div>
-
-      <!-- Card 4: Ujian & Skor Tertinggi -->
-      <div class="card p-5 rounded-xl border-border bg-card space-y-3">
-        <div class="flex items-center justify-between">
-          <span class="text-xs font-medium text-muted-foreground">Simulasi TKA Diikuti</span>
-          <div class="w-7 h-7 rounded-md bg-cyan-500/10 text-cyan-600 dark:text-cyan-400 flex items-center justify-center font-bold text-xs">🎯</div>
-        </div>
-        <div class="space-y-0.5">
-          <div class="text-2xl font-bold text-foreground font-mono tracking-tight">
-            {examHistory.length} <span class="text-xs font-sans font-normal text-muted-foreground">Kali</span>
-          </div>
-          <p class="text-xs text-muted-foreground">Skor Terbaik: <span class="font-bold text-foreground font-mono">{highestScore}/100</span></p>
-        </div>
-      </div>
-
-    </div>
-
-    <!-- Main Grid Sections: Left (Courses & Drilling CTA) + Right (Leaderboard & Exam Log) -->
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-      
-      <!-- LEFT 2 COLS: Curriculum & Quick Actions -->
-      <div class="lg:col-span-2 space-y-6">
-        
-        <!-- Quick Action Banner for Drilling TKA -->
-        <div class="p-5 rounded-xl bg-card border border-border flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-sm">
-          <div class="space-y-1.5">
-            <div class="inline-flex items-center gap-1.5 text-xs font-mono font-semibold text-cyan-600 dark:text-cyan-400">
-              <span>🎯 SIMULASI DRILLING UJIAN</span>
-            </div>
-            <h2 class="text-base font-bold text-foreground">Tes Kemampuan Akademik (TKA) PPLG</h2>
-            <p class="text-xs text-muted-foreground max-w-md">
-              Uji pemahaman komprehensif terkait Pemrograman Web, OOP, SQL Basis Data, dan Rekayasa Perangkat Lunak berbasis standar industri SMK.
-            </p>
-          </div>
-          <a href="/pembelajaran/tka-pplg" class="btn btn-sm bg-primary hover:bg-primary/90 text-primary-foreground font-semibold whitespace-nowrap px-4 py-2.5 rounded-lg flex-shrink-0">
-            Mulai Ujian Sekarang →
-          </a>
-        </div>
-
-        <!-- LKPD Grades & Feedback Section -->
-        {lkpdSubmissions.length > 0 && (
-          <div class="p-5 rounded-xl bg-card border border-border space-y-4 shadow-sm">
-            <div class="flex items-center justify-between">
-              <div class="space-y-0.5">
-                <h2 class="text-base font-bold text-foreground flex items-center gap-2">
-                  <span>📝 Rekap Penilaian LKPD oleh Guru</span>
-                </h2>
-                <p class="text-xs text-muted-foreground">Hasil evaluasi, skor angka, capaian KKTP, dan catatan masukan dari guru produktif RPL.</p>
+            <div class="space-y-1.5 pt-1">
+              <div class="w-full bg-secondary/80 rounded-full h-1.5 overflow-hidden border border-white/5">
+                <div class="bg-gradient-to-r from-amber-400 to-orange-500 h-full rounded-full transition-all duration-500" style={`width: ${xpProgressPercent}%`}></div>
+              </div>
+              <div class="flex justify-between text-[10px] text-muted-foreground font-mono font-medium">
+                <span>Ke Level {stats.level + 1}</span>
+                <span class="text-amber-500">{xpProgressPercent}%</span>
               </div>
             </div>
+          </div>
+        </div>
+      </div>
 
-            <div class="space-y-3">
-              {lkpdSubmissions.map((sub: any) => {
-                const isGraded = sub.teacherScore !== null && sub.teacherScore !== undefined;
-                const matchedMod = allModules.find(m => m.slug === sub.lessonSlug);
-                const title = matchedMod?.data.title || sub.lessonSlug;
+      <!-- Level Card -->
+      <div class="group p-5 rounded-2xl border border-white/5 bg-card relative overflow-hidden shadow-lg hover:shadow-xl hover:shadow-emerald-500/10 transition-all hover:-translate-y-1">
+        <div class="absolute inset-0 bg-gradient-to-br from-emerald-500/5 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
+        <div class="relative z-10 space-y-4">
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Tingkat Level</span>
+            <div class="w-8 h-8 rounded-lg bg-emerald-500/10 text-emerald-500 flex items-center justify-center font-bold shadow-inner">🏅</div>
+          </div>
+          <div class="space-y-1">
+            <div class="text-3xl font-black text-foreground font-mono tracking-tight">
+              Level {stats.level}
+            </div>
+            <p class="text-xs text-muted-foreground font-medium truncate">{getLevelTitle(stats.level)}</p>
+          </div>
+        </div>
+      </div>
 
-                return (
-                  <div class="p-4 rounded-xl bg-background border border-border hover:border-primary/30 transition-all space-y-3">
-                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-border/60 pb-2.5">
-                      <div class="space-y-0.5">
-                        <div class="flex items-center gap-2">
-                          <span class="text-[10px] font-mono px-2 py-0.5 rounded bg-primary/10 text-primary border border-primary/20 uppercase font-bold">
-                            {sub.submissionType.toUpperCase()}
-                          </span>
-                          <span class="text-xs font-bold text-foreground">{title}</span>
-                        </div>
-                        <span class="text-[10px] text-muted-foreground font-mono">
-                          Diserahkan: {new Date(sub.submittedAt).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })}
-                        </span>
-                      </div>
+      <!-- Modules Card -->
+      <div class="group p-5 rounded-2xl border border-white/5 bg-card relative overflow-hidden shadow-lg hover:shadow-xl hover:shadow-primary/10 transition-all hover:-translate-y-1">
+        <div class="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
+        <div class="relative z-10 space-y-4">
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Modul Selesai</span>
+            <div class="w-8 h-8 rounded-lg bg-primary/10 text-primary flex items-center justify-center font-bold shadow-inner">📚</div>
+          </div>
+          <div class="space-y-1">
+            <div class="text-3xl font-black text-foreground font-mono tracking-tight">
+              {completedLessons.length} <span class="text-sm font-sans font-medium text-muted-foreground">/ {allModules.length || 1}</span>
+            </div>
+            <a href="/pembelajaran" class="text-xs font-semibold text-primary hover:text-primary/80 transition-colors inline-flex items-center gap-1">
+              Buka Katalog <span class="group-hover:translate-x-1 transition-transform">→</span>
+            </a>
+          </div>
+        </div>
+      </div>
 
-                      <div class="flex items-center gap-2">
-                        {isGraded ? (
-                          <div class="flex items-center gap-2">
-                            {sub.teacherLevel && (
-                              <span class="px-2.5 py-1 rounded bg-primary/10 text-primary font-mono text-[11px] font-bold border border-primary/20">
-                                {sub.teacherLevel}
-                              </span>
-                            )}
-                            <span class="px-3 py-1 rounded bg-amber-500/15 text-amber-600 dark:text-amber-400 font-mono text-xs font-extrabold border border-amber-500/30">
-                              ⭐ Nilai: {sub.teacherScore} / 100
-                            </span>
+      <!-- Exam Card -->
+      <div class="group p-5 rounded-2xl border border-white/5 bg-card relative overflow-hidden shadow-lg hover:shadow-xl hover:shadow-cyan-500/10 transition-all hover:-translate-y-1">
+        <div class="absolute inset-0 bg-gradient-to-br from-cyan-500/5 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
+        <div class="relative z-10 space-y-4">
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Skor Tertinggi</span>
+            <div class="w-8 h-8 rounded-lg bg-cyan-500/10 text-cyan-400 flex items-center justify-center font-bold shadow-inner">🎯</div>
+          </div>
+          <div class="space-y-1">
+            <div class="text-3xl font-black text-foreground font-mono tracking-tight">
+              {highestScore} <span class="text-sm font-sans font-medium text-muted-foreground">/ 100</span>
+            </div>
+            <p class="text-xs text-muted-foreground font-medium">Dari {examHistory.length}x simulasi TKA</p>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Main Content Area: 2 Cols Left, 1 Col Right -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-8">
+      
+      <!-- LEFT (Main Features) -->
+      <div class="lg:col-span-2 space-y-8">
+        
+        <!-- Tabbed Evaluations Section -->
+        {lkpdSubmissions.length > 0 && (
+          <div class="p-6 sm:p-8 rounded-3xl bg-card border border-white/5 shadow-xl relative overflow-hidden">
+            <div class="absolute inset-0 bg-gradient-to-b from-white/[0.02] to-transparent pointer-events-none"></div>
+            
+            <div class="relative z-10 space-y-6">
+              <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-white/10 pb-5">
+                <div class="space-y-1">
+                  <h2 class="text-xl font-black text-foreground flex items-center gap-2">
+                    <span class="text-2xl">📝</span> Rekap Penilaian
+                  </h2>
+                  <p class="text-sm text-muted-foreground">Riwayat evaluasi tugas, refleksi, dan kuis.</p>
+                </div>
+                
+                <!-- Tab Navigation -->
+                <div class="flex bg-background/50 backdrop-blur-md p-1.5 rounded-xl border border-white/10 shadow-inner">
+                  <button class="tab-btn flex-1 px-4 py-2 text-xs font-bold rounded-lg transition-all text-foreground bg-secondary/80 shadow-sm" data-target="lkpd">
+                    LKPD
+                  </button>
+                  <button class="tab-btn flex-1 px-4 py-2 text-xs font-bold rounded-lg transition-all text-muted-foreground hover:text-foreground" data-target="refleksi">
+                    Refleksi
+                  </button>
+                  <button class="tab-btn flex-1 px-4 py-2 text-xs font-bold rounded-lg transition-all text-muted-foreground hover:text-foreground" data-target="kuis">
+                    Kuis
+                  </button>
+                </div>
+              </div>
+
+              <!-- Tab Contents -->
+              <div class="min-h-[250px]">
+                <!-- LKPD Tab -->
+                <div id="tab-lkpd" class="tab-content block space-y-4 animate-in fade-in slide-in-from-bottom-2 duration-300">
+                  {subLkpd.length === 0 ? (
+                    <div class="text-center py-10 text-muted-foreground text-sm font-medium bg-background/30 rounded-2xl border border-dashed border-white/10">Belum ada data Lembar Kerja (LKPD).</div>
+                  ) : subLkpd.map((sub: any) => {
+                    const isGraded = sub.teacherScore !== null && sub.teacherScore !== undefined;
+                    const matchedMod = allModules.find(m => m.slug === sub.lessonSlug);
+                    const title = matchedMod?.data.title || sub.lessonSlug;
+                    return (
+                      <div class="p-4 rounded-2xl bg-background border border-white/5 hover:border-primary/30 transition-all space-y-3 shadow-sm">
+                        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-white/5 pb-3">
+                          <div class="space-y-1">
+                            <span class="text-sm font-bold text-foreground">{title}</span>
+                            <div class="text-[10px] text-muted-foreground font-mono">Diserahkan: {new Date(sub.submittedAt).toLocaleDateString('id-ID')}</div>
                           </div>
-                        ) : (
-                          <span class="px-2.5 py-1 rounded bg-secondary text-muted-foreground font-mono text-[11px] border border-border">
-                            ⏳ Menunggu Penilaian Guru
-                          </span>
+                          <div class="flex items-center gap-2">
+                            {isGraded ? (
+                              <div class="flex items-center gap-2">
+                                {sub.teacherLevel && <span class="px-2 py-1 rounded bg-primary/10 text-primary font-mono text-[10px] font-bold border border-primary/20">{sub.teacherLevel}</span>}
+                                <span class="px-2.5 py-1 rounded bg-amber-500/15 text-amber-500 font-mono text-xs font-black border border-amber-500/30">⭐ {sub.teacherScore}/100</span>
+                              </div>
+                            ) : (
+                              <span class="px-2.5 py-1 rounded bg-secondary text-muted-foreground font-mono text-[10px] font-bold border border-white/5">⏳ MENUNGGU</span>
+                            )}
+                          </div>
+                        </div>
+                        {isGraded && sub.teacherFeedback && (
+                          <div class="p-3 rounded-xl bg-primary/5 border border-primary/10 text-xs text-foreground space-y-1">
+                            <span class="text-[10px] font-bold text-primary">💬 EVALUASI:</span>
+                            <p class="italic text-muted-foreground">"{sub.teacherFeedback}"</p>
+                          </div>
                         )}
+                        <div class="text-right pt-1">
+                          <a href={`/pembelajaran/${sub.lessonSlug}`} class="text-[11px] font-bold text-primary hover:underline">Lihat Detail →</a>
+                        </div>
                       </div>
-                    </div>
+                    );
+                  })}
+                </div>
 
-                    {isGraded && sub.teacherFeedback && (
-                      <div class="p-3 rounded-lg bg-secondary/30 border border-border text-xs text-foreground space-y-1">
-                        <span class="text-[11px] font-semibold text-primary block">💬 Catatan & Evaluasi Guru:</span>
-                        <p class="italic leading-relaxed">"{sub.teacherFeedback}"</p>
+                <!-- Refleksi Tab -->
+                <div id="tab-refleksi" class="tab-content hidden space-y-4 animate-in fade-in slide-in-from-bottom-2 duration-300">
+                  {subRefleksi.length === 0 ? (
+                    <div class="text-center py-10 text-muted-foreground text-sm font-medium bg-background/30 rounded-2xl border border-dashed border-white/10">Belum ada data Jurnal Refleksi.</div>
+                  ) : subRefleksi.map((sub: any) => {
+                    const isGraded = sub.teacherScore !== null && sub.teacherScore !== undefined;
+                    const matchedMod = allModules.find(m => m.slug === sub.lessonSlug);
+                    const title = matchedMod?.data.title || sub.lessonSlug;
+                    return (
+                      <div class="p-4 rounded-2xl bg-background border border-white/5 hover:border-primary/30 transition-all space-y-3 shadow-sm">
+                        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-white/5 pb-3">
+                          <div class="space-y-1">
+                            <span class="text-sm font-bold text-foreground">{title}</span>
+                            <div class="text-[10px] text-muted-foreground font-mono">Diserahkan: {new Date(sub.submittedAt).toLocaleDateString('id-ID')}</div>
+                          </div>
+                          <div class="flex items-center gap-2">
+                            {isGraded ? (
+                              <div class="flex items-center gap-2">
+                                <span class="px-2.5 py-1 rounded bg-amber-500/15 text-amber-500 font-mono text-xs font-black border border-amber-500/30">⭐ {sub.teacherScore}/100</span>
+                              </div>
+                            ) : (
+                              <span class="px-2.5 py-1 rounded bg-secondary text-muted-foreground font-mono text-[10px] font-bold border border-white/5">⏳ MENUNGGU</span>
+                            )}
+                          </div>
+                        </div>
+                        <div class="text-right pt-1">
+                          <a href={`/pembelajaran/${sub.lessonSlug}`} class="text-[11px] font-bold text-primary hover:underline">Lihat Detail →</a>
+                        </div>
                       </div>
-                    )}
+                    );
+                  })}
+                </div>
 
-                    <div class="flex items-center justify-between text-[11px] pt-1">
-                      <span class="text-muted-foreground font-mono">
-                        {isGraded && sub.gradedAt ? `Dinilai: ${new Date(sub.gradedAt).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })}` : 'Tersimpan di Cloud'}
-                      </span>
-                      <a href={`/pembelajaran/${sub.lessonSlug}#tab-lkpd`} class="text-primary font-semibold hover:underline flex items-center gap-1">
-                        <span>Buka Lembar Kerja</span> →
-                      </a>
-                    </div>
-                  </div>
-                );
-              })}
+                <!-- Kuis Tab -->
+                <div id="tab-kuis" class="tab-content hidden space-y-4 animate-in fade-in slide-in-from-bottom-2 duration-300">
+                  {subKuis.length === 0 ? (
+                    <div class="text-center py-10 text-muted-foreground text-sm font-medium bg-background/30 rounded-2xl border border-dashed border-white/10">Belum ada data Kuis Checkpoint.</div>
+                  ) : subKuis.map((sub: any) => {
+                    const isGraded = sub.teacherScore !== null && sub.teacherScore !== undefined;
+                    const matchedMod = allModules.find(m => m.slug === sub.lessonSlug);
+                    const title = matchedMod?.data.title || sub.lessonSlug;
+                    return (
+                      <div class="p-4 rounded-2xl bg-background border border-white/5 hover:border-primary/30 transition-all space-y-3 shadow-sm">
+                        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-white/5 pb-3">
+                          <div class="space-y-1">
+                            <span class="text-sm font-bold text-foreground">{title}</span>
+                            <div class="text-[10px] text-muted-foreground font-mono">Diserahkan: {new Date(sub.submittedAt).toLocaleDateString('id-ID')}</div>
+                          </div>
+                          <div class="flex items-center gap-2">
+                            {isGraded ? (
+                              <div class="flex items-center gap-2">
+                                <span class="px-2.5 py-1 rounded bg-amber-500/15 text-amber-500 font-mono text-xs font-black border border-amber-500/30">⭐ {sub.teacherScore}/100</span>
+                              </div>
+                            ) : (
+                              <span class="px-2.5 py-1 rounded bg-secondary text-muted-foreground font-mono text-[10px] font-bold border border-white/5">⏳ MENUNGGU</span>
+                            )}
+                          </div>
+                        </div>
+                        <div class="text-right pt-1">
+                          <a href={`/pembelajaran/${sub.lessonSlug}`} class="text-[11px] font-bold text-primary hover:underline">Lihat Detail →</a>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
             </div>
           </div>
         )}
 
-        <!-- Learning Modules List -->
-        <div class="p-5 rounded-xl bg-card border border-border space-y-5 shadow-sm">
-          <div class="flex items-center justify-between">
-            <div class="space-y-0.5">
-              <h2 class="text-base font-bold text-foreground flex items-center gap-2">
-                <span>📚 Modul Pembelajaran PPLG</span>
-              </h2>
-              <p class="text-xs text-muted-foreground">Pilih materi yang ingin Anda pelajari atau lanjutkan.</p>
-            </div>
-            <a href="/pembelajaran" class="text-xs font-semibold text-primary hover:underline">
-              Lihat Semua Modul →
+        <!-- Resume Learning (Compact) -->
+        <div class="space-y-4">
+          <div class="flex items-center justify-between px-1">
+            <h2 class="text-lg font-black text-foreground">Lanjutkan Belajar</h2>
+            <a href="/pembelajaran" class="text-sm font-bold text-primary hover:text-primary/80 transition-colors inline-flex items-center gap-1">
+              Katalog Lengkap <span>→</span>
             </a>
           </div>
 
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-3.5">
-            {allModules.length > 0 ? (
-              allModules.map((mod: any) => {
-                const isCompleted = completedLessons.some(c => c.lessonSlug === mod.slug);
-                return (
-                  <a 
-                    href={`/pembelajaran/${mod.slug}`} 
-                    class="p-4 rounded-lg bg-background border border-border hover:border-primary/40 hover:bg-accent/30 transition-all flex flex-col justify-between gap-3 group"
-                  >
-                    <div class="space-y-1.5">
-                      <div class="flex items-center justify-between">
-                        <span class="text-[10px] font-mono px-2 py-0.5 rounded bg-secondary text-muted-foreground border border-border">
-                          {mod.data.category || 'Materi PPLG'}
-                        </span>
-                        {isCompleted ? (
-                          <span class="text-[10px] font-semibold text-emerald-600 dark:text-emerald-400 flex items-center gap-1">
-                            <span>✓</span> Selesai
-                          </span>
-                        ) : (
-                          <span class="text-[10px] text-muted-foreground font-mono">+10 XP</span>
-                        )}
-                      </div>
-                      <h3 class="text-xs font-bold text-foreground group-hover:text-primary transition-colors line-clamp-1">
-                        {mod.data.title}
-                      </h3>
-                      <p class="text-xs text-muted-foreground line-clamp-2">
-                        {mod.data.description}
-                      </p>
-                    </div>
-
-                    <div class="text-[11px] font-medium text-primary flex items-center gap-1 pt-1">
-                      <span>{isCompleted ? 'Pelajari Ulang' : 'Buka Materi'}</span>
-                      <span class="group-hover:translate-x-0.5 transition-transform">→</span>
-                    </div>
-                  </a>
-                );
-              })
-            ) : (
-              <div class="col-span-2 p-6 rounded-lg bg-background text-center text-xs text-muted-foreground">
-                Katalog materi siap diakses di menu Pembelajaran.
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            {resumeModules.length > 0 ? resumeModules.map((mod: any) => (
+              <a href={`/pembelajaran/${mod.slug}`} class="group p-5 rounded-2xl bg-card border border-white/5 shadow-lg hover:shadow-xl hover:border-primary/30 transition-all flex flex-col justify-between h-full gap-6">
+                <div class="space-y-3">
+                  <span class="inline-block px-2.5 py-1 rounded-md bg-secondary text-muted-foreground border border-white/5 text-[10px] font-mono font-bold uppercase tracking-wider">
+                    {mod.data.category || 'Materi'}
+                  </span>
+                  <h3 class="text-base font-bold text-foreground group-hover:text-primary transition-colors leading-snug">
+                    {mod.data.title}
+                  </h3>
+                </div>
+                <div class="flex items-center justify-between border-t border-white/5 pt-4">
+                  <span class="text-xs font-mono font-bold text-amber-500">✨ +10 XP</span>
+                  <span class="text-xs font-bold text-primary group-hover:translate-x-1 transition-transform">Lanjutkan →</span>
+                </div>
+              </a>
+            )) : (
+              <div class="col-span-1 sm:col-span-2 p-6 rounded-2xl bg-card border border-white/5 text-center shadow-sm">
+                <p class="text-sm font-bold text-foreground">🎉 Luar Biasa!</p>
+                <p class="text-xs text-muted-foreground mt-1">Anda telah menyelesaikan semua materi yang tersedia.</p>
               </div>
             )}
           </div>
@@ -440,102 +472,110 @@ const isTeacherOrAdmin = canAccessAdminPanel(dbUser.role);
 
       </div>
 
-      <!-- RIGHT 1 COL: Leaderboard & Recent Exams -->
-      <div class="space-y-6">
-        
-        <!-- Top Leaderboard Preview -->
-        <div class="p-5 rounded-xl bg-card border border-border space-y-4 shadow-sm">
-          <div class="flex items-center justify-between">
-            <div class="flex items-center gap-2">
-              <span class="text-base">🏆</span>
-              <h2 class="text-sm font-bold text-foreground">Papan Peringkat</h2>
+      <!-- RIGHT (Leaderboard & TKA CTA) -->
+      <div class="space-y-6 lg:space-y-8">
+
+        <!-- TKA Banner (Elevated) -->
+        <a href="/pembelajaran/tka-pplg" class="group block p-6 rounded-3xl bg-gradient-to-br from-cyan-900/40 to-blue-900/20 border border-cyan-500/20 shadow-xl hover:shadow-cyan-500/10 transition-all hover:-translate-y-1 relative overflow-hidden">
+          <div class="absolute -right-6 -top-6 text-7xl opacity-10 group-hover:opacity-20 group-hover:rotate-12 transition-all">🎯</div>
+          <div class="relative z-10 space-y-4">
+            <span class="inline-block px-3 py-1 rounded-lg bg-cyan-500/20 text-cyan-300 text-[10px] font-mono font-black uppercase tracking-widest border border-cyan-500/30">
+              Ujian Kejuruan
+            </span>
+            <h3 class="text-xl font-black text-white leading-tight">Drilling Simulator TKA PPLG</h3>
+            <p class="text-xs text-cyan-100/70 font-medium">Ukur kesiapanmu dengan CBT standar industri. Real-time scoring.</p>
+            <div class="pt-2">
+              <span class="inline-flex items-center justify-center bg-cyan-500 text-black font-bold text-xs px-4 py-2 rounded-xl group-hover:bg-cyan-400 transition-colors">
+                Mulai Ujian Sekarang →
+              </span>
             </div>
-            <a href="/dashboard/leaderboard" class="text-xs font-semibold text-primary hover:underline">
+          </div>
+        </a>
+
+        <!-- Leaderboard -->
+        <div class="p-6 rounded-3xl bg-card border border-white/5 shadow-xl">
+          <div class="flex items-center justify-between mb-6">
+            <h2 class="text-base font-black text-foreground flex items-center gap-2">
+              <span class="text-xl">🏆</span> Peringkat
+            </h2>
+            <a href="/dashboard/leaderboard" class="text-xs font-bold text-primary hover:text-primary/80 transition-colors">
               Semua →
             </a>
           </div>
 
-          <div class="space-y-2">
+          <div class="space-y-3">
             {topUsers.length === 0 ? (
-              <p class="text-xs text-muted-foreground text-center py-4">Belum ada data peringkat.</p>
+              <p class="text-xs text-center text-muted-foreground py-4 bg-background/50 rounded-xl">Belum ada data peringkat.</p>
             ) : (
-              topUsers.map((top, idx) => (
-                <div class:list={[
-                  "flex items-center justify-between p-2.5 rounded-lg border text-xs transition-colors",
-                  idx === 0 
-                    ? "bg-amber-500/10 border-amber-500/25 text-foreground" 
-                    : "bg-background border-border hover:bg-accent/40"
-                ]}>
-                  <div class="flex items-center gap-2.5 min-w-0">
-                    <span class:list={[
-                      "w-5 h-5 rounded-full flex items-center justify-center font-bold font-mono text-[10px] flex-shrink-0",
-                      idx === 0 ? "bg-amber-500 text-black font-bold" :
-                      idx === 1 ? "bg-slate-300 text-black" :
-                      idx === 2 ? "bg-amber-700 text-white" :
-                      "bg-secondary text-muted-foreground"
-                    ]}>
-                      {idx + 1}
-                    </span>
-                    <div class="min-w-0">
-                      <span class="text-xs font-medium text-foreground truncate block">{top.name}</span>
-                      <div class="flex items-center gap-1.5 flex-wrap">
-                        <span class="text-[10px] text-muted-foreground font-mono">Lvl {top.level}</span>
-                        {top.studentClass && (
-                          <span class="text-[9px] px-1.5 py-0.2 rounded bg-secondary text-muted-foreground font-mono">
-                            {top.studentClass}
-                          </span>
-                        )}
+              topUsers.map((top, idx) => {
+                let badgeClass = "bg-secondary text-muted-foreground border-border";
+                if (idx === 0) badgeClass = "bg-gradient-to-br from-yellow-300 to-amber-500 text-black border-yellow-200 shadow-md shadow-amber-500/20"; // Gold
+                else if (idx === 1) badgeClass = "bg-gradient-to-br from-slate-200 to-slate-400 text-black border-slate-300 shadow-md shadow-slate-400/20"; // Silver
+                else if (idx === 2) badgeClass = "bg-gradient-to-br from-orange-300 to-orange-600 text-white border-orange-400 shadow-md shadow-orange-500/20"; // Bronze
+
+                return (
+                  <div class="flex items-center justify-between p-3 rounded-2xl bg-background border border-white/5 hover:border-white/10 hover:bg-white/[0.02] transition-colors">
+                    <div class="flex items-center gap-3 min-w-0">
+                      <div class={`w-8 h-8 rounded-xl flex items-center justify-center font-black font-mono text-xs border ${badgeClass} flex-shrink-0`}>
+                        {idx + 1}
+                      </div>
+                      <div class="min-w-0 pr-2">
+                        <div class="text-sm font-bold text-foreground truncate">{top.name}</div>
+                        <div class="flex items-center gap-2 mt-0.5">
+                          <span class="text-[10px] text-muted-foreground font-mono font-medium">Lvl {top.level}</span>
+                          {top.studentClass && <span class="text-[9px] px-1.5 py-0.5 rounded-md bg-secondary/50 text-muted-foreground font-mono">{top.studentClass}</span>}
+                        </div>
                       </div>
                     </div>
+                    <div class="font-mono text-xs font-black text-amber-500 flex-shrink-0 bg-amber-500/10 px-2 py-1 rounded-lg border border-amber-500/20">
+                      {top.xp} <span class="text-[9px] text-amber-500/70">XP</span>
+                    </div>
                   </div>
-                  <span class="font-mono text-xs font-semibold text-amber-600 dark:text-amber-400 flex-shrink-0">{top.xp} XP</span>
-                </div>
-              ))
+                )
+              })
             )}
           </div>
         </div>
 
-        <!-- Recent Exam History -->
-        <div class="p-5 rounded-xl bg-card border border-border space-y-4 shadow-sm">
-          <div class="flex items-center justify-between">
-            <div class="flex items-center gap-2">
-              <span class="text-base">📊</span>
-              <h2 class="text-sm font-bold text-foreground">Riwayat Ujian</h2>
-            </div>
-            <a href="/dashboard/riwayat" class="text-xs font-semibold text-primary hover:underline">
-              Detail →
-            </a>
-          </div>
-
-          {examHistory.length === 0 ? (
-            <div class="p-5 rounded-lg bg-background text-center text-xs text-muted-foreground space-y-1.5">
-              <p>Belum ada riwayat pengerjaan ujian.</p>
-              <a href="/pembelajaran/tka-pplg" class="text-primary font-medium hover:underline block text-xs">
-                Mulai Drilling TKA Pertama →
-              </a>
-            </div>
-          ) : (
-            <div class="space-y-2">
-              {examHistory.map((attempt) => (
-                <div class="p-2.5 rounded-lg bg-background border border-border flex items-center justify-between text-xs">
-                  <div>
-                    <span class="font-semibold text-foreground">Skor: {attempt.score}/100</span>
-                    <span class="text-[10px] text-muted-foreground block font-mono">
-                      Benar {attempt.correctAnswers}/{attempt.totalQuestions} soal
-                    </span>
-                  </div>
-                  <span class="px-2 py-0.5 rounded bg-amber-500/10 border border-amber-500/20 text-amber-600 dark:text-amber-400 font-mono font-semibold text-[11px]">
-                    +{attempt.xpEarned} XP
-                  </span>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-
       </div>
-
     </div>
-
   </div>
 </DashboardLayout>
+
+<!-- Client Script for Tabs -->
+<script is:inline>
+  document.addEventListener('DOMContentLoaded', () => {
+    const btns = document.querySelectorAll('.tab-btn');
+    const contents = document.querySelectorAll('.tab-content');
+
+    btns.forEach(btn => {
+      btn.addEventListener('click', () => {
+        // Reset all buttons
+        btns.forEach(b => {
+          b.classList.remove('text-foreground', 'bg-secondary/80', 'shadow-sm');
+          b.classList.add('text-muted-foreground');
+        });
+        
+        // Active button
+        btn.classList.remove('text-muted-foreground');
+        btn.classList.add('text-foreground', 'bg-secondary/80', 'shadow-sm');
+
+        // Hide all contents
+        contents.forEach(c => {
+          c.classList.remove('block');
+          c.classList.add('hidden');
+        });
+
+        // Show target content
+        const targetId = `tab-${btn.getAttribute('data-target')}`;
+        document.getElementById(targetId)?.classList.remove('hidden');
+        document.getElementById(targetId)?.classList.add('block');
+      });
+    });
+  });
+</script>
+
+<!-- Helper component function defined in frontmatter scope is messy in astro if we render UI, so we just use a small reusable pattern below -->
+---
+{/* Helper Render Function - Since Astro doesn't support inline UI functions easily, we do it in a map. I already inlined it inside the maps using a standalone render block if needed, but Astro JSX handles map smoothly. */}
+{/* Oh wait, I didn't define renderSubmissionCard. I will replace it with inline map for simplicity or a local component. Let me fix the map below. */}
