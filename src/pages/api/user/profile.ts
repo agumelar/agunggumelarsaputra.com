@@ -19,7 +19,7 @@ export const POST: APIRoute = async ({ request, cookies }) => {
 
   try {
     const body = await request.json();
-    const { name, studentClass, currentPassword, newPassword } = body;
+    const { name, studentClass, avatarUrl, currentPassword, newPassword } = body;
 
     // Validate name
     if (!name || typeof name !== 'string' || name.trim().length < 2) {
@@ -73,6 +73,9 @@ export const POST: APIRoute = async ({ request, cookies }) => {
       studentClass: cleanClass,
       role: currentRole,
     };
+    if (avatarUrl && typeof avatarUrl === 'string' && avatarUrl.startsWith('data:image/')) {
+      updateData.avatarUrl = avatarUrl;
+    }
     if (passwordHashToUpdate) {
       updateData.passwordHash = passwordHashToUpdate;
     }

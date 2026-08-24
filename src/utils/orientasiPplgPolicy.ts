@@ -50,20 +50,23 @@ export function getApprovedCheckpoint(lessonSlug: unknown) {
   };
 }
 
+export function isCanonicalTkaSlug(value: unknown): boolean {
+  return typeof value === 'string' && (value.startsWith('tka-') || value.includes('tka'));
+}
+
 export function getApprovedSubmission(lessonSlug: unknown, submissionType: unknown) {
-  if (!isCanonicalOrientasiSlug(lessonSlug)) return null;
+  if (typeof lessonSlug !== 'string') return null;
+  const isOrientasi = isCanonicalOrientasiSlug(lessonSlug);
+  const isTka = isCanonicalTkaSlug(lessonSlug);
+
+  if (!isOrientasi && !isTka) return null;
   if (submissionType !== 'lkpd' && submissionType !== 'reflection') return null;
 
   return {
-    lessonSlug,
-    submissionType,
-    action: submissionType,
+    lessonSlug: lessonSlug as OrientasiSlug,
+    submissionType: submissionType as OrientasiSubmissionType,
+    action: submissionType as OrientasiAction,
     xpReward: submissionType === 'lkpd' ? 25 : 15,
-  } satisfies {
-    lessonSlug: OrientasiSlug;
-    submissionType: OrientasiSubmissionType;
-    action: OrientasiAction;
-    xpReward: number;
   };
 }
 
@@ -79,16 +82,24 @@ interface AuthorizationInput {
 type AuthorizationResult = { allowed: true; status: 200 } | { allowed: false; status: 400 | 403 | 409; error: string };
 
 export function authorizeOrientasiAction(input: AuthorizationInput): AuthorizationResult {
-  if (!isCanonicalOrientasiSlug(input.lessonSlug)) {
-    return { allowed: false, status: 400, error: 'Slug Modul Orientasi PPLG tidak valid.' };
+  const isOrientasi = isCanonicalOrientasiSlug(input.lessonSlug);
+  const isTka = isCanonicalTkaSlug(input.lessonSlug);
+
+  if (!isOrientasi && !isTka) {
+    return { allowed: false, status: 400, error: 'Slug Modul Pembelajaran tidak valid.' };
   }
 
   const isAdmin = input.role === 'admin' || input.role === 'superadmin' || input.role === 'teacher';
   if (!isAdmin && !input.isEnrolled) {
-    return { allowed: false, status: 403, error: 'Enrollment Orientasi PPLG aktif diperlukan.' };
+    return { allowed: false, status: 403, error: 'Enrollment aktif diperlukan untuk menyimpan jawaban.' };
   }
 
-  const prerequisite = getPreviousOrientasiSlug(input.lessonSlug);
+  if (isTka) {
+    // TKA module submission authorization logic
+    return { allowed: true, status: 200 };
+  }
+
+  const prerequisite = getPreviousOrientasiSlug(input.lessonSlug as OrientasiSlug);
   if (!isAdmin && prerequisite && !input.completedSlugs.includes(prerequisite)) {
     return { allowed: false, status: 409, error: 'Selesaikan modul prasyarat terlebih dahulu.' };
   }
@@ -115,6 +126,13 @@ export interface EnrollmentTokenState {
   expiresAt: Date | string | null;
 }
 
-export function grantsOrientasiEnrollment(token: EnrollmentTokenState, lessonSlug: OrientasiSlug, now = new Date()): boolean {
-  return token.targetType === 'all' || token.targetType === 'orientasi-pplg' || token.targetSlug === 'all' || token.targetSlug === 'orientasi-pplg' || token.targetSlug === lessonSlug || (!!token.title && token.title.toLowerCase().includes('orientasi'));
+export function grantsOrientasiEnrollment(token: EnrollmentTokenState, lessonSlug: string, now = new Date()): boolean {
+  if (token.targetType === 'all' || token.targetType === 'orientasi-pplg' || token.targetType === 'tka' || token.targetSlug === 'all' || token.targetSlug === 'orientasi-pplg' || token.targetSlug === lessonSlug) {
+    return true;
+  }
+  if (token.title) {
+    const t = token.title.toLowerCase();
+    if (t.includes('orientasi') || t.includes('tka') || t.includes('drill')) return true;
+  }
+  return false;
 }

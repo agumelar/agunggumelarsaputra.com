@@ -99,10 +99,14 @@
         return true;
       }
 
-      // Input di luar LKPD/refleksi tetap bebas, misalnya login atau pencarian.
+      // Input di luar LKPD/refleksi/literasi tetap bebas, misalnya login atau pencarian.
       const isLearningTask = el.closest('#form-lkpd-p1') ||
                              el.closest('#form-general-lkpd') ||
                              el.closest('#form-reflection') ||
+                             el.closest('#form-resensi') ||
+                             el.closest('#reflection-form-card') ||
+                             el.closest('#panel-refleksi') ||
+                             el.closest('#tab-panel-form') ||
                              el.closest('.lkpd-form-content') ||
                              el.closest('[data-no-paste="true"]') ||
                              el.closest('#tab-content-lkpd') ||

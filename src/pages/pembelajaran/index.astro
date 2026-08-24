@@ -154,6 +154,50 @@ const sortedModules = modules.sort((a, b) => a.data.order - b.data.order);
             </div>
           </a>
 
+          <!-- COURSE CARD: RABU LITERASI ASIK (RESIK) -->
+          <a href="/pembelajaran/literasi-resik" class="group relative flex flex-col justify-between bg-card rounded-3xl border border-white/5 hover:border-emerald-500/30 overflow-hidden shadow-lg hover:shadow-2xl hover:shadow-emerald-900/20 transition-all duration-300 hover:-translate-y-1.5 cursor-pointer md:col-span-2 lg:col-span-1">
+            <div class="absolute inset-0 bg-gradient-to-br from-emerald-500/5 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
+            
+            <div class="p-8 space-y-6 relative z-10">
+              <div class="flex flex-wrap items-center gap-2">
+                <span class="px-2.5 py-1 rounded-md bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 text-[10px] font-mono font-bold uppercase tracking-wider">
+                  Pembiasaan Mingguan
+                </span>
+                <span class="px-2.5 py-1 rounded-md bg-secondary text-foreground border border-border text-[10px] font-mono font-semibold">
+                  Program RESIK
+                </span>
+              </div>
+
+              <div>
+                <h3 class="text-2xl font-bold text-foreground group-hover:text-emerald-400 transition-colors mb-3">
+                  Rabu Literasi ASIK (RESIK)
+                </h3>
+                <p class="text-sm text-muted-foreground leading-relaxed line-clamp-2">
+                  Laporan resensi buku mingguan, evaluasi rubrik 9 aspek, peer review antarteman sekelas, dan cetak dokumen resmi resensi.
+                </p>
+              </div>
+
+              <div class="p-4 rounded-xl bg-secondary/30 border border-white/5 flex items-center justify-between">
+                <div>
+                  <span class="text-[10px] font-mono text-muted-foreground block mb-1">FREKUENSI</span>
+                  <span class="text-xs font-bold text-foreground">1 Minggu Sekali (Hari Rabu)</span>
+                </div>
+                <div class="text-right">
+                  <span class="text-[10px] font-mono text-muted-foreground block mb-1">REWARD</span>
+                  <span class="text-xs font-bold text-emerald-400 font-mono">✨ +30 XP / Resensi</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="px-8 py-5 border-t border-white/5 bg-secondary/10 flex items-center justify-between transition-colors group-hover:bg-emerald-500/5 relative z-10">
+              <span class="text-xs font-medium text-muted-foreground">Unduh PDF & CSV Rekap</span>
+              <span class="text-sm font-semibold text-emerald-400 group-hover:translate-x-1 transition-transform flex items-center gap-1">
+                Buka Portal RESIK 
+                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+              </span>
+            </div>
+          </a>
+
         </div>
 
         <!-- PENGAYAAN -->
@@ -191,67 +235,187 @@ const sortedModules = modules.sort((a, b) => a.data.order - b.data.order);
   </DashboardLayout>
 ) : (
   <BaseLayout 
-    title="Learning Hub & Modul RPL" 
-    description="Pusat modul pembelajaran interaktif Rekayasa Perangkat Lunak (RPL) SMKN 1 Rongga oleh Agung Gumelar Saputra."
+    title="Katalog Pembelajaran PPLG" 
+    description="Pusat modul pembelajaran interaktif Rekayasa Perangkat Lunak (RPL) SMKN 1 Rongga oleh Agung Gumelar Saputra, S.Tr.T."
   >
-    <!-- Non-logged in view, using similar elegant styling -->
-    <section class="py-16 md:py-24 relative overflow-hidden">
-      <div class="absolute inset-0 bg-gradient-to-b from-blue-900/10 to-background z-0"></div>
-      <div class="container-main relative z-10 text-center space-y-6">
-        <div class="inline-flex items-center justify-center gap-2 px-3 py-1 rounded-full bg-primary/10 text-primary border border-primary/20 text-xs font-mono font-semibold mx-auto">
-          📚 Learning Hub RPL
+    <!-- Public Hero Section (Dark Slate & Glow Accents) -->
+    <section class="relative pt-12 pb-16 overflow-hidden border-b border-border bg-gradient-to-b from-card via-background to-background">
+      <div class="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-cyan-900/20 via-transparent to-transparent pointer-events-none"></div>
+      
+      <div class="container-main relative z-10 space-y-6 text-center max-w-3xl mx-auto">
+        <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 text-xs font-mono font-semibold shadow-sm">
+          <span class="w-2 h-2 rounded-full bg-cyan-500 animate-pulse"></span>
+          <span>KATALOG PEMBELAJARAN PPLG & REKAYASA PERANGKAT LUNAK</span>
         </div>
-        <h1 class="text-4xl md:text-6xl font-black text-foreground tracking-tight leading-tight">
-          Platform Belajar <span class="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-emerald-400">PPLG Modern</span>
+
+        <h1 class="text-3xl sm:text-5xl font-extrabold text-foreground tracking-tight leading-tight">
+          Platform Belajar <span class="bg-clip-text text-transparent bg-gradient-to-r from-cyan-400 via-emerald-400 to-teal-300">PPLG & Software Engineer</span>
         </h1>
-        <p class="text-base md:text-lg text-muted-foreground max-w-2xl mx-auto leading-relaxed">
-          Akses 100+ materi, studi kasus, dan simulasi CBT dalam satu platform gamifikasi interaktif yang dirancang khusus untuk siswa RPL.
+
+        <p class="text-sm sm:text-base text-muted-foreground leading-relaxed">
+          Jelajahi silabus materi interaktif, 16 pertemuan Orientasi PPLG, 10 simulasi CBT Drilling TKA, dan ekosistem gamifikasi XP khusus siswa Rekayasa Perangkat Lunak SMKN 1 Rongga.
         </p>
 
-        <div class="pt-6">
-          <a href="/login?redirect=/pembelajaran" class="inline-flex items-center justify-center gap-2 bg-primary hover:bg-primary/90 text-primary-foreground font-semibold px-8 py-4 rounded-full shadow-lg shadow-primary/25 transition-all hover:scale-105">
-            Mulai Belajar Sekarang <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
+        <!-- Quick Login / Register Prompt Card -->
+        <div class="p-4 rounded-2xl bg-card/80 border border-cyan-500/20 shadow-lg flex flex-col sm:flex-row items-center justify-between gap-4 text-left backdrop-blur-md">
+          <div class="space-y-0.5">
+            <div class="text-xs font-bold text-foreground flex items-center gap-1.5">
+              <span>🔑</span>
+              <span>Akses Penuh Modul & Gamifikasi XP</span>
+            </div>
+            <p class="text-[11px] text-muted-foreground">Pilih modul di bawah ini untuk memulai. Saat mengklik modul, kamu akan diarahkan untuk masuk/daftar akun siswa.</p>
+          </div>
+          <a href="/login?redirect=/pembelajaran" class="btn btn-sm bg-gradient-to-r from-cyan-600 to-emerald-500 hover:from-cyan-500 hover:to-emerald-400 text-white font-bold text-xs px-5 py-2.5 rounded-xl border-0 shadow-md flex-shrink-0">
+            Masuk Portal Siswa →
           </a>
         </div>
       </div>
     </section>
 
-    <!-- Public Preview of Courses -->
-    <section class="py-12 bg-card border-t border-white/5">
-      <div class="container-main">
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          <!-- Public Orientasi Card -->
-          <div class="bg-background rounded-3xl border border-white/5 p-8 md:p-10 shadow-lg">
-            <span class="px-3 py-1 rounded-lg bg-blue-500/10 text-blue-400 border border-blue-500/20 text-xs font-mono font-bold uppercase mb-6 inline-block">
-              Kelas 10 RPL
+    <!-- Public Course Catalog Grid Section -->
+    <section class="py-14 bg-background">
+      <div class="container-main space-y-10">
+        
+        <!-- Header & Category Stats Bar -->
+        <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-border/60 pb-5">
+          <div>
+            <span class="px-2.5 py-0.5 rounded text-[10px] bg-secondary text-foreground font-mono font-semibold border border-border">
+              PROGRAM & MATA PELAJARAN
             </span>
-            <h2 class="text-2xl md:text-3xl font-extrabold text-foreground mb-4">
-              Orientasi PPLG & Skill Passport
+            <h2 class="text-2xl sm:text-3xl font-extrabold text-foreground mt-1">
+              Katalog Silabus & Modul Pembelajaran
             </h2>
-            <p class="text-sm md:text-base text-muted-foreground leading-relaxed mb-8">
-              Rencana pembelajaran 16 pertemuan mencakup wawasan 8 profesi kunci industri, ekosistem software house, jenjang karier, dan review produk digital berdasarkan BSKAP No. 046/H/KR/2025.
-            </p>
-            <a href="/pembelajaran/orientasi-pplg" class="inline-flex items-center text-sm font-semibold text-primary hover:text-primary/80">
-              Lihat Silabus Lengkap <svg class="w-4 h-4 ml-1" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
-            </a>
           </div>
 
-          <!-- Public TKA Card -->
-          <div class="bg-background rounded-3xl border border-white/5 p-8 md:p-10 shadow-lg">
-            <span class="px-3 py-1 rounded-lg bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 text-xs font-mono font-bold uppercase mb-6 inline-block">
-              Tryout CBT
-            </span>
-            <h2 class="text-2xl md:text-3xl font-extrabold text-foreground mb-4">
-              Drilling TKA PPLG Simulator
-            </h2>
-            <p class="text-sm md:text-base text-muted-foreground leading-relaxed mb-8">
-              Simulasi ujian kejuruan interaktif dengan sistem waktu untuk mengukur pemahaman teori, logika pemrograman, dan kesiapan uji sertifikasi industri.
-            </p>
-            <a href="/pembelajaran/tka-pplg" class="inline-flex items-center text-sm font-semibold text-cyan-500 hover:text-cyan-400">
-              Coba Simulator <svg class="w-4 h-4 ml-1" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
-            </a>
+          <div class="flex items-center gap-2 text-xs font-mono text-muted-foreground">
+            <span class="px-3 py-1 rounded-lg bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 font-bold">16 Modul Orientasi</span>
+            <span>•</span>
+            <span class="px-3 py-1 rounded-lg bg-amber-500/10 text-amber-400 border border-amber-500/20 font-bold">10 Tryout TKA</span>
           </div>
         </div>
+
+        <!-- 2 Main Course Highlight Cards -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          
+          <!-- MAIN CARD 1: ORIENTASI PPLG -->
+          <div class="card p-8 rounded-3xl border border-blue-500/30 bg-gradient-to-br from-card via-card to-blue-950/20 shadow-xl space-y-6 relative overflow-hidden group hover:border-blue-500/60 transition-all">
+            <div class="space-y-4">
+              <div class="flex items-center justify-between">
+                <span class="px-3 py-1 rounded-lg bg-blue-500/10 text-blue-400 border border-blue-500/20 text-xs font-mono font-bold uppercase tracking-wider">
+                  MATA PELAJARAN UTAMA • FASE E (KELAS 10)
+                </span>
+                <span class="text-xs font-mono text-emerald-400 font-bold">✨ +120 XP</span>
+              </div>
+              <h3 class="text-2xl sm:text-3xl font-extrabold text-foreground group-hover:text-blue-400 transition-colors">
+                Orientasi PPLG & Skill Passport
+              </h3>
+              <p class="text-xs sm:text-sm text-muted-foreground leading-relaxed">
+                Fondasi wawasan industri perangkat lunak, 8 profesi kunci PPLG, ekosistem software house vs startup, review produk digital, dan jejak kompetensi Skill Passport (Level 0-4).
+              </p>
+            </div>
+
+            <div class="grid grid-cols-2 gap-3 pt-2">
+              <div class="p-3.5 rounded-xl bg-secondary/40 border border-border/60">
+                <span class="text-[10px] font-mono text-muted-foreground block mb-0.5">ESTIMASI MATERI</span>
+                <span class="text-xs font-bold text-foreground">16 Pertemuan</span>
+              </div>
+              <div class="p-3.5 rounded-xl bg-secondary/40 border border-border/60">
+                <span class="text-[10px] font-mono text-muted-foreground block mb-0.5">STANDAR ASESMEN</span>
+                <span class="text-xs font-bold text-foreground">Rubrik KKTP Level 0-4</span>
+              </div>
+            </div>
+
+            <div class="pt-4 border-t border-border/60 flex items-center justify-between">
+              <span class="text-xs text-muted-foreground font-mono">Pengampu: Agung Gumelar S., S.Tr.T.</span>
+              <a href="/login?redirect=/pembelajaran/orientasi-pplg" class="btn btn-sm bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs px-4 py-2 rounded-xl transition-all shadow-md">
+                Buka Silabus Modul →
+              </a>
+            </div>
+          </div>
+
+          <!-- MAIN CARD 2: DRILLING TKA PPLG -->
+          <div class="card p-8 rounded-3xl border border-amber-500/30 bg-gradient-to-br from-card via-card to-amber-950/20 shadow-xl space-y-6 relative overflow-hidden group hover:border-amber-500/60 transition-all">
+            <div class="space-y-4">
+              <div class="flex items-center justify-between">
+                <span class="px-3 py-1 rounded-lg bg-amber-500/10 text-amber-400 border border-amber-500/20 text-xs font-mono font-bold uppercase tracking-wider">
+                  TRYOUT CBT SIMULATOR • KELAS 12
+                </span>
+                <span class="text-xs font-mono text-amber-400 font-bold">🎯 600 SOAL A-E</span>
+              </div>
+              <h3 class="text-2xl sm:text-3xl font-extrabold text-foreground group-hover:text-amber-400 transition-colors">
+                Drilling TKA RPL Simulator
+              </h3>
+              <p class="text-xs sm:text-sm text-muted-foreground leading-relaxed">
+                Simulasi Ujian Tes Keahlian Akademik PPLG berbasis CBT waktu 60 menit, pengacakan otomatis opsi (A-E), dan penjelasan lengkap khas Pak Agung.
+              </p>
+            </div>
+
+            <div class="grid grid-cols-2 gap-3 pt-2">
+              <div class="p-3.5 rounded-xl bg-secondary/40 border border-border/60">
+                <span class="text-[10px] font-mono text-muted-foreground block mb-0.5">TOTAL TOPIK UJIAN</span>
+                <span class="text-xs font-bold text-foreground">10 Pertemuan</span>
+              </div>
+              <div class="p-3.5 rounded-xl bg-secondary/40 border border-border/60">
+                <span class="text-[10px] font-mono text-muted-foreground block mb-0.5">SISTEM SKOR</span>
+                <span class="text-xs font-bold text-emerald-400 font-mono">KKM 73 • Auto Score</span>
+              </div>
+            </div>
+
+            <div class="pt-4 border-t border-border/60 flex items-center justify-between">
+              <span class="text-xs text-muted-foreground font-mono">Pengacak: Fisher-Yates</span>
+              <a href="/login?redirect=/pembelajaran/tka-pplg" class="btn btn-sm bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-black font-bold text-xs px-4 py-2 rounded-xl transition-all shadow-md">
+                🎯 Mulai Simulator Ujian →
+              </a>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- 16 ORIENTASI PPLG MODULES PUBLIC LIST -->
+        <div class="space-y-5 pt-6">
+          <div class="flex items-center justify-between border-b border-border/60 pb-3">
+            <h3 class="text-xl font-bold text-foreground flex items-center gap-2">
+              <span>📖 Modul Pembelajaran Orientasi PPLG</span>
+              <span class="px-2.5 py-0.5 rounded text-xs font-mono font-semibold bg-blue-500/10 text-blue-400 border border-blue-500/20">
+                16 Pertemuan
+              </span>
+            </h3>
+            <span class="text-xs text-muted-foreground">Fase E / Kelas 10 RPL</span>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {sortedModules.map((mod) => (
+              <div class="card p-5 rounded-2xl border border-border bg-card space-y-3.5 shadow-sm hover:border-cyan-500/40 transition-all flex flex-col justify-between">
+                <div class="space-y-2.5">
+                  <div class="flex items-center justify-between text-xs font-mono">
+                    <span class="px-2 py-0.5 rounded bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 font-bold">
+                      Modul #{mod.data.order}
+                    </span>
+                    <span class="text-muted-foreground">{mod.data.duration}</span>
+                  </div>
+                  <h4 class="text-sm font-bold text-foreground leading-snug line-clamp-2">
+                    {mod.data.title}
+                  </h4>
+                  <p class="text-xs text-muted-foreground line-clamp-2 leading-relaxed">
+                    {mod.data.description}
+                  </p>
+                </div>
+
+                <div class="pt-3 border-t border-border/60 flex items-center justify-between">
+                  <span class="text-[11px] font-mono text-emerald-400 font-bold">✨ +15 XP</span>
+                  <a 
+                    href={`/login?redirect=${encodeURIComponent('/pembelajaran/' + (mod.id || mod.slug))}`}
+                    class="px-3 py-1.5 rounded-lg bg-secondary hover:bg-cyan-500/20 text-foreground hover:text-cyan-400 border border-border text-xs font-semibold transition-all flex items-center gap-1"
+                  >
+                    <span>🔒 Pelajari</span>
+                    <span>→</span>
+                  </a>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
       </div>
     </section>
   </BaseLayout>

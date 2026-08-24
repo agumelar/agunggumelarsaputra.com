@@ -107,6 +107,13 @@ const prevModule = currentIndex > 0 ? sortedSidebarModules[currentIndex - 1] : n
 const nextModule = currentIndex >= 0 && currentIndex < sortedSidebarModules.length - 1 ? sortedSidebarModules[currentIndex + 1] : null;
 
 const isCurrentModuleCompleted = completedSlugs.includes(lessonSlug);
+
+if (isCurrentModuleCompleted) {
+  hasPassedCheckpoint = true;
+  hasSubmittedLkpd = true;
+  hasSubmittedReflection = true;
+}
+
 // Modul 1 selalu terbuka. Modul N hanya terkunci jika user bukan admin dan modul N-1 belum selesai
 const isCurrentModuleLocked = isOrientasiModule && !canAccessAdminPanel(user?.role) && (!hasOrientasiEnrollment || (prevModule !== null && !completedSlugs.includes(prevModule.id || prevModule.slug)));
 
@@ -129,6 +136,11 @@ const progressPercentage = sortedSidebarModules.length > 0 ? Math.round((totalCo
         </div>
 
         <div class="flex items-center gap-3">
+          {canAccessAdminPanel(user?.role) && (
+            <span class="px-2.5 py-1 rounded-lg bg-amber-500/20 text-amber-300 font-mono text-xs font-bold border border-amber-500/40 flex items-center gap-1.5 shadow-sm">
+              👑 Akses Guru: Bypass Modul Aktif
+            </span>
+          )}
           {isCurrentModuleCompleted ? (
             <span class="px-2.5 py-1 rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 font-mono text-xs font-bold border border-emerald-500/20 flex items-center gap-1.5">
               ✅ Modul Selesai

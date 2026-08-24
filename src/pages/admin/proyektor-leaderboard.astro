@@ -1,7 +1,7 @@
 ---
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import { db, isDbConfigured, ensureDbInitialized } from '../../db';
-import { users, userGamification } from '../../db/schema';
+import { users, userGamification, enrollmentTokens } from '../../db/schema';
 import { eq, desc } from 'drizzle-orm';
 
 import { canAccessAdminPanel } from '../../utils/auth';
@@ -12,6 +12,7 @@ if (!user || !canAccessAdminPanel(user.role)) {
 }
 
 let initialStudents: any[] = [];
+let allTokensList: any[] = [];
 if (isDbConfigured()) {
   try {
     await ensureDbInitialized();
@@ -29,6 +30,14 @@ if (isDbConfigured()) {
     .where(eq(users.role, 'student'))
     .orderBy(desc(userGamification.xp))
     .limit(30);
+
+    allTokensList = await db.select({
+      id: enrollmentTokens.id,
+      token: enrollmentTokens.token,
+      title: enrollmentTokens.title,
+      targetType: enrollmentTokens.targetType,
+      targetClass: enrollmentTokens.targetClass,
+    }).from(enrollmentTokens).where(eq(enrollmentTokens.isActive, true));
   } catch (e) {
     console.error('Error fetching initial projector leaderboard:', e);
   }
@@ -64,14 +73,58 @@ if (isDbConfigured()) {
         </div>
 
         <!-- Controls -->
-        <div class="flex items-center gap-3">
+        <div class="flex flex-wrap items-center gap-3">
+          <!-- Subject Filter Pills -->
+          <div class="flex items-center gap-1 bg-[#1e293b] p-1 rounded-xl border border-white/10 text-xs font-mono" id="projector-subject-group">
+            <button type="button" data-subject="all" class="proj-subject-btn active-proj-subject px-2.5 py-1 rounded-lg font-bold bg-primary text-primary-foreground">
+              Semua
+            </button>
+            <button type="button" data-subject="orientasi-pplg" class="proj-subject-btn px-2.5 py-1 rounded-lg font-bold text-slate-400 hover:text-white">
+              Orientasi
+            </button>
+            <button type="button" data-subject="tka" class="proj-subject-btn px-2.5 py-1 rounded-lg font-bold text-slate-400 hover:text-white">
+              Drilling TKA
+            </button>
+            <button type="button" data-subject="literasi" class="proj-subject-btn px-2.5 py-1 rounded-lg font-bold text-slate-400 hover:text-white">
+              Literasi
+            </button>
+          </div>
+
           <!-- Class Filter Dropdown -->
           <div class="flex items-center gap-1.5 bg-[#1e293b] p-1.5 rounded-xl border border-white/10 text-xs font-medium">
-            <span class="text-slate-400 pl-2">Kelas:</span>
+            <span class="text-slate-400 pl-2">Filter Rombel:</span>
             <select id="class-filter" class="bg-transparent text-white font-bold pr-2 focus:outline-none cursor-pointer">
-              <option value="Semua" class="bg-[#1e293b] text-white">Semua Kelas</option>
-              <option value="10 RPL 1" class="bg-[#1e293b] text-white">10 RPL 1</option>
-              <option value="10 RPL 2" class="bg-[#1e293b] text-white">10 RPL 2</option>
+              <option value="Semua" class="bg-[#111827] text-white">🌐 Semua Siswa & Rombel (Global)</option>
+              <optgroup label="── Tingkat 10 (Fase E) ──" class="bg-[#111827] text-slate-300">
+                <option value="10 RPL 1" class="bg-[#1e293b] text-white">10 RPL 1</option>
+                <option value="10 RPL 2" class="bg-[#1e293b] text-white">10 RPL 2</option>
+                <option value="10 RPL 3" class="bg-[#1e293b] text-white">10 RPL 3</option>
+                <option value="10 RPL 4" class="bg-[#1e293b] text-white">10 RPL 4</option>
+              </optgroup>
+              <optgroup label="── Tingkat 11 (Fase F) ──" class="bg-[#111827] text-slate-300">
+                <option value="11 RPL 1" class="bg-[#1e293b] text-white">11 RPL 1</option>
+                <option value="11 RPL 2" class="bg-[#1e293b] text-white">11 RPL 2</option>
+                <option value="11 RPL 3" class="bg-[#1e293b] text-white">11 RPL 3</option>
+                <option value="11 RPL 4" class="bg-[#1e293b] text-white">11 RPL 4</option>
+              </optgroup>
+              <optgroup label="── Tingkat 12 (Fase F) ──" class="bg-[#111827] text-slate-300">
+                <option value="12 RPL 1" class="bg-[#1e293b] text-white">12 RPL 1</option>
+                <option value="12 RPL 2" class="bg-[#1e293b] text-white">12 RPL 2</option>
+                <option value="12 RPL 3" class="bg-[#1e293b] text-white">12 RPL 3</option>
+                <option value="12 RPL 4" class="bg-[#1e293b] text-white">12 RPL 4</option>
+              </optgroup>
+              <optgroup label="── Khusus Pengujian / Sandbox ──" class="bg-[#111827] text-slate-300">
+                <option value="Kelas Uji Coba" class="bg-[#1e293b] text-white">🧪 Kelas Uji Coba (Sandbox)</option>
+              </optgroup>
+              {allTokensList && allTokensList.length > 0 && (
+                <optgroup label="── Token Enrollment ──" class="bg-[#111827] text-slate-300">
+                  {allTokensList.map((t) => (
+                    <option value={t.token} class="bg-[#1e293b] text-white">
+                      🎟️ Token: {t.token} ({t.targetClass || t.title})
+                    </option>
+                  ))}
+                </optgroup>
+              )}
             </select>
           </div>
 
@@ -184,6 +237,8 @@ if (isDbConfigured()) {
       } catch (e) {}
     }
 
+    let activeSubject = 'all';
+
     async function updateProjectorBoard() {
       const classSelect = document.getElementById('class-filter') as HTMLSelectElement;
       const selectedClass = classSelect ? classSelect.value : 'Semua';
@@ -192,8 +247,12 @@ if (isDbConfigured()) {
       const lastUpdatedText = document.getElementById('last-updated-text');
 
       try {
-        const query = selectedClass !== 'Semua' ? `?class=${encodeURIComponent(selectedClass)}&limit=30` : '?limit=30';
-        const res = await fetch(`/api/leaderboard${query}`);
+        const queryParams = new URLSearchParams({
+          subject: activeSubject,
+          class: selectedClass,
+          limit: '30',
+        });
+        const res = await fetch(`/api/leaderboard?${queryParams.toString()}`);
         if (!res.ok) return;
 
         const data = await res.json();
@@ -234,14 +293,20 @@ if (isDbConfigured()) {
             card.className = `p-6 rounded-3xl border ${item.color} flex flex-col justify-between text-center relative overflow-hidden transition-all duration-500 ${item.height}`;
 
             if (s) {
+              const avatarSrc = s.avatarUrl || `https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(s.name)}`;
               card.innerHTML = `
-                <div class="space-y-1">
-                  <div class="text-3xl">${item.icon}</div>
-                  <div class="text-[11px] font-mono font-black uppercase tracking-wider opacity-80">${item.label}</div>
-                  <h2 class="text-base md:text-lg font-extrabold text-white truncate px-2 pt-1">${s.name}</h2>
-                  <span class="inline-block px-2.5 py-0.5 rounded-full bg-white/10 text-[11px] font-mono text-slate-300 font-semibold">${s.studentClass}</span>
+                <div class="space-y-2">
+                  <div class="flex items-center justify-center gap-1.5">
+                    <span class="text-2xl">${item.icon}</span>
+                    <span class="text-[10px] font-mono font-black uppercase tracking-wider opacity-90">${item.label}</span>
+                  </div>
+                  <div class="relative w-16 h-16 md:w-20 md:h-20 rounded-full overflow-hidden mx-auto border-2 border-white/30 shadow-lg bg-black/40">
+                    <img src="${avatarSrc}" alt="${s.name}" class="w-full h-full object-cover" onerror="this.src='https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(s.name)}'" />
+                  </div>
+                  <h2 class="text-base md:text-lg font-extrabold text-white truncate px-2">${s.name}</h2>
+                  <span class="inline-block px-2.5 py-0.5 rounded-full bg-white/10 text-[11px] font-mono text-cyan-300 font-bold">${s.studentClass || '10 RPL'}</span>
                 </div>
-                <div class="space-y-1 pt-3 border-t border-white/10">
+                <div class="space-y-1 pt-2 border-t border-white/10">
                   <div class="text-2xl md:text-3xl font-black font-mono text-amber-400 tracking-tight flex items-center justify-center gap-1">
                     <span>⚡</span>
                     <span>${s.xp}</span>
@@ -278,12 +343,20 @@ if (isDbConfigured()) {
             `;
           } else {
             restStudents.forEach((s: any) => {
+              const rowAvatar = s.avatarUrl || `https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(s.name)}`;
               const row = document.createElement('tr');
               row.className = 'hover:bg-white/[0.02] transition-colors';
               row.innerHTML = `
                 <td class="py-3 px-4 text-center font-mono font-bold text-slate-400">#${s.rank}</td>
-                <td class="py-3 px-4 font-bold text-white">${s.name}</td>
-                <td class="py-3 px-4 font-mono text-slate-300">${s.studentClass}</td>
+                <td class="py-3 px-4 font-bold text-white">
+                  <div class="flex items-center gap-2.5">
+                    <div class="w-7 h-7 rounded-full overflow-hidden border border-white/15 bg-black/40 flex-shrink-0">
+                      <img src="${rowAvatar}" alt="${s.name}" class="w-full h-full object-cover" onerror="this.src='https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(s.name)}'" />
+                    </div>
+                    <span class="truncate">${s.name}</span>
+                  </div>
+                </td>
+                <td class="py-3 px-4 font-mono text-cyan-300 font-semibold">${s.studentClass || '-'}</td>
                 <td class="py-3 px-4 text-center">
                   <span class="px-2 py-0.5 rounded bg-primary/20 text-primary font-mono font-bold text-[10px]">Lvl ${s.level}</span>
                 </td>
@@ -328,6 +401,21 @@ if (isDbConfigured()) {
       } else {
         document.exitFullscreen();
       }
+    });
+
+    // Subject filter listener
+    const projSubjectBtns = document.querySelectorAll('.proj-subject-btn');
+    projSubjectBtns.forEach(btn => {
+      btn.addEventListener('click', () => {
+        projSubjectBtns.forEach(b => {
+          b.classList.remove('active-proj-subject', 'bg-primary', 'text-primary-foreground');
+          b.classList.add('text-slate-400');
+        });
+        btn.classList.remove('text-slate-400');
+        btn.classList.add('active-proj-subject', 'bg-primary', 'text-primary-foreground');
+        activeSubject = btn.getAttribute('data-subject') || 'all';
+        updateProjectorBoard();
+      });
     });
 
     // Class filter listener

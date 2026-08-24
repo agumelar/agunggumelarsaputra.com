@@ -3,7 +3,7 @@ import { db } from '../db';
 import { enrollmentTokens, userEnrollments, userProgress, userSubmissions } from '../db/schema';
 import { grantsOrientasiEnrollment, type OrientasiSlug } from './orientasiPplgPolicy.ts';
 
-export async function getOrientasiServerState(userId: number, lessonSlug: OrientasiSlug) {
+export async function getOrientasiServerState(userId: number, lessonSlug: string) {
   const [progressRows, submissionRows, enrollmentRows] = await Promise.all([
     db.select({ lessonSlug: userProgress.lessonSlug })
       .from(userProgress)

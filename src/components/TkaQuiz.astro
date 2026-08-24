@@ -1,8 +1,21 @@
 ---
-import { TKA_PPLG_QUESTIONS } from '../utils/tkaEngine';
+interface Props {
+  slug?: string;
+}
+const { slug = 'tka-01-algoritma-logika' } = Astro.props;
+
+const allQuestionsFiles = import.meta.glob('/src/data/tka-questions/*.json', { eager: true });
+const targetFile = `/src/data/tka-questions/${slug}.json`;
+
+let questions = [];
+if (allQuestionsFiles[targetFile]) {
+  questions = (allQuestionsFiles[targetFile] as any).default || allQuestionsFiles[targetFile];
+}
 ---
 
 <div class="space-y-4">
+  <div id="tka-quiz-data" data-questions={JSON.stringify(questions)} data-slug={slug} class="hidden"></div>
+
   <!-- Active Token Session Indicator Banner -->
   <div id="quiz-token-banner" class="hidden p-4 rounded-xl bg-card border border-border flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-sm animate-fadeIn">
     <div class="flex items-center gap-3">
@@ -39,22 +52,18 @@ import { TKA_PPLG_QUESTIONS } from '../utils/tkaEngine';
       <div>
         <div class="flex items-center gap-2">
           <span class="px-2 py-0.5 rounded bg-secondary text-foreground text-[10px] font-mono font-semibold uppercase tracking-wider border border-border">Simulasi CBT TKA PPLG</span>
-          <span id="quiz-progress-text" class="text-xs text-muted-foreground font-mono">Soal 1 dari 6</span>
+          <span id="quiz-progress-text" class="text-xs text-muted-foreground font-mono">Soal 1 dari ...</span>
         </div>
-        <h3 id="quiz-category-title" class="text-base font-bold text-foreground mt-1">Proses Bisnis PPLG</h3>
-      </div>
-
-      <!-- Timer & Control -->
-      <div class="flex items-center gap-3">
-        <div class="px-3 py-1.5 rounded-lg bg-secondary border border-border font-mono text-xs font-bold text-amber-600 dark:text-amber-400 flex items-center gap-1.5">
-          <span>⏱️</span>
-          <span id="quiz-timer">10:00</span>
-        </div>
+        <h3 id="quiz-category-title" class="text-base font-bold text-foreground mt-1">Memuat Modul...</h3>
       </div>
     </div>
 
+    <div id="quiz-empty-state" class="hidden text-center py-8">
+      <p class="text-sm text-muted-foreground">Bank soal untuk pertemuan ini belum tersedia.</p>
+    </div>
+
     <!-- Question Box -->
-    <div id="quiz-question-box" class="space-y-4">
+    <div id="quiz-question-box" class="space-y-4 hidden">
       <div id="quiz-question-text" class="text-sm md:text-base text-foreground font-medium leading-relaxed">
         <!-- Question text rendered by JS -->
       </div>
@@ -80,7 +89,7 @@ import { TKA_PPLG_QUESTIONS } from '../utils/tkaEngine';
     </div>
 
     <!-- Navigation Buttons -->
-    <div class="flex items-center justify-between mt-6 pt-4 border-t border-border">
+    <div id="quiz-navigation" class="hidden items-center justify-between mt-6 pt-4 border-t border-border flex">
       <button id="btn-prev-question" class="btn btn-outline btn-sm text-xs font-medium rounded-lg" disabled>
         ← Soal Sebelumnya
       </button>
@@ -123,8 +132,8 @@ import { TKA_PPLG_QUESTIONS } from '../utils/tkaEngine';
       </div>
 
       <div class="flex items-center justify-center gap-3 pt-2">
-        <a href="/pembelajaran" class="btn btn-outline text-xs font-semibold px-4 py-2 rounded-lg">
-          ← Kembali ke Katalog
+        <a href="/pembelajaran/tka-pplg" class="btn btn-outline text-xs font-semibold px-4 py-2 rounded-lg">
+          ← Kembali ke Hub
         </a>
         <button id="btn-restart-quiz" class="btn btn-primary text-xs font-semibold px-4 py-2 rounded-lg">
           Ulangi Simulasi Ujian 🔄
@@ -135,14 +144,50 @@ import { TKA_PPLG_QUESTIONS } from '../utils/tkaEngine';
 </div>
 
 <script>
-  import { TKA_PPLG_QUESTIONS } from '../utils/tkaEngine';
   import { addXp, unlockBadge, getGamificationState } from '../utils/gamification';
 
+  const quizDataEl = document.getElementById('tka-quiz-data');
+  let TKA_PPLG_QUESTIONS = quizDataEl && quizDataEl.dataset.questions 
+    ? JSON.parse(quizDataEl.dataset.questions) 
+    : [];
+
+  // Algoritma Pengacakan (Fisher-Yates) untuk meminimalisir saling contek
+  function shuffleArray(array: any[]) {
+    for (let i = array.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [array[i], array[j]] = [array[j], array[i]];
+    }
+  }
+
+  if (TKA_PPLG_QUESTIONS.length > 0) {
+    // 1. Acak urutan soal
+    shuffleArray(TKA_PPLG_QUESTIONS);
+    
+    // 2. Acak urutan opsi jawaban per soal
+    TKA_PPLG_QUESTIONS.forEach((q: any) => {
+      let opts = q.options.map((text: string, i: number) => ({ text, originalIndex: i }));
+      shuffleArray(opts);
+      q.correctAnswer = opts.findIndex((o: any) => o.originalIndex === q.correctAnswer);
+      q.options = opts.map((o: any) => o.text);
+    });
+  }
+
+  const emptyState = document.getElementById('quiz-empty-state');
+  const questionBox = document.getElementById('quiz-question-box');
+  const navigation = document.getElementById('quiz-navigation');
+
   let currentIndex = 0;
-  let userAnswers: (number | null)[] = new Array(TKA_PPLG_QUESTIONS.length).fill(null);
-  let isAnswerChecked = new Array(TKA_PPLG_QUESTIONS.length).fill(false);
-  let secondsRemaining = 600; // 10 minutes
+  let userAnswers: (number | null)[] = [];
+  let isAnswerChecked: boolean[] = [];
+  let secondsRemaining = 3600; // 60 minutes
   let timerInterval: any = null;
+
+  if (TKA_PPLG_QUESTIONS.length > 0) {
+    userAnswers = new Array(TKA_PPLG_QUESTIONS.length).fill(null);
+    isAnswerChecked = new Array(TKA_PPLG_QUESTIONS.length).fill(false);
+  } else {
+    if (emptyState) emptyState.classList.remove('hidden');
+  }
 
   // Active Token Detection
   const urlParams = new URLSearchParams(window.location.search);
@@ -194,7 +239,6 @@ import { TKA_PPLG_QUESTIONS } from '../utils/tkaEngine';
   const btnCheck = document.getElementById('btn-check-answer') as HTMLButtonElement;
   const btnRestart = document.getElementById('btn-restart-quiz');
 
-  const questionBox = document.getElementById('quiz-question-box');
   const resultScreen = document.getElementById('quiz-result-screen');
 
   function startTimer() {
@@ -272,15 +316,45 @@ import { TKA_PPLG_QUESTIONS } from '../utils/tkaEngine';
       });
     }
 
-    // Show/Hide Explanation
+    // Show/Hide Explanation & Personal Teacher Feedback
     if (isAnswerChecked[currentIndex] && explanationBox && explanationText && teacherNote) {
-      explanationText.textContent = q.explanation;
-      if (q.teacherNote) {
-        teacherNote.textContent = q.teacherNote;
-        teacherNote.classList.remove('hidden');
+      const userChoiceIdx = userAnswers[currentIndex];
+      const isCorrect = userChoiceIdx === q.correctAnswer;
+      const chosenText = userChoiceIdx !== null ? q.options[userChoiceIdx] : '';
+      const correctText = q.options[q.correctAnswer];
+      const chosenLetter = userChoiceIdx !== null ? String.fromCharCode(65 + userChoiceIdx) : '';
+      const correctLetter = String.fromCharCode(65 + q.correctAnswer);
+
+      if (isCorrect) {
+        explanationText.innerHTML = `
+          <div class="text-emerald-500 font-bold mb-1">✅ Jawaban kamu Tepat! (${correctLetter}: ${correctText})</div>
+          <div>${q.explanation}</div>
+        `;
+        teacherNote.innerHTML = `
+          <span class="font-bold">🗣️ Catatan Pak Agung:</span> 
+          <span>${q.teacherNote || "Luar biasa! Pemahaman konsepmu sudah sangat matang. Pertahankan daya analisis ini!"}</span>
+        `;
       } else {
-        teacherNote.classList.add('hidden');
+        explanationText.innerHTML = `
+          <div class="space-y-1.5">
+            <div class="text-destructive font-semibold">
+              ❌ Kamu memilih: <span class="font-mono font-bold">(${chosenLetter}) ${chosenText}</span>
+            </div>
+            <div class="text-emerald-600 dark:text-emerald-400 font-bold">
+              ✓ Jawaban yang benar adalah: <span class="font-mono">(${correctLetter}) ${correctText}</span>
+            </div>
+            <div class="pt-2 border-t border-border/40 text-muted-foreground">
+              ${q.explanation}
+            </div>
+          </div>
+        `;
+        teacherNote.innerHTML = `
+          <span class="font-bold">🗣️ Catatan Pak Agung:</span> 
+          <span>${q.teacherNote || `Jangan berkecil hati! Pilihan (${chosenLetter}) "${chosenText}" kurang tepat untuk kasus ini. Jawaban yang benar adalah (${correctLetter}) "${correctText}". Perhatikan baik-baik perbedaannya ya!`}</span>
+        `;
       }
+      
+      teacherNote.classList.remove('hidden');
       explanationBox.classList.remove('hidden');
     } else if (explanationBox) {
       explanationBox.classList.add('hidden');
@@ -318,12 +392,22 @@ import { TKA_PPLG_QUESTIONS } from '../utils/tkaEngine';
       currentIndex++;
       renderQuestion();
     } else {
+      const answeredCount = userAnswers.filter(a => a !== null).length;
+      const total = TKA_PPLG_QUESTIONS.length;
+
+      if (answeredCount < total) {
+        alert(`⚠️ Masih ada ${total - answeredCount} soal yang belum Anda jawab!\n\nHarap lengkapi jawaban seluruh soal sebelum menyelesaikan ujian.`);
+        return;
+      }
+
+      const confirmFinish = confirm(`📝 Seluruh ${total} soal telah Anda jawab.\n\nApakah Anda yakin 100% ingin mengumpulkan ujian sekarang dan mengunci skor Anda?`);
+      if (!confirmFinish) return;
+
       finishQuiz();
     }
   });
 
-  function finishQuiz() {
-    clearInterval(timerInterval);
+  async function finishQuiz() {
     let correctCount = 0;
     TKA_PPLG_QUESTIONS.forEach((q, idx) => {
       if (userAnswers[idx] === q.correctAnswer) {
@@ -340,17 +424,25 @@ import { TKA_PPLG_QUESTIONS } from '../utils/tkaEngine';
     addXp(score >= 80 ? 100 : 0, 'Bonus kelulusan TKA');
 
     const currentSavedTokenId = localStorage.getItem('ags_active_token_id');
+    const quizSlug = quizDataEl?.dataset.slug || '';
 
-    fetch('/api/tka/submit', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        score,
-        totalQuestions: TKA_PPLG_QUESTIONS.length,
-        correctAnswers: correctCount,
-        tokenId: currentSavedTokenId ? Number(currentSavedTokenId) : null,
-      })
-    }).catch(err => console.log('TKA Submit API Error:', err));
+    try {
+      await fetch('/api/tka/submit', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          score,
+          totalQuestions: TKA_PPLG_QUESTIONS.length,
+          correctAnswers: correctCount,
+          tokenId: currentSavedTokenId ? Number(currentSavedTokenId) : null,
+          lessonSlug: quizSlug,
+        })
+      });
+    } catch (err) {
+      console.error('TKA Submit API Error:', err);
+    }
+
+    window.dispatchEvent(new CustomEvent('checkpoint-passed'));
 
     if (questionBox) questionBox.classList.add('hidden');
     if (explanationBox) explanationBox.classList.add('hidden');
@@ -374,7 +466,6 @@ import { TKA_PPLG_QUESTIONS } from '../utils/tkaEngine';
     currentIndex = 0;
     userAnswers = new Array(TKA_PPLG_QUESTIONS.length).fill(null);
     isAnswerChecked = new Array(TKA_PPLG_QUESTIONS.length).fill(false);
-    secondsRemaining = 600;
 
     if (questionBox) questionBox.classList.remove('hidden');
     if (btnPrev) btnPrev.classList.remove('hidden');
@@ -382,11 +473,13 @@ import { TKA_PPLG_QUESTIONS } from '../utils/tkaEngine';
     if (btnCheck) btnCheck.classList.remove('hidden');
     if (resultScreen) resultScreen.classList.add('hidden');
 
-    startTimer();
     renderQuestion();
   });
 
   // Init
-  startTimer();
-  renderQuestion();
+  if (TKA_PPLG_QUESTIONS.length > 0) {
+    if (questionBox) questionBox.classList.remove('hidden');
+    if (navigation) navigation.classList.remove('hidden');
+    renderQuestion();
+  }
 </script>

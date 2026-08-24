@@ -28,4 +28,18 @@ const pembelajaran = defineCollection({
   }),
 });
 
-export const collections = { blog, pembelajaran };
+const tkaDrilling = defineCollection({
+  loader: glob({ pattern: "**/*.{md,mdx}", base: "./src/content/tka-drilling" }),
+  schema: z.object({
+    title: z.string(),
+    description: z.string(),
+    category: z.string(), // e.g. "Drilling TKA PPLG"
+    level: z.enum(['Pemula', 'Menengah', 'Lanjutan']).default('Lanjutan'),
+    order: z.number().default(1),
+    duration: z.string().default('160 min'),
+    tags: z.array(z.string()).default([]),
+    teacherTip: z.string().optional(),
+  }),
+});
+
+export const collections = { blog, pembelajaran, tkaDrilling };

@@ -9,6 +9,7 @@ const navItems = [
   { href: '/', label: 'Beranda' },
   { href: '/pembelajaran', label: 'Modul Belajar' },
   { href: '/pembelajaran/tka-pplg', label: 'Drilling TKA', highlight: true },
+  { href: '/pembelajaran/literasi-resik', label: 'Rabu Literasi' },
   { href: '/projects', label: 'Projects' },
   { href: '/blog', label: 'Blog' },
   { href: '/cv', label: 'CV Guru' },
@@ -19,11 +20,9 @@ const navItems = [
 <header class="sticky top-0 z-50 w-full border-b border-border/40 bg-background/80 backdrop-blur-md supports-[backdrop-filter]:bg-background/60">
   <div class="container-main flex h-16 items-center justify-between">
     <!-- Brand Logo -->
-    <a href="/" class="flex items-center gap-2 font-bold text-lg tracking-tight group">
-      <div class="w-9 h-9 rounded-lg bg-gradient-to-br from-blue-600 via-cyan-500 to-emerald-400 p-0.5 flex items-center justify-center shadow-md group-hover:scale-105 transition-transform">
-        <div class="w-full h-full bg-background rounded-[7px] flex items-center justify-center">
-          <span class="text-transparent bg-clip-text bg-gradient-to-r from-blue-500 to-cyan-400 font-extrabold text-sm">AGS</span>
-        </div>
+    <a href="/" class="flex items-center gap-2.5 font-bold text-lg tracking-tight group">
+      <div class="w-9 h-9 rounded-xl overflow-hidden bg-[#090d16] border border-white/15 flex items-center justify-center shadow-md group-hover:scale-105 transition-transform p-0.5 flex-shrink-0">
+        <img src="/logo-ags.png" alt="Logo AGS" class="w-full h-full object-contain rounded-lg" />
       </div>
       <div class="flex flex-col">
         <span class="leading-tight text-foreground font-semibold">Agung Gumelar</span>

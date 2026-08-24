@@ -22,8 +22,15 @@
    - **TIDAK ADA AI SLOP:** Dilarang menggunakan gradien neon ungu-cyan acak, aura blur berlebih di background, teks bergradien menyilaukan, atau glassmorphism kabur yang menurunkan keterbacaan (*readability*).
    - **Desain Bersih & Solid:** Gunakan palet warna solid bernilai kontras tinggi (Dark slate `#090d16`, `#111827`, border halus `rgba(255,255,255,0.08)`, teks terang `#f3f4f6`).
    - **Artisanal & Human Feel:** Tipografi bersih (*Inter*, *Outfit*, *JetBrains Mono*), komponen fungsional dengan micro-interaction yang halus dan bermakna.
-3. **Aturan Deployment & Pengujian:**
-   - **Langsung Deploy ke Production:** Tidak perlu menginstruksikan atau menunggu pengujian di localhost. Langsung jalankan build verification (`npm run build`) lalu deploy langsung ke production menggunakan `npx vercel --prod --yes` (atau `vercel --prod`).
+3. **Alur Kerja Interaksi & Brainstorming (ATURAN MUTLAK):**
+   - Sebelum pengguna secara eksplisit mengatakan **"proses"** atau memberikan perintah eksekusi, seluruh interaksi berstatus **BRAINSTORMING** (eksplorasi ide, diskusi arsitektur, konseptualisasi fitur, tanya-jawab kebutuhan, dan perumusan rencana kerja).
+   - Dilarang keras melakukan modifikasi kode/file secara sepihak sebelum ada instruksi *"proses"* dari pengguna.
+4. **Aturan Deployment & Sinkronisasi Git (GitHub + Vercel):**
+   - Setiap kali melakukan deployment:
+     1. Jalankan `git add .` dan `git commit` dengan pesan commit yang jelas dan deskriptif.
+     2. Lakukan `git push` ke repositori remote **GitHub**.
+     3. Jalankan verifikasi build (`npm run build`).
+     4. Jalankan deploy ke **Vercel Production** (`npx vercel --prod --yes` atau `vercel --prod`).
    - Berikan tautan production langsung (`https://agunggumelarsaputra.com`) untuk peninjauan hasil kerja.
 
 ---

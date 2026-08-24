@@ -1,5 +1,7 @@
-import { drizzle } from 'drizzle-orm/neon-http';
+import { drizzle as drizzleNeon } from 'drizzle-orm/neon-http';
+import { drizzle as drizzlePostgres } from 'drizzle-orm/postgres-js';
 import { neon } from '@neondatabase/serverless';
+import postgres from 'postgres';
 import * as schema from './schema';
 
 export function getDatabaseUrl(): string {
@@ -15,8 +17,34 @@ export function getDatabaseUrl(): string {
 }
 
 const connectionString = getDatabaseUrl();
-export const sql = connectionString ? neon(connectionString) : null;
-export const db = sql ? drizzle(sql, { schema }) : (null as any);
+
+// Detect whether connection is Neon Cloud HTTP or Universal Postgres (Supabase, Self-hosted VPS, Docker)
+const isNeonCloud = connectionString.includes('.neon.tech');
+
+let sqlClient: any = null;
+let dbClient: any = null;
+
+if (connectionString) {
+  try {
+    if (isNeonCloud) {
+      sqlClient = neon(connectionString);
+      dbClient = drizzleNeon(sqlClient, { schema });
+    } else {
+      sqlClient = postgres(connectionString, {
+        max: 10,
+        idle_timeout: 20,
+        connect_timeout: 10,
+        ssl: (connectionString.includes('sslmode=require') || connectionString.includes('ssl=true')) ? 'require' : false,
+      });
+      dbClient = drizzlePostgres(sqlClient, { schema });
+    }
+  } catch (initErr) {
+    console.error('Database client initialization error:', initErr);
+  }
+}
+
+export const sql = sqlClient;
+export const db = dbClient;
 
 let isInitialized = false;
 let initPromise: Promise<boolean> | null = null;
@@ -44,21 +72,29 @@ export async function ensureDbInitialized(): Promise<{ success: boolean; message
 
   initPromise = (async () => {
     try {
-      // 1. Users table
-      await sql`
-        CREATE TABLE IF NOT EXISTS users (
-          id SERIAL PRIMARY KEY,
-          name TEXT NOT NULL,
-          email TEXT NOT NULL UNIQUE,
-          password_hash TEXT,
-          google_id TEXT UNIQUE,
-          role TEXT NOT NULL DEFAULT 'student',
-          student_class TEXT,
-          avatar_url TEXT,
-          created_at TIMESTAMP NOT NULL DEFAULT NOW()
-        )
-      `;
+      // 1. Users table & columns
+      try {
+        await sql`
+          CREATE TABLE IF NOT EXISTS users (
+            id SERIAL PRIMARY KEY,
+            name TEXT NOT NULL,
+            email TEXT NOT NULL UNIQUE,
+            password_hash TEXT,
+            google_id TEXT UNIQUE,
+            role TEXT NOT NULL DEFAULT 'student',
+            student_class TEXT,
+            avatar_url TEXT,
+            created_at TIMESTAMP NOT NULL DEFAULT NOW()
+          )
+        `;
+      } catch (userTableErr) {
+        console.warn('Users table init notice:', userTableErr);
+      }
       try { await sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS student_class TEXT`; } catch {}
+      try { await sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS avatar_url TEXT`; } catch {}
+      try { await sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS password_hash TEXT`; } catch {}
+      try { await sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS google_id TEXT`; } catch {}
+      try { await sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS role TEXT NOT NULL DEFAULT 'student'`; } catch {}
 
       // 2. User gamification table
       await sql`
@@ -117,6 +153,8 @@ export async function ensureDbInitialized(): Promise<{ success: boolean; message
           id SERIAL PRIMARY KEY,
           user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
           token_id INTEGER REFERENCES enrollment_tokens(id) ON DELETE SET NULL,
+          lesson_slug TEXT,
+          attempt_number INTEGER NOT NULL DEFAULT 1,
           score INTEGER NOT NULL,
           total_questions INTEGER NOT NULL,
           correct_answers INTEGER NOT NULL,
@@ -125,6 +163,8 @@ export async function ensureDbInitialized(): Promise<{ success: boolean; message
         )
       `;
       try { await sql`ALTER TABLE tka_attempts ADD COLUMN IF NOT EXISTS token_id INTEGER REFERENCES enrollment_tokens(id) ON DELETE SET NULL`; } catch {}
+      try { await sql`ALTER TABLE tka_attempts ADD COLUMN IF NOT EXISTS lesson_slug TEXT`; } catch {}
+      try { await sql`ALTER TABLE tka_attempts ADD COLUMN IF NOT EXISTS attempt_number INTEGER NOT NULL DEFAULT 1`; } catch {}
 
       // 7. User submissions (LKPD & Reflection) table
       await sql`
@@ -197,6 +237,57 @@ export async function ensureDbInitialized(): Promise<{ success: boolean; message
           END IF;
         END
         $checkpoint_atomicity_migration$
+      `;
+
+      // Literasi Reports table
+      await sql`
+        CREATE TABLE IF NOT EXISTS literasi_reports (
+          id SERIAL PRIMARY KEY,
+          user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+          week_number INTEGER NOT NULL DEFAULT 1,
+          report_date TIMESTAMP NOT NULL DEFAULT NOW(),
+          book_title TEXT NOT NULL,
+          author TEXT NOT NULL,
+          publisher TEXT NOT NULL,
+          city TEXT NOT NULL,
+          year INTEGER NOT NULL,
+          page_count INTEGER NOT NULL,
+          edition TEXT,
+          summary TEXT NOT NULL,
+          moral_message TEXT NOT NULL,
+          self_checklist TEXT NOT NULL,
+          writing_score INTEGER,
+          presentation_score INTEGER,
+          final_score INTEGER,
+          teacher_feedback TEXT,
+          graded_by INTEGER REFERENCES users(id) ON DELETE SET NULL,
+          graded_at TIMESTAMP,
+          status TEXT NOT NULL DEFAULT 'submitted',
+          created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+          updated_at TIMESTAMP NOT NULL DEFAULT NOW()
+        )
+      `;
+      try { await sql`ALTER TABLE literasi_reports ADD COLUMN IF NOT EXISTS edition TEXT`; } catch {}
+      try { await sql`ALTER TABLE literasi_reports ADD COLUMN IF NOT EXISTS self_checklist TEXT NOT NULL DEFAULT '[]'`; } catch {}
+      try { await sql`ALTER TABLE literasi_reports ADD COLUMN IF NOT EXISTS writing_score INTEGER`; } catch {}
+      try { await sql`ALTER TABLE literasi_reports ADD COLUMN IF NOT EXISTS presentation_score INTEGER`; } catch {}
+      try { await sql`ALTER TABLE literasi_reports ADD COLUMN IF NOT EXISTS final_score INTEGER`; } catch {}
+      try { await sql`ALTER TABLE literasi_reports ADD COLUMN IF NOT EXISTS teacher_feedback TEXT`; } catch {}
+      try { await sql`ALTER TABLE literasi_reports ADD COLUMN IF NOT EXISTS graded_by INTEGER REFERENCES users(id) ON DELETE SET NULL`; } catch {}
+      try { await sql`ALTER TABLE literasi_reports ADD COLUMN IF NOT EXISTS graded_at TIMESTAMP`; } catch {}
+      try { await sql`ALTER TABLE literasi_reports ADD COLUMN IF NOT EXISTS status TEXT NOT NULL DEFAULT 'submitted'`; } catch {}
+      try { await sql`ALTER TABLE literasi_reports ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP NOT NULL DEFAULT NOW()`; } catch {}
+
+      // Literasi Peer Reviews table
+      await sql`
+        CREATE TABLE IF NOT EXISTS literasi_peer_reviews (
+          id SERIAL PRIMARY KEY,
+          report_id INTEGER NOT NULL REFERENCES literasi_reports(id) ON DELETE CASCADE,
+          reviewer_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+          rating INTEGER NOT NULL,
+          comment TEXT NOT NULL,
+          created_at TIMESTAMP NOT NULL DEFAULT NOW()
+        )
       `;
 
       isInitialized = true;

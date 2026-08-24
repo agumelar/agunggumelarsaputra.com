@@ -5,7 +5,10 @@ import BaseLayout from '../layouts/BaseLayout.astro';
 <BaseLayout title="Masuk Siswa" description="Halaman Login Portal Learning Hub PPLG SMKN 1 Rongga">
   <div class="min-h-[80vh] flex items-center justify-center py-12 px-4">
     <div class="card w-full max-w-md p-6 sm:p-8 border-border rounded-xl space-y-6 shadow-sm bg-card">
-      <div class="text-center space-y-1.5">
+      <div class="text-center space-y-2 flex flex-col items-center">
+        <div class="w-14 h-14 rounded-2xl overflow-hidden bg-[#090d16] border border-white/15 flex items-center justify-center p-1 shadow-lg">
+          <img src="/logo-ags.png" alt="Logo AGS" class="w-full h-full object-contain rounded-xl" />
+        </div>
         <h1 class="text-2xl sm:text-3xl font-bold text-foreground tracking-tight">Selamat Datang 👋</h1>
         <p class="text-xs sm:text-sm text-muted-foreground">Masuk untuk mengakses Student Learning Hub & Gamifikasi PPLG</p>
       </div>
@@ -72,7 +75,15 @@ import BaseLayout from '../layouts/BaseLayout.astro';
         });
         const data = await res.json();
         if (res.ok && data.success) {
-          window.location.href = '/dashboard';
+          const urlParams = new URLSearchParams(window.location.search);
+          const redirectUrl = urlParams.get('redirect');
+          if (redirectUrl) {
+            window.location.href = redirectUrl;
+          } else if (data.user && (data.user.role === 'teacher' || data.user.role === 'admin' || data.user.role === 'superadmin')) {
+            window.location.href = '/admin';
+          } else {
+            window.location.href = '/dashboard';
+          }
         } else {
           if (alert) {
             alert.className = 'p-3 rounded-lg bg-destructive/10 border border-destructive/25 text-destructive text-xs text-center font-medium block';

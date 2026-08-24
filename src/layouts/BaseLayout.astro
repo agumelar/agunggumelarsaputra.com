@@ -2,6 +2,7 @@
 import '../styles/global.css';
 import Navigation from '../components/Navigation.astro';
 import Footer from '../components/Footer.astro';
+import MandatoryProfileModal from '../components/auth/MandatoryProfileModal.astro';
 
 interface Props {
   title: string;
@@ -12,7 +13,7 @@ interface Props {
 const { 
   title, 
   description = "Website Personal & Learning Hub Agung Gumelar Saputra - Guru RPL SMKN 1 Rongga & Software Developer.",
-  image = "/favicon.svg"
+  image = "/logo-ags.png"
 } = Astro.props;
 ---
 
@@ -22,7 +23,9 @@ const {
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=1.0, user-scalable=0" />
     <meta name="theme-color" content="#090d16" />
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="icon" type="image/png" href="/favicon.png" />
+    <link rel="shortcut icon" href="/favicon.png" />
+    <link rel="apple-touch-icon" href="/logo-ags.png" />
     
     <!-- Primary Meta Tags -->
     <title>{title} | Agung Gumelar Saputra</title>
@@ -59,5 +62,6 @@ const {
       <slot />
     </main>
     <Footer />
+    <MandatoryProfileModal />
   </body>
 </html>

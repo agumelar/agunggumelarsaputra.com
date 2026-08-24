@@ -31,9 +31,20 @@ export function isSuperAdmin(role?: string | null): boolean {
   return role === 'superadmin';
 }
 
-/** Backward-compatible alias for teacher email check */
+export function getTeacherEmails(): string[] {
+  const envTeachers = process.env.TEACHER_EMAILS 
+    ? process.env.TEACHER_EMAILS.split(',').map(e => e.trim().toLowerCase()) 
+    : [];
+  return Array.from(new Set([...getSuperAdminEmails(), ...envTeachers]));
+}
+
+/** Check if an email belongs to a Teacher or Admin */
 export function isTeacherEmail(email: string): boolean {
-  return isSuperAdminEmail(email);
+  if (!email) return false;
+  const clean = email.trim().toLowerCase();
+  if (isSuperAdminEmail(clean)) return true;
+  const teacherList = getTeacherEmails();
+  return teacherList.includes(clean);
 }
 
 export interface UserSessionPayload {

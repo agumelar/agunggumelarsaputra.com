@@ -1,0 +1,1323 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import AntiCopyPasteGuardian from '../../components/modul/AntiCopyPasteGuardian.astro';
+import { db, isDbConfigured, ensureDbInitialized } from '../../db';
+import { literasiReports, literasiPeerReviews, users, userGamification } from '../../db/schema';
+import { eq, desc } from 'drizzle-orm';
+import { canAccessAdminPanel } from '../../utils/auth';
+
+const user = Astro.locals.user;
+if (!user) {
+  return Astro.redirect('/login?redirect=/pembelajaran/literasi-resik');
+}
+
+let userReports: any[] = [];
+let peerFeed: any[] = [];
+let allSubmissionsForTeacher: any[] = [];
+let userStats: any = { xp: 0, level: 1 };
+const isTeacherOrAdmin = canAccessAdminPanel(user.role);
+
+if (isDbConfigured()) {
+  try {
+    await ensureDbInitialized();
+
+    // 1. Fetch user's own reports
+    userReports = await db.select().from(literasiReports)
+      .where(eq(literasiReports.userId, user.userId))
+      .orderBy(desc(literasiReports.reportDate));
+
+    // 2. Fetch user gamification stats
+    const [stats] = await db.select().from(userGamification).where(eq(userGamification.userId, user.userId)).limit(1);
+    if (stats) userStats = stats;
+
+    // 3. Fetch peer feed (latest submissions from all students)
+    const rawFeed = await db.select({
+      id: literasiReports.id,
+      userId: literasiReports.userId,
+      studentName: users.name,
+      studentClass: users.studentClass,
+      avatarUrl: users.avatarUrl,
+      weekNumber: literasiReports.weekNumber,
+      reportDate: literasiReports.reportDate,
+      bookTitle: literasiReports.bookTitle,
+      author: literasiReports.author,
+      publisher: literasiReports.publisher,
+      summary: literasiReports.summary,
+      moralMessage: literasiReports.moralMessage,
+      finalScore: literasiReports.finalScore,
+      status: literasiReports.status,
+    }).from(literasiReports)
+      .innerJoin(users, eq(literasiReports.userId, users.id))
+      .orderBy(desc(literasiReports.reportDate))
+      .limit(20);
+
+    // Fetch peer review ratings for each feed item
+    const feedWithReviews = await Promise.all(rawFeed.map(async (item) => {
+      const reviews = await db.select({
+        rating: literasiPeerReviews.rating,
+        comment: literasiPeerReviews.comment,
+        reviewerName: users.name,
+      }).from(literasiPeerReviews)
+        .innerJoin(users, eq(literasiPeerReviews.reviewerId, users.id))
+        .where(eq(literasiPeerReviews.reportId, item.id));
+
+      const avgRating = reviews.length > 0 
+        ? (reviews.reduce((acc, r) => acc + r.rating, 0) / reviews.length).toFixed(1)
+        : null;
+
+      return {
+        ...item,
+        reviews,
+        avgRating,
+      };
+    }));
+
+    peerFeed = feedWithReviews;
+
+    // 4. If teacher/admin, fetch all submissions for grading
+    if (isTeacherOrAdmin) {
+      allSubmissionsForTeacher = await db.select({
+        id: literasiReports.id,
+        userId: literasiReports.userId,
+        studentName: users.name,
+        studentEmail: users.email,
+        studentClass: users.studentClass,
+        weekNumber: literasiReports.weekNumber,
+        reportDate: literasiReports.reportDate,
+        bookTitle: literasiReports.bookTitle,
+        author: literasiReports.author,
+        publisher: literasiReports.publisher,
+        city: literasiReports.city,
+        year: literasiReports.year,
+        pageCount: literasiReports.pageCount,
+        edition: literasiReports.edition,
+        summary: literasiReports.summary,
+        moralMessage: literasiReports.moralMessage,
+        selfChecklist: literasiReports.selfChecklist,
+        writingScore: literasiReports.writingScore,
+        presentationScore: literasiReports.presentationScore,
+        finalScore: literasiReports.finalScore,
+        teacherFeedback: literasiReports.teacherFeedback,
+        status: literasiReports.status,
+      }).from(literasiReports)
+        .innerJoin(users, eq(literasiReports.userId, users.id))
+        .orderBy(desc(literasiReports.reportDate));
+    }
+
+  } catch (e) {
+    console.error('Error loading Literasi RESIK data:', e);
+  }
+}
+
+// Calculate summary metrics
+const totalUserResensi = userReports.length;
+const gradedUserResensi = userReports.filter(r => r.status === 'graded');
+const avgScore = gradedUserResensi.length > 0 
+  ? Math.round(gradedUserResensi.reduce((acc, r) => acc + (r.finalScore || 0), 0) / gradedUserResensi.length) 
+  : 0;
+
+const currentWeek = userReports.length + 1;
+---
+
+<BaseLayout title="Program Rabu Literasi ASIK (RESIK) - SMKN 1 Rongga" description="Portal Laporan Literasi Siswa & Peer Review Program Pembiasaan Rabu Literasi ASIK (RESIK)">
+  <AntiCopyPasteGuardian />
+
+  <div class="container-main py-8 space-y-8 max-w-7xl mx-auto pb-16">
+    
+    <!-- Navigation Breadcrumb -->
+    <div class="flex items-center justify-between">
+      <a href="/pembelajaran" class="inline-flex items-center gap-1.5 text-xs font-semibold text-muted-foreground hover:text-foreground transition-colors">
+        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+        </svg>
+        Kembali ke Katalog Pembelajaran
+      </a>
+
+      {isTeacherOrAdmin && (
+        <span class="px-3 py-1 rounded-full bg-amber-500/20 text-amber-300 font-mono text-xs font-bold border border-amber-500/30 flex items-center gap-1.5 shadow-sm">
+          👑 Mode Guru: Evaluator Rubrik RESIK
+        </span>
+      )}
+    </div>
+
+    <!-- Hero Card RESIK -->
+    <div class="relative overflow-hidden rounded-3xl bg-gradient-to-br from-card via-card to-cyan-950/20 border border-cyan-500/30 p-6 md:p-8 shadow-xl space-y-6">
+      <div class="absolute -right-8 -top-8 text-9xl opacity-5 pointer-events-none select-none">📚</div>
+
+      <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-6 relative z-10">
+        <div class="space-y-3 max-w-3xl">
+          <div class="flex flex-wrap items-center gap-2">
+            <span class="px-2.5 py-0.5 rounded bg-cyan-500/10 text-cyan-400 text-[11px] font-mono font-bold uppercase border border-cyan-500/20">
+              PEMBIASAAN RABU LITERASI ASIK (RESIK)
+            </span>
+            <span class="px-2.5 py-0.5 rounded bg-secondary text-foreground text-[11px] font-mono font-semibold border border-border">
+              SMK NEGERI 1 RONGGA
+            </span>
+            <span class="px-2.5 py-0.5 rounded bg-emerald-500/10 text-emerald-400 text-[11px] font-mono font-bold border border-emerald-500/20">
+              ✨ +30 XP / Resensi Buku
+            </span>
+          </div>
+
+          <h1 class="text-3xl md:text-4xl font-black text-foreground tracking-tight">
+            Portal Laporan Literasi Siswa <span class="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 via-blue-400 to-emerald-400">(RESIK)</span>
+          </h1>
+
+          <p class="text-xs md:text-sm text-muted-foreground leading-relaxed">
+            Program rutin membaca dan meresensi buku mingguan. Buat ringkasan runtut, tentukan amanat moral, beri penilaian peer-review teman sekelas, dan cetak dokumen resmi resensi berstandar sekolah.
+          </p>
+
+          <!-- Quick Metrics -->
+          <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-2">
+            <div class="p-3 rounded-xl bg-background/60 border border-border">
+              <span class="text-[10px] font-mono text-muted-foreground block uppercase">TOTAL RESENSI SAYA</span>
+              <span class="text-base font-bold text-foreground font-mono">{totalUserResensi} Buku</span>
+            </div>
+            <div class="p-3 rounded-xl bg-background/60 border border-border">
+              <span class="text-[10px] font-mono text-muted-foreground block uppercase">SUDAH DINILAI GURU</span>
+              <span class="text-base font-bold text-emerald-400 font-mono">{gradedUserResensi.length} Resensi</span>
+            </div>
+            <div class="p-3 rounded-xl bg-background/60 border border-border">
+              <span class="text-[10px] font-mono text-muted-foreground block uppercase">RATA-RATA NILAI RESIK</span>
+              <span class="text-base font-bold text-cyan-400 font-mono">{avgScore > 0 ? `${avgScore} / 100` : '-'}</span>
+            </div>
+            <div class="p-3 rounded-xl bg-background/60 border border-border">
+              <span class="text-[10px] font-mono text-muted-foreground block uppercase">LEVEL GAMIFIKASI</span>
+              <span class="text-base font-bold text-amber-400 font-mono">Lvl {userStats.level} ({userStats.xp} XP)</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Action CTAs -->
+        <div class="w-full lg:w-72 p-5 rounded-2xl bg-background/80 backdrop-blur-md border border-cyan-500/20 flex flex-col justify-between space-y-4 shadow-lg shrink-0">
+          <div>
+            <div class="text-xs font-bold text-foreground mb-1">
+              🎯 Minggu Ini: Resensi Ke-{currentWeek}
+            </div>
+            <p class="text-[11px] text-muted-foreground leading-relaxed">
+              Pastikan Anda membaca buku minimal 15 menit dan melengkapi format resensi 4 kriteria sebelum dikumpulkan.
+            </p>
+          </div>
+
+          <a href="#form-resensi" class="btn btn-primary bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white font-extrabold text-xs py-2.5 rounded-xl text-center shadow-md border-0">
+            ✍️ Tulis Resensi Baru →
+          </a>
+        </div>
+      </div>
+    </div>
+
+    <!-- Navigation Tabs -->
+    <div class="flex border-b border-border/80 gap-2 overflow-x-auto hide-scrollbar pb-1" id="resik-tab-headers">
+      <button 
+        type="button" 
+        data-tab="form" 
+        class="resik-tab-btn active px-4 py-2.5 rounded-xl text-xs font-bold transition-all border border-cyan-500/30 bg-cyan-500/10 text-cyan-400 flex items-center gap-2 shrink-0"
+      >
+        <span>✍️</span> 1. Form Tulis Resensi Baru
+      </button>
+      <button 
+        type="button" 
+        data-tab="my-reports" 
+        class="resik-tab-btn px-4 py-2.5 rounded-xl text-xs font-bold transition-all border border-border bg-card text-muted-foreground hover:text-foreground flex items-center gap-2 shrink-0"
+      >
+        <span>📚</span> 2. Riwayat & Cetak PDF Resensi Saya ({totalUserResensi})
+      </button>
+      <button 
+        type="button" 
+        data-tab="peer-feed" 
+        class="resik-tab-btn px-4 py-2.5 rounded-xl text-xs font-bold transition-all border border-border bg-card text-muted-foreground hover:text-foreground flex items-center gap-2 shrink-0"
+      >
+        <span>🌟</span> 3. Galeri Literasi Teman & Peer Review
+      </button>
+      {isTeacherOrAdmin && (
+        <button 
+          type="button" 
+          data-tab="teacher-panel" 
+          class="resik-tab-btn px-4 py-2.5 rounded-xl text-xs font-bold transition-all border border-amber-500/40 bg-amber-500/10 text-amber-300 flex items-center gap-2 shrink-0"
+        >
+          <span>👑</span> 4. Panel Evaluasi & Rekap Guru ({allSubmissionsForTeacher.length})
+        </button>
+      )}
+    </div>
+
+    <!-- TAB 1: FORM TULIS RESENSI BUKU -->
+    <div id="tab-panel-form" class="tab-panel space-y-6">
+      <form id="form-resensi" data-no-paste="true" class="card p-6 md:p-8 rounded-2xl border border-border bg-card shadow-sm space-y-6">
+        <div class="border-b border-border pb-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div>
+            <span class="text-[10px] font-mono font-bold uppercase tracking-wider text-cyan-400">FORMAT RESENSI BUKU (ASPEK MENULIS RESIK)</span>
+            <h2 class="text-xl font-extrabold text-foreground">Lembar Pengumpulan Resensi Minggu Ke-{currentWeek}</h2>
+          </div>
+          <div class="px-3 py-1 rounded-lg bg-secondary text-foreground text-xs font-mono font-semibold border border-border">
+            Minggu Ke: <input type="number" id="input-week-number" min="1" max="52" value={currentWeek} class="w-12 px-1 py-0.5 rounded bg-background border border-border text-center text-xs font-bold text-cyan-400" />
+          </div>
+        </div>
+
+        <div id="alert-resensi-submit" class="hidden p-4 rounded-xl text-xs font-semibold text-center"></div>
+
+        <!-- 1. IDENTITAS BUKU -->
+        <div class="space-y-4">
+          <h3 class="text-sm font-bold text-foreground flex items-center gap-2 border-b border-border/50 pb-2">
+            <span class="w-6 h-6 rounded-full bg-cyan-500/20 text-cyan-400 text-xs flex items-center justify-center font-mono font-bold">1</span>
+            Kelengkapan Identitas Buku (Skor Max 4)
+          </h3>
+
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs">
+            <div>
+              <label class="block font-semibold mb-1 text-foreground">Judul Buku <span class="text-rose-500">*</span></label>
+              <input type="text" id="resensi-title" required class="w-full px-3.5 py-2.5 rounded-xl bg-background border border-border text-foreground focus:outline-none focus:border-cyan-500" placeholder="Contoh: Laskar Pelangi" />
+            </div>
+
+            <div>
+              <label class="block font-semibold mb-1 text-foreground">Penulis / Pengarang <span class="text-rose-500">*</span></label>
+              <input type="text" id="resensi-author" required class="w-full px-3.5 py-2.5 rounded-xl bg-background border border-border text-foreground focus:outline-none focus:border-cyan-500" placeholder="Contoh: Andrea Hirata" />
+            </div>
+
+            <div>
+              <label class="block font-semibold mb-1 text-foreground">Penerbit <span class="text-rose-500">*</span></label>
+              <input type="text" id="resensi-publisher" required class="w-full px-3.5 py-2.5 rounded-xl bg-background border border-border text-foreground focus:outline-none focus:border-cyan-500" placeholder="Contoh: Bentang Pustaka" />
+            </div>
+
+            <div>
+              <label class="block font-semibold mb-1 text-foreground">Kota Terbit <span class="text-rose-500">*</span></label>
+              <input type="text" id="resensi-city" required class="w-full px-3.5 py-2.5 rounded-xl bg-background border border-border text-foreground focus:outline-none focus:border-cyan-500" placeholder="Contoh: Yogyakarta" />
+            </div>
+
+            <div>
+              <label class="block font-semibold mb-1 text-foreground">Tahun Terbit <span class="text-rose-500">*</span></label>
+              <input type="number" id="resensi-year" required min="1900" max="2030" value="2024" class="w-full px-3.5 py-2.5 rounded-xl bg-background border border-border text-foreground focus:outline-none focus:border-cyan-500" />
+            </div>
+
+            <div>
+              <label class="block font-semibold mb-1 text-foreground">Jumlah Halaman <span class="text-rose-500">*</span></label>
+              <input type="number" id="resensi-pages" required min="1" value="250" class="w-full px-3.5 py-2.5 rounded-xl bg-background border border-border text-foreground focus:outline-none focus:border-cyan-500" />
+            </div>
+
+            <div class="md:col-span-3">
+              <label class="block font-semibold mb-1 text-foreground">Cetakan / Edisi (Opsional)</label>
+              <input type="text" id="resensi-edition" class="w-full px-3.5 py-2.5 rounded-xl bg-background border border-border text-foreground focus:outline-none focus:border-cyan-500" placeholder="Contoh: Cetakan Ke-15 / Edisi Revisi" />
+            </div>
+          </div>
+        </div>
+
+        <!-- 2. RINGKASAN BUKU -->
+        <div class="space-y-3">
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-border/50 pb-2">
+            <h3 class="text-sm font-bold text-foreground flex items-center gap-2">
+              <span class="w-6 h-6 rounded-full bg-cyan-500/20 text-cyan-400 text-xs flex items-center justify-center font-mono font-bold">2</span>
+              Isi / Ringkasan Buku (Aspek Menulis • Skor Max 4)
+            </h3>
+            <span class="text-xs font-mono px-2.5 py-1 rounded-md bg-rose-500/10 text-rose-400 border border-rose-500/30 font-semibold" id="summary-char-counter">
+              📝 0 / 100 kata (Min. 100 kata)
+            </span>
+          </div>
+
+          <div class="p-3.5 rounded-xl bg-cyan-950/20 border border-cyan-500/20 text-xs text-muted-foreground space-y-1.5">
+            <p class="font-semibold text-cyan-300">💡 Panduan Menyusun Ringkasan 3 Bagian Runtut (Minimal 100 Kata):</p>
+            <ul class="list-disc list-inside space-y-0.5 text-[11px]">
+              <li><strong>Paragraf 1 (Awal):</strong> Kenalkan tokoh utama, latar tempat/waktu, dan situasi pembuka cerita/buku.</li>
+              <li><strong>Paragraf 2 (Tengah):</strong> Uraikan inti konflik, alur peristiwa penting, atau gagasan utama buku.</li>
+              <li><strong>Paragraf 3 (Akhir):</strong> Jelaskan penyelesaian masalah, klimaks cerita, dan simpulan akhir bacaan.</li>
+            </ul>
+          </div>
+
+          <textarea 
+            id="resensi-summary" 
+            data-no-paste="true" 
+            onpaste="return false;" 
+            ondrop="return false;" 
+            oncontextmenu="return false;" 
+            required 
+            rows="8" 
+            class="w-full p-4 rounded-xl bg-background border border-border text-foreground text-xs leading-relaxed focus:outline-none focus:border-cyan-500 placeholder:text-muted-foreground/60" 
+            placeholder="Paragraf 1 (Awal): Buku ini menceritakan tentang latar dan tokoh...&#10;&#10;Paragraf 2 (Tengah): Konflik utama mulai muncul ketika...&#10;&#10;Paragraf 3 (Akhir): Pada akhirnya, cerita ini diselesaikan dengan..."
+          ></textarea>
+        </div>
+
+        <!-- 3. AMANAT / PESAN BUKU -->
+        <div class="space-y-3">
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-border/50 pb-2">
+            <h3 class="text-sm font-bold text-foreground flex items-center gap-2">
+              <span class="w-6 h-6 rounded-full bg-cyan-500/20 text-cyan-400 text-xs flex items-center justify-center font-mono font-bold">3</span>
+              Amanat / Pesan Bacaan & Refleksi (Skor Max 4)
+            </h3>
+            <span class="text-xs font-mono px-2.5 py-1 rounded-md bg-rose-500/10 text-rose-400 border border-rose-500/30 font-semibold" id="moral-char-counter">
+              💡 0 / 30 kata (Min. 30 kata)
+            </span>
+          </div>
+
+          <div class="p-3.5 rounded-xl bg-emerald-950/20 border border-emerald-500/20 text-xs text-muted-foreground space-y-1">
+            <p class="font-semibold text-emerald-300">💡 Panduan Menulis Amanat & Refleksi (Minimal 30 Kata):</p>
+            <p class="text-[11px] leading-relaxed">
+              Tuliskan nilai moral, hikmah kehidupan, atau relevansinya dengan pembentukan karakter / etika kerja kejuruan RPL minimal dalam 2–3 kalimat mendalam (hindari jawaban singkat 1 baris).
+            </p>
+          </div>
+
+          <textarea 
+            id="resensi-moral" 
+            data-no-paste="true" 
+            onpaste="return false;" 
+            ondrop="return false;" 
+            oncontextmenu="return false;" 
+            required 
+            rows="4" 
+            class="w-full p-4 rounded-xl bg-background border border-border text-foreground text-xs leading-relaxed focus:outline-none focus:border-cyan-500 placeholder:text-muted-foreground/60" 
+            placeholder="Amanat atau pelajaran berharga yang saya peroleh dari buku ini adalah... Nilai ini penting diterapkan dalam kehidupan dan kebiasaan belajar saya karena..."
+          ></textarea>
+        </div>
+
+        <!-- 4. CHECKLIST MANDATORI & KERAPIHAN BAHASA -->
+        <div class="space-y-3 p-5 rounded-2xl bg-secondary/30 border border-border">
+          <h3 class="text-sm font-bold text-foreground flex items-center gap-2">
+            <span class="w-6 h-6 rounded-full bg-cyan-500/20 text-cyan-400 text-xs flex items-center justify-center font-mono font-bold">4</span>
+            Checklist Mandatori Kerapihan dan Penggunaan Bahasa (Skor Max 4)
+          </h3>
+          <p class="text-xs text-muted-foreground">
+            Centang keempat poin di bawah ini setelah Anda memeriksa kembali ejaan dan efektivitas kalimat resensi Anda:
+          </p>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1 text-xs">
+            <label class="flex items-center gap-2.5 cursor-pointer p-2.5 rounded-lg bg-background/80 border border-border hover:border-cyan-500/40 transition-all select-none">
+              <input type="checkbox" id="chk-rapi" class="w-4 h-4 rounded text-cyan-500 border-border focus:ring-cyan-500" checked />
+              <span class="text-foreground font-medium">☐ Tulisan rapi & mudah dibaca</span>
+            </label>
+            <label class="flex items-center gap-2.5 cursor-pointer p-2.5 rounded-lg bg-background/80 border border-border hover:border-cyan-500/40 transition-all select-none">
+              <input type="checkbox" id="chk-ejaan" class="w-4 h-4 rounded text-cyan-500 border-border focus:ring-cyan-500" checked />
+              <span class="text-foreground font-medium">☐ Ejaan dan tanda baca sudah diperiksa</span>
+            </label>
+            <label class="flex items-center gap-2.5 cursor-pointer p-2.5 rounded-lg bg-background/80 border border-border hover:border-cyan-500/40 transition-all select-none">
+              <input type="checkbox" id="chk-efektif" class="w-4 h-4 rounded text-cyan-500 border-border focus:ring-cyan-500" checked />
+              <span class="text-foreground font-medium">☐ Kalimat efektif, tidak bertele-tele</span>
+            </label>
+            <label class="flex items-center gap-2.5 cursor-pointer p-2.5 rounded-lg bg-background/80 border border-border hover:border-cyan-500/40 transition-all select-none">
+              <input type="checkbox" id="chk-santun" class="w-4 h-4 rounded text-cyan-500 border-border focus:ring-cyan-500" checked />
+              <span class="text-foreground font-medium">☐ Bahasa baku dan santun</span>
+            </label>
+          </div>
+        </div>
+
+        <div class="flex justify-end pt-2">
+          <button type="submit" id="btn-submit-resensi" class="btn btn-primary bg-gradient-to-r from-cyan-600 to-emerald-600 hover:from-cyan-500 hover:to-emerald-500 text-white font-extrabold text-xs px-6 py-3 rounded-xl shadow-lg border-0 flex items-center gap-2">
+            <span>✨ Kumpulkan Resensi Minggu Ke-{currentWeek} (+30 XP)</span>
+            <span>→</span>
+          </button>
+        </div>
+      </form>
+    </div>
+
+    <!-- TAB 2: RIWAYAT & CETAK PDF RESENSI SAYA -->
+    <div id="tab-panel-my-reports" class="tab-panel hidden space-y-6">
+      <div class="flex items-center justify-between border-b border-border pb-4">
+        <div>
+          <h2 class="text-lg font-bold text-foreground">Riwayat Resensi Buku Saya</h2>
+          <p class="text-xs text-muted-foreground">Daftar laporan resensi yang telah Anda kumpulkan pada kegiatan Rabu Literasi ASIK (RESIK).</p>
+        </div>
+        <span class="text-xs font-mono font-semibold px-3 py-1 rounded-lg bg-secondary border border-border text-foreground">
+          {totalUserResensi} Resensi Buku
+        </span>
+      </div>
+
+      {userReports.length === 0 ? (
+        <div class="card p-12 text-center space-y-3 rounded-2xl border-dashed border-border">
+          <span class="text-4xl block">📚</span>
+          <h3 class="text-base font-bold text-foreground">Belum Ada Resensi Dikumpulkan</h3>
+          <p class="text-xs text-muted-foreground max-w-md mx-auto">
+            Anda belum pernah mengisi resensi buku. Klik tab "1. Form Tulis Resensi Baru" di atas untuk mulai membuat laporan mingguan Anda.
+          </p>
+        </div>
+      ) : (
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {userReports.map((rep) => {
+            const checklist = JSON.parse(rep.selfChecklist || '[]');
+            return (
+              <div class="card p-6 rounded-2xl border border-border bg-card shadow-sm space-y-4 flex flex-col justify-between relative overflow-hidden">
+                <div class="space-y-3">
+                  <div class="flex items-center justify-between gap-2">
+                    <span class="px-2.5 py-0.5 rounded bg-cyan-500/10 text-cyan-400 font-mono text-[11px] font-bold border border-cyan-500/20">
+                      Minggu Ke-{rep.weekNumber}
+                    </span>
+                    {rep.status === 'graded' ? (
+                      <span class="px-2.5 py-0.5 rounded bg-emerald-500/10 text-emerald-400 font-mono text-[11px] font-bold border border-emerald-500/20">
+                        ✓ Nilai Akhir: {rep.finalScore}/100
+                      </span>
+                    ) : (
+                      <span class="px-2.5 py-0.5 rounded bg-amber-500/10 text-amber-400 font-mono text-[11px] font-bold border border-amber-500/20">
+                        ⏳ Menunggu Evaluasi Guru
+                      </span>
+                    )}
+                  </div>
+
+                  <div>
+                    <h3 class="text-base font-extrabold text-foreground">{rep.bookTitle}</h3>
+                    <p class="text-xs text-muted-foreground">
+                      Oleh: <strong>{rep.author}</strong> • Penerbit: {rep.publisher} ({rep.year}) • {rep.pageCount} Hal.
+                    </p>
+                  </div>
+
+                  <div class="p-3 rounded-xl bg-background/80 border border-border/60 text-xs space-y-2">
+                    <div>
+                      <span class="font-bold text-foreground block">Ringkasan:</span>
+                      <p class="text-muted-foreground line-clamp-3 leading-relaxed mt-0.5">{rep.summary}</p>
+                    </div>
+                    <div>
+                      <span class="font-bold text-foreground block">Amanat:</span>
+                      <p class="text-muted-foreground line-clamp-2 leading-relaxed mt-0.5">{rep.moralMessage}</p>
+                    </div>
+                  </div>
+
+                  {rep.status === 'graded' && (
+                    <div class="p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-xs space-y-1">
+                      <div class="font-bold text-emerald-400 flex items-center justify-between">
+                        <span>Rincian Skor RESIK:</span>
+                        <span>Menulis: {rep.writingScore}/16 • Presentasi: {rep.presentationScore}/20</span>
+                      </div>
+                      {rep.teacherFeedback && (
+                        <p class="text-emerald-300/80 italic text-[11px] mt-1">
+                          "Catatan Guru: {rep.teacherFeedback}"
+                        </p>
+                      )}
+                    </div>
+                  )}
+                </div>
+
+                <div class="pt-3 border-t border-border flex items-center justify-between gap-2 text-xs">
+                  <span class="text-[11px] text-muted-foreground font-mono">
+                    {new Date(rep.reportDate).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })}
+                  </span>
+
+                  <button 
+                    type="button" 
+                    class="btn-print-resensi btn btn-sm bg-secondary hover:bg-accent text-foreground font-bold text-xs px-3 py-1.5 rounded-lg border border-border flex items-center gap-1.5"
+                    data-report={JSON.stringify(rep)}
+                    data-user={JSON.stringify({ name: user.name, studentClass: user.studentClass || '10 RPL' })}
+                  >
+                    <span>🖨️</span> Cetak / Unduh PDF
+                  </button>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </div>
+
+    <!-- TAB 3: GALERI LITERASI TEMAN & PEER REVIEW -->
+    <div id="tab-panel-peer-feed" class="tab-panel hidden space-y-6">
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-border pb-4">
+        <div>
+          <h2 class="text-lg font-bold text-foreground">Galeri Literasi & Resensi Teman</h2>
+          <p class="text-xs text-muted-foreground">Baca resensi teman sekelas, pelajari gaya penulisannya, dan berikan rating bintang + apresiasi.</p>
+        </div>
+        <div class="w-full sm:w-64">
+          <input type="text" id="search-peer-resensi" class="w-full px-3 py-2 rounded-xl bg-background border border-border text-xs text-foreground focus:outline-none focus:border-cyan-500" placeholder="🔍 Cari judul/penulis/siswa..." />
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4" id="peer-resensi-grid">
+        {peerFeed.map((item) => (
+          <div class="card p-5 rounded-2xl border border-border bg-card shadow-sm space-y-4 flex flex-col justify-between peer-card-item" data-search={`${item.bookTitle} ${item.author} ${item.studentName}`.toLowerCase()}>
+            <div class="space-y-3">
+              <div class="flex items-center gap-2.5">
+                <div class="w-8 h-8 rounded-full bg-cyan-500/20 text-cyan-400 flex items-center justify-center font-bold text-xs border border-cyan-500/30 shrink-0">
+                  {item.studentName ? item.studentName.charAt(0).toUpperCase() : 'S'}
+                </div>
+                <div class="truncate">
+                  <div class="text-xs font-bold text-foreground truncate">{item.studentName}</div>
+                  <div class="text-[10px] text-muted-foreground font-mono">{item.studentClass || 'Siswa RPL'} • Minggu Ke-{item.weekNumber}</div>
+                </div>
+              </div>
+
+              <div>
+                <span class="text-[10px] font-mono text-cyan-400 font-bold uppercase">JUDUL BUKU:</span>
+                <h3 class="text-sm font-extrabold text-foreground leading-snug">{item.bookTitle}</h3>
+                <p class="text-[11px] text-muted-foreground mt-0.5">Penulis: {item.author}</p>
+              </div>
+
+              <div class="p-3 rounded-xl bg-background/80 border border-border/60 text-xs space-y-1.5">
+                <span class="font-bold text-foreground text-[11px] block">Ringkasan:</span>
+                <p class="text-muted-foreground line-clamp-3 leading-relaxed text-[11px]">{item.summary}</p>
+              </div>
+
+              <!-- Peer Rating Badge -->
+              <div class="flex items-center justify-between text-xs pt-1">
+                <span class="text-muted-foreground text-[11px]">Ulasan Teman ({item.reviews.length}):</span>
+                <span class="font-bold text-amber-400 font-mono text-xs flex items-center gap-1">
+                  ⭐ {item.avgRating ? `${item.avgRating} / 5` : 'Belum Ada Rating'}
+                </span>
+              </div>
+            </div>
+
+            <button 
+              type="button" 
+              class="btn-open-peer-modal btn btn-sm bg-cyan-500/10 hover:bg-cyan-500/20 text-cyan-400 font-bold text-xs py-2 rounded-xl border border-cyan-500/30 w-full flex items-center justify-center gap-1.5 mt-2"
+              data-item={JSON.stringify(item)}
+            >
+              <span>⭐</span> Beri Ulasan & Rating (+5 XP)
+            </button>
+          </div>
+        ))}
+      </div>
+    </div>
+
+    <!-- TAB 4: PANEL EVALUASI GURU (KHUSUS GURU/ADMIN) -->
+    {isTeacherOrAdmin && (
+      <div id="tab-panel-teacher-panel" class="tab-panel hidden space-y-6">
+        <div class="p-6 rounded-2xl bg-amber-500/10 border-2 border-amber-500/30 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-xl">
+          <div>
+            <div class="text-xs font-bold text-foreground flex items-center gap-2">
+              <span>PANEL EVALUASI RUBRIK MENULIS & PRESENTASI RESIK</span>
+              <span class="text-[10px] px-2 py-0.5 rounded font-mono font-bold bg-amber-500 text-black">GURU PENGAMPU</span>
+            </div>
+            <p class="text-xs text-muted-foreground mt-1">
+              Beri nilai 4 Aspek Menulis (Max 16) + 5 Aspek Presentasi (Max 20). Sistem akan secara otomatis menghitung Nilai Akhir sesuai rumus resmi RESIK.
+            </p>
+          </div>
+
+          <a href="/api/literasi/export-rekap" target="_blank" class="btn btn-sm bg-amber-500 hover:bg-amber-400 text-black font-extrabold text-xs px-4 py-2.5 rounded-xl border-0 shadow-md shrink-0 flex items-center gap-2">
+            <span>📊</span> Unduh Rekap Excel / CSV Kelas →
+          </a>
+        </div>
+
+        <div class="space-y-4">
+          <h3 class="text-base font-bold text-foreground">Daftar Pengumpulan Resensi Siswa ({allSubmissionsForTeacher.length})</h3>
+
+          <div class="overflow-x-auto rounded-2xl border border-border bg-card">
+            <table class="w-full text-left text-xs">
+              <thead class="bg-secondary/60 text-muted-foreground uppercase font-mono text-[10px] border-b border-border">
+                <tr>
+                  <th class="p-3">Siswa</th>
+                  <th class="p-3">Minggu</th>
+                  <th class="p-3">Judul Buku & Penulis</th>
+                  <th class="p-3">Tanggal Submit</th>
+                  <th class="p-3">Status / Nilai</th>
+                  <th class="p-3 text-right">Aksi Evaluasi</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-border/60">
+                {allSubmissionsForTeacher.map((sub) => (
+                  <tr class="hover:bg-accent/40 transition-colors">
+                    <td class="p-3">
+                      <div class="font-bold text-foreground">{sub.studentName}</div>
+                      <div class="text-[10px] text-muted-foreground font-mono">{sub.studentClass || '10 RPL'}</div>
+                    </td>
+                    <td class="p-3 font-mono font-bold text-cyan-400">Minggu #{sub.weekNumber}</td>
+                    <td class="p-3">
+                      <div class="font-bold text-foreground">{sub.bookTitle}</div>
+                      <div class="text-[10px] text-muted-foreground">{sub.author} ({sub.year})</div>
+                    </td>
+                    <td class="p-3 font-mono text-muted-foreground">
+                      {new Date(sub.reportDate).toLocaleDateString('id-ID')}
+                    </td>
+                    <td class="p-3">
+                      {sub.status === 'graded' ? (
+                        <span class="px-2.5 py-1 rounded bg-emerald-500/10 text-emerald-400 font-mono font-bold border border-emerald-500/20">
+                          {sub.finalScore} / 100
+                        </span>
+                      ) : (
+                        <span class="px-2.5 py-1 rounded bg-amber-500/10 text-amber-400 font-mono font-bold border border-amber-500/20">
+                          Belum Dinilai
+                        </span>
+                      )}
+                    </td>
+                    <td class="p-3 text-right">
+                      <button 
+                        type="button" 
+                        class="btn-open-grade-modal btn btn-sm bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 font-bold text-xs px-3 py-1.5 rounded-lg border border-amber-500/40"
+                        data-report={JSON.stringify(sub)}
+                      >
+                        ⭐ Evaluasi Rubrik →
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    )}
+
+  </div>
+
+  <!-- MODAL 1: PEER REVIEW MODAL -->
+  <div id="modal-peer-review" class="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm hidden items-center justify-center p-4">
+    <div class="card w-full max-w-lg p-6 rounded-2xl border border-cyan-500/30 bg-card shadow-2xl space-y-5 relative animate-in zoom-in-95">
+      <div class="flex items-center justify-between border-b border-border pb-3">
+        <h3 class="text-base font-extrabold text-foreground" id="modal-peer-title">Beri Rating & Ulasan Resensi</h3>
+        <button type="button" id="close-peer-modal" class="text-muted-foreground hover:text-foreground text-lg">✕</button>
+      </div>
+
+      <div id="modal-peer-body" class="p-3 rounded-xl bg-secondary/30 border border-border text-xs space-y-1">
+        <!-- Injected via JS -->
+      </div>
+
+      <form id="form-peer-submit" class="space-y-4 text-xs">
+        <input type="hidden" id="peer-report-id" />
+        
+        <div>
+          <label class="block font-semibold mb-1 text-foreground">Rating Bintang (1-5)</label>
+          <div class="flex items-center gap-2" id="star-rating-selector">
+            {[1, 2, 3, 4, 5].map((star) => (
+              <button type="button" class="btn-star text-2xl text-muted-foreground hover:text-amber-400 transition-colors" data-star={star}>★</button>
+            ))}
+            <input type="hidden" id="peer-rating-val" value="5" />
+          </div>
+        </div>
+
+        <div>
+          <label class="block font-semibold mb-1 text-foreground">Komentar / Apresiasi Literasi</label>
+          <textarea id="peer-comment" required rows="3" class="w-full p-3 rounded-xl bg-background border border-border text-foreground text-xs focus:outline-none focus:border-cyan-500" placeholder="Tuliskan ulasan positif atau masukan konstruktif untuk karya resensi temanmu..."></textarea>
+        </div>
+
+        <button type="submit" class="btn btn-primary w-full py-2.5 font-bold bg-cyan-600 hover:bg-cyan-500 text-white rounded-xl">
+          Kirim Ulasan Peer Review (+5 XP)
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL 2: TEACHER GRADING MODAL (RUBRIK RESIK 9 ASPEK) -->
+  {isTeacherOrAdmin && (
+    <div id="modal-teacher-grade" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-md hidden items-center justify-center p-4 overflow-y-auto">
+      <div class="card w-full max-w-3xl p-6 md:p-8 rounded-2xl border border-amber-500/40 bg-card shadow-2xl space-y-6 my-8">
+        <div class="flex items-center justify-between border-b border-border pb-4">
+          <div>
+            <span class="text-[10px] font-mono font-bold uppercase text-amber-400">RUBRIK EVALUASI GURU SMKN 1 RONGGA</span>
+            <h3 class="text-xl font-extrabold text-foreground" id="grade-modal-title">Penilaian RESIK Siswa</h3>
+          </div>
+          <button type="button" id="close-grade-modal" class="text-muted-foreground hover:text-foreground text-xl">✕</button>
+        </div>
+
+        <form id="form-teacher-grade" class="space-y-6 text-xs">
+          <input type="hidden" id="grade-report-id" />
+
+          <!-- Summary Display -->
+          <div id="grade-modal-summary" class="p-4 rounded-xl bg-secondary/30 border border-border space-y-2">
+            <!-- Injected via JS -->
+          </div>
+
+          <!-- ASPEK 1: MENULIS (4 Kriteria, @1-4, Max 16) -->
+          <div class="space-y-4 border-t border-border pt-4">
+            <div class="flex items-center justify-between">
+              <h4 class="font-bold text-amber-400 text-sm uppercase font-mono">1. Aspek Menulis (Skor Max 16)</h4>
+              <span class="font-mono text-xs font-bold text-foreground" id="calc-writing-total">Total Menulis: 16 / 16</span>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div class="p-3 rounded-xl bg-background border border-border space-y-1">
+                <label class="block font-bold text-foreground">1. Kelengkapan Identitas (1-4)</label>
+                <p class="text-[10px] text-muted-foreground">4: Judul & pengarang lengkap | 1: Tidak ditulis</p>
+                <input type="range" id="score-w1" min="1" max="4" value="4" class="w-full accent-amber-500" />
+                <div class="text-right font-mono font-bold text-amber-400" id="val-w1">Skor: 4</div>
+              </div>
+
+              <div class="p-3 rounded-xl bg-background border border-border space-y-1">
+                <label class="block font-bold text-foreground">2. Isi / Ringkasan (1-4)</label>
+                <p class="text-[10px] text-muted-foreground">4: Sangat sesuai, lengkap & runtut | 1: Tidak sesuai</p>
+                <input type="range" id="score-w2" min="1" max="4" value="4" class="w-full accent-amber-500" />
+                <div class="text-right font-mono font-bold text-amber-400" id="val-w2">Skor: 4</div>
+              </div>
+
+              <div class="p-3 rounded-xl bg-background border border-border space-y-1">
+                <label class="block font-bold text-foreground">3. Amanat / Pesan (1-4)</label>
+                <p class="text-[10px] text-muted-foreground">4: Tepat, logis & mendalam | 1: Tidak menemukan</p>
+                <input type="range" id="score-w3" min="1" max="4" value="4" class="w-full accent-amber-500" />
+                <div class="text-right font-mono font-bold text-amber-400" id="val-w3">Skor: 4</div>
+              </div>
+
+              <div class="p-3 rounded-xl bg-background border border-border space-y-1">
+                <label class="block font-bold text-foreground">4. Kerapihan & Bahasa (1-4)</label>
+                <p class="text-[10px] text-muted-foreground">4: Sangat rapi, bahasa baik | 1: Sulit dibaca</p>
+                <input type="range" id="score-w4" min="1" max="4" value="4" class="w-full accent-amber-500" />
+                <div class="text-right font-mono font-bold text-amber-400" id="val-w4">Skor: 4</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- ASPEK 2: PRESENTASI (5 Kriteria, @1-4, Max 20) -->
+          <div class="space-y-4 border-t border-border pt-4">
+            <div class="flex items-center justify-between">
+              <h4 class="font-bold text-cyan-400 text-sm uppercase font-mono">2. Aspek Presentasi (Skor Max 20)</h4>
+              <span class="font-mono text-xs font-bold text-foreground" id="calc-presentation-total">Total Presentasi: 20 / 20</span>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+              <div class="p-3 rounded-xl bg-background border border-border space-y-1">
+                <label class="block font-bold text-foreground">5. Penguasaan Bacaan</label>
+                <input type="range" id="score-p1" min="1" max="4" value="4" class="w-full accent-cyan-500" />
+                <div class="text-right font-mono font-bold text-cyan-400" id="val-p1">Skor: 4</div>
+              </div>
+
+              <div class="p-3 rounded-xl bg-background border border-border space-y-1">
+                <label class="block font-bold text-foreground">6. Ketepatan Pesan</label>
+                <input type="range" id="score-p2" min="1" max="4" value="4" class="w-full accent-cyan-500" />
+                <div class="text-right font-mono font-bold text-cyan-400" id="val-p2">Skor: 4</div>
+              </div>
+
+              <div class="p-3 rounded-xl bg-background border border-border space-y-1">
+                <label class="block font-bold text-foreground">7. Komunikasi</label>
+                <input type="range" id="score-p3" min="1" max="4" value="4" class="w-full accent-cyan-500" />
+                <div class="text-right font-mono font-bold text-cyan-400" id="val-p3">Skor: 4</div>
+              </div>
+
+              <div class="p-3 rounded-xl bg-background border border-border space-y-1">
+                <label class="block font-bold text-foreground">8. Sistematika</label>
+                <input type="range" id="score-p4" min="1" max="4" value="4" class="w-full accent-cyan-500" />
+                <div class="text-right font-mono font-bold text-cyan-400" id="val-p4">Skor: 4</div>
+              </div>
+
+              <div class="p-3 rounded-xl bg-background border border-border space-y-1 md:col-span-2 lg:col-span-1">
+                <label class="block font-bold text-foreground">9. Sikap Presentasi</label>
+                <input type="range" id="score-p5" min="1" max="4" value="4" class="w-full accent-cyan-500" />
+                <div class="text-right font-mono font-bold text-cyan-400" id="val-p5">Skor: 4</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- KALKULASI NILAI AKHIR -->
+          <div class="p-4 rounded-2xl bg-gradient-to-r from-amber-500/20 to-emerald-500/20 border border-emerald-500/30 flex items-center justify-between">
+            <div>
+              <span class="text-[10px] font-mono font-bold uppercase text-emerald-400 block">RUMUS RESIK: (MENULIS + PRESENTASI) / 36 * 100</span>
+              <span class="text-sm font-bold text-foreground">NILAI AKHIR EVALUASI RESIK</span>
+            </div>
+            <div class="text-2xl font-black font-mono text-emerald-400" id="calc-final-score">
+              100 / 100
+            </div>
+          </div>
+
+          <div>
+            <label class="block font-semibold mb-1 text-foreground">Catatan / Feedback Evaluasi Guru</label>
+            <textarea id="grade-feedback" rows="3" class="w-full p-3 rounded-xl bg-background border border-border text-foreground text-xs focus:outline-none focus:border-amber-500" placeholder="Tuliskan catatan apresiasi atau perbaikan untuk siswa..."></textarea>
+          </div>
+
+          <button type="submit" class="btn btn-primary w-full py-3 font-extrabold bg-gradient-to-r from-amber-500 to-emerald-500 hover:from-amber-400 hover:to-emerald-400 text-black rounded-xl text-xs shadow-lg border-0">
+            💾 Simpan Penilaian & Evaluasi RESIK →
+          </button>
+        </form>
+      </div>
+    </div>
+  )}
+
+  <script>
+    // Tab Navigation Logic
+    const tabBtns = document.querySelectorAll('.resik-tab-btn');
+    const tabPanels = document.querySelectorAll('.tab-panel');
+
+    tabBtns.forEach(btn => {
+      btn.addEventListener('click', () => {
+        const targetTab = btn.getAttribute('data-tab');
+        
+        tabBtns.forEach(b => {
+          b.classList.remove('active', 'border-cyan-500/30', 'bg-cyan-500/10', 'text-cyan-400', 'border-amber-500/40', 'bg-amber-500/10', 'text-amber-300');
+          b.classList.add('border-border', 'bg-card', 'text-muted-foreground');
+        });
+
+        if (targetTab === 'form' || targetTab === 'peer-feed') {
+          btn.classList.add('active', 'border-cyan-500/30', 'bg-cyan-500/10', 'text-cyan-400');
+        } else if (targetTab === 'teacher-panel') {
+          btn.classList.add('active', 'border-amber-500/40', 'bg-amber-500/10', 'text-amber-300');
+        } else {
+          btn.classList.add('active', 'border-cyan-500/30', 'bg-cyan-500/10', 'text-cyan-400');
+        }
+
+        tabPanels.forEach(panel => {
+          if (panel.id === `tab-panel-${targetTab}`) {
+            panel.classList.remove('hidden');
+          } else {
+            panel.classList.add('hidden');
+          }
+        });
+      });
+    });
+
+    // Word & Character Counter with Dynamic UX Badges
+    const summaryInput = document.getElementById('resensi-summary') as HTMLTextAreaElement;
+    const summaryCounter = document.getElementById('summary-char-counter');
+    const moralInput = document.getElementById('resensi-moral') as HTMLTextAreaElement;
+    const moralCounter = document.getElementById('moral-char-counter');
+
+    function getWordCount(text: string) {
+      return text.trim().split(/\s+/).filter(Boolean).length;
+    }
+
+    function updateSummaryCounter() {
+      if (!summaryInput || !summaryCounter) return;
+      const text = summaryInput.value;
+      const words = getWordCount(text);
+      const chars = text.length;
+
+      if (words < 100) {
+        summaryCounter.className = 'text-xs font-mono px-2.5 py-1 rounded-md bg-rose-500/10 text-rose-400 border border-rose-500/30 font-semibold transition-all';
+        summaryCounter.textContent = `📝 ${words} / 100 kata (Kurang ${100 - words} kata • ${chars} kar)`;
+      } else if (words < 150) {
+        summaryCounter.className = 'text-xs font-mono px-2.5 py-1 rounded-md bg-amber-500/10 text-amber-400 border border-amber-500/30 font-semibold transition-all';
+        summaryCounter.textContent = `✓ ${words} kata (Standar Baik • ${chars} kar)`;
+      } else {
+        summaryCounter.className = 'text-xs font-mono px-2.5 py-1 rounded-md bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 font-bold transition-all';
+        summaryCounter.textContent = `⭐ ${words} kata (Sangat Lengkap & Mahir • ${chars} kar)`;
+      }
+    }
+
+    function updateMoralCounter() {
+      if (!moralInput || !moralCounter) return;
+      const text = moralInput.value;
+      const words = getWordCount(text);
+      const chars = text.length;
+
+      if (words < 30) {
+        moralCounter.className = 'text-xs font-mono px-2.5 py-1 rounded-md bg-rose-500/10 text-rose-400 border border-rose-500/30 font-semibold transition-all';
+        moralCounter.textContent = `💡 ${words} / 30 kata (Kurang ${30 - words} kata • ${chars} kar)`;
+      } else if (words < 50) {
+        moralCounter.className = 'text-xs font-mono px-2.5 py-1 rounded-md bg-amber-500/10 text-amber-400 border border-amber-500/30 font-semibold transition-all';
+        moralCounter.textContent = `✓ ${words} kata (Standar Baik • ${chars} kar)`;
+      } else {
+        moralCounter.className = 'text-xs font-mono px-2.5 py-1 rounded-md bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 font-bold transition-all';
+        moralCounter.textContent = `⭐ ${words} kata (Sangat Lengkap & Reflektif • ${chars} kar)`;
+      }
+    }
+
+    summaryInput?.addEventListener('input', updateSummaryCounter);
+    moralInput?.addEventListener('input', updateMoralCounter);
+
+    // Submit Resensi Handler
+    const formResensi = document.getElementById('form-resensi') as HTMLFormElement;
+    const alertBox = document.getElementById('alert-resensi-submit');
+
+    formResensi?.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      if (!alertBox) return;
+
+      alertBox.classList.add('hidden');
+
+      const weekNumber = (document.getElementById('input-week-number') as HTMLInputElement).value;
+      const bookTitle = (document.getElementById('resensi-title') as HTMLInputElement).value;
+      const author = (document.getElementById('resensi-author') as HTMLInputElement).value;
+      const publisher = (document.getElementById('resensi-publisher') as HTMLInputElement).value;
+      const city = (document.getElementById('resensi-city') as HTMLInputElement).value;
+      const year = (document.getElementById('resensi-year') as HTMLInputElement).value;
+      const pageCount = (document.getElementById('resensi-pages') as HTMLInputElement).value;
+      const edition = (document.getElementById('resensi-edition') as HTMLInputElement).value;
+      const summary = summaryInput.value;
+      const moralMessage = moralInput.value;
+
+      const sWords = getWordCount(summary);
+      const mWords = getWordCount(moralMessage);
+
+      if (sWords < 100) {
+        alertBox.className = 'p-4 rounded-xl text-xs font-semibold text-center bg-rose-500/10 border border-rose-500/30 text-rose-400 block';
+        alertBox.textContent = `Ringkasan buku belum mencapai batas minimal (${sWords} / 100 kata). Silakan lengkapi 3 bagian: awal, tengah, dan penutup cerita.`;
+        summaryInput.focus();
+        return;
+      }
+
+      if (mWords < 30) {
+        alertBox.className = 'p-4 rounded-xl text-xs font-semibold text-center bg-rose-500/10 border border-rose-500/30 text-rose-400 block';
+        alertBox.textContent = `Amanat / pesan moral belum mencapai batas minimal (${mWords} / 30 kata). Uraikan nilai moral secara lebih jelas dan mendalam.`;
+        moralInput.focus();
+        return;
+      }
+
+      const selfChecklist: string[] = [];
+      if ((document.getElementById('chk-rapi') as HTMLInputElement).checked) selfChecklist.push('Tulisan rapi & mudah dibaca');
+      if ((document.getElementById('chk-ejaan') as HTMLInputElement).checked) selfChecklist.push('Ejaan dan tanda baca sudah diperiksa');
+      if ((document.getElementById('chk-efektif') as HTMLInputElement).checked) selfChecklist.push('Kalimat efektif, tidak bertele-tele');
+      if ((document.getElementById('chk-santun') as HTMLInputElement).checked) selfChecklist.push('Bahasa baku dan santun');
+
+      try {
+        const res = await fetch('/api/literasi/submit', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            weekNumber,
+            bookTitle,
+            author,
+            publisher,
+            city,
+            year,
+            pageCount,
+            edition,
+            summary,
+            moralMessage,
+            selfChecklist,
+          })
+        });
+
+        const data = await res.json();
+        if (res.ok && data.success) {
+          alertBox.className = 'p-4 rounded-xl text-xs font-semibold text-center bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 block';
+          alertBox.textContent = data.message || 'Resensi berhasil dikumpulkan!';
+          setTimeout(() => window.location.reload(), 1500);
+        } else {
+          alertBox.className = 'p-4 rounded-xl text-xs font-semibold text-center bg-rose-500/10 border border-rose-500/30 text-rose-400 block';
+          alertBox.textContent = data.error || 'Gagal mengumpulkan resensi.';
+        }
+      } catch (err) {
+        alertBox.className = 'p-4 rounded-xl text-xs font-semibold text-center bg-rose-500/10 border border-rose-500/30 text-rose-400 block';
+        alertBox.textContent = 'Koneksi bermasalah.';
+      }
+    });
+
+    // Search Peer Resensi Filter
+    const searchPeer = document.getElementById('search-peer-resensi') as HTMLInputElement;
+    const peerCards = document.querySelectorAll('.peer-card-item');
+
+    searchPeer?.addEventListener('input', () => {
+      const q = searchPeer.value.toLowerCase().trim();
+      peerCards.forEach(card => {
+        const s = card.getAttribute('data-search') || '';
+        if (s.includes(q)) {
+          (card as HTMLElement).style.display = 'flex';
+        } else {
+          (card as HTMLElement).style.display = 'none';
+        }
+      });
+    });
+
+    // Peer Review Modal Logic
+    const peerModal = document.getElementById('modal-peer-review');
+    const closePeerModal = document.getElementById('close-peer-modal');
+    const peerReportId = document.getElementById('peer-report-id') as HTMLInputElement;
+    const modalPeerTitle = document.getElementById('modal-peer-title');
+    const modalPeerBody = document.getElementById('modal-peer-body');
+
+    document.querySelectorAll('.btn-open-peer-modal').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const dataStr = btn.getAttribute('data-item');
+        if (!dataStr || !peerModal) return;
+        const item = JSON.parse(dataStr);
+
+        if (peerReportId) peerReportId.value = item.id;
+        if (modalPeerTitle) modalPeerTitle.textContent = `Ulas Resensi: "${item.bookTitle}"`;
+        if (modalPeerBody) {
+          modalPeerBody.innerHTML = `
+            <div class="font-bold text-foreground">${item.bookTitle} (${item.author})</div>
+            <div class="text-muted-foreground text-[11px]">Ditulis oleh: ${item.studentName} (${item.studentClass || 'Siswa RPL'})</div>
+          `;
+        }
+        peerModal.classList.remove('hidden');
+        peerModal.classList.add('flex');
+      });
+    });
+
+    closePeerModal?.addEventListener('click', () => {
+      peerModal?.classList.add('hidden');
+      peerModal?.classList.remove('flex');
+    });
+
+    // Star Selector
+    const starBtns = document.querySelectorAll('.btn-star');
+    const ratingVal = document.getElementById('peer-rating-val') as HTMLInputElement;
+
+    starBtns.forEach(star => {
+      star.addEventListener('click', () => {
+        const val = Number(star.getAttribute('data-star') || 5);
+        if (ratingVal) ratingVal.value = String(val);
+        starBtns.forEach((s, idx) => {
+          if (idx < val) {
+            s.classList.add('text-amber-400');
+            s.classList.remove('text-muted-foreground');
+          } else {
+            s.classList.remove('text-amber-400');
+            s.classList.add('text-muted-foreground');
+          }
+        });
+      });
+    });
+
+    // Peer Review Form Submit
+    const formPeer = document.getElementById('form-peer-submit');
+    formPeer?.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const reportId = peerReportId.value;
+      const rating = ratingVal.value;
+      const comment = (document.getElementById('peer-comment') as HTMLTextAreaElement).value;
+
+      try {
+        const res = await fetch('/api/literasi/peer-review', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ reportId, rating, comment }),
+        });
+        const data = await res.json();
+        if (res.ok && data.success) {
+          alert(data.message || 'Ulasan berhasil dikirim!');
+          window.location.reload();
+        } else {
+          alert(data.error || 'Gagal meriview.');
+        }
+      } catch (e) {
+        alert('Koneksi bermasalah.');
+      }
+    });
+
+    // Teacher Grading Modal & Calculator Logic
+    const gradeModal = document.getElementById('modal-teacher-grade');
+    const closeGradeModal = document.getElementById('close-grade-modal');
+    const gradeReportId = document.getElementById('grade-report-id') as HTMLInputElement;
+
+    const w1 = document.getElementById('score-w1') as HTMLInputElement;
+    const w2 = document.getElementById('score-w2') as HTMLInputElement;
+    const w3 = document.getElementById('score-w3') as HTMLInputElement;
+    const w4 = document.getElementById('score-w4') as HTMLInputElement;
+
+    const p1 = document.getElementById('score-p1') as HTMLInputElement;
+    const p2 = document.getElementById('score-p2') as HTMLInputElement;
+    const p3 = document.getElementById('score-p3') as HTMLInputElement;
+    const p4 = document.getElementById('score-p4') as HTMLInputElement;
+    const p5 = document.getElementById('score-p5') as HTMLInputElement;
+
+    function recalculateFinalScore() {
+      const vW1 = Number(w1?.value || 4);
+      const vW2 = Number(w2?.value || 4);
+      const vW3 = Number(w3?.value || 4);
+      const vW4 = Number(w4?.value || 4);
+
+      const vP1 = Number(p1?.value || 4);
+      const vP2 = Number(p2?.value || 4);
+      const vP3 = Number(p3?.value || 4);
+      const vP4 = Number(p4?.value || 4);
+      const vP5 = Number(p5?.value || 4);
+
+      const totalWriting = vW1 + vW2 + vW3 + vW4;
+      const totalPresentation = vP1 + vP2 + vP3 + vP4 + vP5;
+      const finalScore = Math.round(((totalWriting + totalPresentation) / 36) * 100);
+
+      document.getElementById('val-w1')!.textContent = `Skor: ${vW1}`;
+      document.getElementById('val-w2')!.textContent = `Skor: ${vW2}`;
+      document.getElementById('val-w3')!.textContent = `Skor: ${vW3}`;
+      document.getElementById('val-w4')!.textContent = `Skor: ${vW4}`;
+
+      document.getElementById('val-p1')!.textContent = `Skor: ${vP1}`;
+      document.getElementById('val-p2')!.textContent = `Skor: ${vP2}`;
+      document.getElementById('val-p3')!.textContent = `Skor: ${vP3}`;
+      document.getElementById('val-p4')!.textContent = `Skor: ${vP4}`;
+      document.getElementById('val-p5')!.textContent = `Skor: ${vP5}`;
+
+      document.getElementById('calc-writing-total')!.textContent = `Total Menulis: ${totalWriting} / 16`;
+      document.getElementById('calc-presentation-total')!.textContent = `Total Presentasi: ${totalPresentation} / 20`;
+      document.getElementById('calc-final-score')!.textContent = `${finalScore} / 100`;
+    }
+
+    [w1, w2, w3, w4, p1, p2, p3, p4, p5].forEach(input => {
+      input?.addEventListener('input', recalculateFinalScore);
+    });
+
+    document.querySelectorAll('.btn-open-grade-modal').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const dataStr = btn.getAttribute('data-report');
+        if (!dataStr || !gradeModal) return;
+        const sub = JSON.parse(dataStr);
+
+        if (gradeReportId) gradeReportId.value = sub.id;
+        document.getElementById('grade-modal-title')!.textContent = `Penilaian RESIK: ${sub.studentName} (Minggu #${sub.weekNumber})`;
+        document.getElementById('grade-modal-summary')!.innerHTML = `
+          <div class="font-bold text-foreground">Buku: "${sub.bookTitle}" (Penulis: ${sub.author})</div>
+          <div class="text-muted-foreground mt-1 font-semibold">Ringkasan Siswa:</div>
+          <p class="text-muted-foreground line-clamp-3 leading-relaxed text-[11px]">${sub.summary}</p>
+          <div class="text-muted-foreground mt-1 font-semibold">Amanat:</div>
+          <p class="text-muted-foreground text-[11px]">${sub.moralMessage}</p>
+        `;
+
+        if (sub.teacherFeedback) {
+          (document.getElementById('grade-feedback') as HTMLTextAreaElement).value = sub.teacherFeedback;
+        }
+
+        recalculateFinalScore();
+        gradeModal.classList.remove('hidden');
+        gradeModal.classList.add('flex');
+      });
+    });
+
+    closeGradeModal?.addEventListener('click', () => {
+      gradeModal?.classList.add('hidden');
+      gradeModal?.classList.remove('flex');
+    });
+
+    // Submit Teacher Grade
+    const formTeacherGrade = document.getElementById('form-teacher-grade');
+    formTeacherGrade?.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const reportId = gradeReportId.value;
+      const teacherFeedback = (document.getElementById('grade-feedback') as HTMLTextAreaElement).value;
+
+      try {
+        const res = await fetch('/api/literasi/grade', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            reportId,
+            w1: w1.value, w2: w2.value, w3: w3.value, w4: w4.value,
+            p1: p1.value, p2: p2.value, p3: p3.value, p4: p4.value, p5: p5.value,
+            teacherFeedback,
+          }),
+        });
+        const data = await res.json();
+        if (res.ok && data.success) {
+          alert(data.message || 'Penilaian berhasil disimpan!');
+          window.location.reload();
+        } else {
+          alert(data.error || 'Gagal menyimpan nilai.');
+        }
+      } catch (err) {
+        alert('Koneksi bermasalah.');
+      }
+    });
+
+    // Print PDF Resensi Trigger with Official School Kop & Logo
+    document.querySelectorAll('.btn-print-resensi').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const reportData = JSON.parse(btn.getAttribute('data-report') || '{}');
+        const userData = JSON.parse(btn.getAttribute('data-user') || '{}');
+
+        const printWindow = window.open('', '_blank');
+        if (!printWindow) return;
+
+        const logoUrl = window.location.origin + '/logo-smkn1rongga.png';
+
+        const printHtml = [
+          '<!DOCTYPE html>',
+          '<html lang="id">',
+          '<head>',
+          '  <meta charset="UTF-8">',
+          '  <title>LAPORAN_RESIK_' + (userData.name || 'SISWA').replace(/\s+/g, '_') + '_MINGGU_' + reportData.weekNumber + '</title>',
+          '  <style>',
+          '    @page { size: A4 portrait; margin: 12mm 15mm 15mm 15mm; }',
+          '    * { box-sizing: border-box; }',
+          '    body { font-family: "Times New Roman", Times, serif; margin: 0; color: #000; line-height: 1.35; font-size: 11pt; background: #fff; }',
+          '    .kop-container { display: flex; align-items: center; justify-content: space-between; gap: 14px; padding-bottom: 8px; margin-bottom: 2px; }',
+          '    .kop-logo { width: 85px; height: 95px; object-fit: contain; flex-shrink: 0; }',
+          '    .kop-text { text-align: center; flex: 1; line-height: 1.2; }',
+          '    .kop-text h4 { margin: 0; font-size: 10.5pt; font-weight: normal; text-transform: uppercase; letter-spacing: 0.5px; }',
+          '    .kop-text h3 { margin: 2px 0; font-size: 11.5pt; font-weight: bold; text-transform: uppercase; letter-spacing: 0.5px; }',
+          '    .kop-text h2 { margin: 2px 0; font-size: 14.5pt; font-weight: 900; text-transform: uppercase; letter-spacing: 1px; }',
+          '    .kop-text p.meta-sub { margin: 2px 0 0 0; font-size: 9.5pt; font-weight: bold; text-transform: uppercase; }',
+          '    .kop-text p.address { margin: 2px 0 0 0; font-size: 8.5pt; font-style: italic; line-height: 1.2; }',
+          '    .kop-line-thick { border-top: 3px solid #000; margin-top: 4px; }',
+          '    .kop-line-thin { border-top: 1px solid #000; margin-top: 2px; margin-bottom: 14px; }',
+          '    .doc-title { text-align: center; margin-bottom: 14px; }',
+          '    .doc-title h3 { margin: 0; font-size: 12pt; font-weight: bold; text-decoration: underline; text-transform: uppercase; letter-spacing: 0.5px; }',
+          '    .doc-title p { margin: 2px 0 0 0; font-size: 9.5pt; font-family: monospace; font-weight: bold; }',
+          '    .meta-table { width: 100%; border-collapse: collapse; margin-bottom: 12px; font-size: 10pt; }',
+          '    .meta-table td { padding: 2.5px 4px; vertical-align: top; }',
+          '    .section-header { font-weight: bold; font-size: 10.5pt; margin-top: 10px; margin-bottom: 4px; text-transform: uppercase; border-bottom: 1px solid #000; padding-bottom: 2px; }',
+          '    .content-box { border: 1px solid #444; padding: 8px 10px; background: #fff; margin-bottom: 10px; text-align: justify; font-size: 10pt; line-height: 1.4; }',
+          '    .score-box { border: 1.5px solid #000; padding: 8px 10px; margin-top: 12px; page-break-inside: avoid; }',
+          '    .score-table { width: 100%; border-collapse: collapse; text-align: center; font-size: 9.5pt; margin-top: 4px; }',
+          '    .score-table th, .score-table td { border: 1px solid #000; padding: 4px 6px; }',
+          '    .score-table th { background: #f2f2f2; font-weight: bold; }',
+          '    .footer-signature { margin-top: 24px; width: 100%; page-break-inside: avoid; }',
+          '    .footer-signature td { text-align: center; width: 50%; vertical-align: top; font-size: 10pt; }',
+          '    @media print { body { -webkit-print-color-adjust: exact; print-color-adjust: exact; } }',
+          '  </style>',
+          '</head>',
+          '<body>',
+          '  <!-- KOP SURAT RESMI DENGAN LOGO SMKN 1 RONGGA -->',
+          '  <div class="kop-container">',
+          '    <img src="' + logoUrl + '" class="kop-logo" alt="Logo SMKN 1 Rongga" />',
+          '    <div class="kop-text">',
+          '      <h4>PEMERINTAH DAERAH PROVINSI JAWA BARAT</h4>',
+          '      <h4>DINAS PENDIDIKAN</h4>',
+          '      <h4>CABANG DINAS PENDIDIKAN WILAYAH VI</h4>',
+          '      <h2>SMK NEGERI 1 RONGGA</h2>',
+          '      <p class="meta-sub">PROGRAM KEAHLIAN PENGEMBANGAN PERANGKAT LUNAK DAN GIM (PPLG)</p>',
+          '      <p class="address">Jl. Raya Rongga, Desa. Cibedug Kec. Rongga Kab. Bandung Barat Prov. Jawa Barat Telp. 022-6950350</p>',
+          '      <p class="address"><u>Website :</u> smkn1rongga.sch.id Email : mail@smkn1rongga.sch.id</p>',
+          '      <p class="address">Bandung Barat 40565</p>',
+          '    </div>',
+          '    <div style="width: 85px; flex-shrink: 0;"></div>',
+          '  </div>',
+          '  <div class="kop-line-thick"></div>',
+          '  <div class="kop-line-thin"></div>',
+          '',
+          '  <div class="doc-title">',
+          '    <h3>LEMBAR LAPORAN RESENSI BUKU (RABU LITERASI RESIK)</h3>',
+          '    <p>MINGGU KE-' + reportData.weekNumber + ' • SEMESTER GANJIL TAHUN AJARAN 2026/2027</p>',
+          '  </div>',
+          '',
+          '  <!-- IDENTITAS SISWA -->',
+          '  <table class="meta-table">',
+          '    <tr>',
+          '      <td width="22%"><strong>Nama Peserta Didik</strong></td>',
+          '      <td width="2%">:</td>',
+          '      <td width="36%"><strong>' + (userData.name || '-').toUpperCase() + '</strong></td>',
+          '      <td width="18%"><strong>Konsentrasi Keahlian</strong></td>',
+          '      <td width="2%">:</td>',
+          '      <td width="20%">Rekayasa Perangkat Lunak</td>',
+          '    </tr>',
+          '    <tr>',
+          '      <td><strong>Kelas / Rombel</strong></td>',
+          '      <td>:</td>',
+          '      <td>' + (userData.studentClass || '10 RPL') + '</td>',
+          '      <td><strong>Tanggal Pengerjaan</strong></td>',
+          '      <td>:</td>',
+          '      <td>' + new Date(reportData.reportDate).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' }) + '</td>',
+          '    </tr>',
+          '  </table>',
+          '',
+          '  <!-- IDENTITAS BUKU -->',
+          '  <div class="section-header">1. Kelengkapan Identitas Buku</div>',
+          '  <table class="meta-table" style="margin-left: 6px; margin-bottom: 6px;">',
+          '    <tr><td width="22%">Judul Buku</td><td width="2%">:</td><td><strong>' + reportData.bookTitle + '</strong></td></tr>',
+          '    <tr><td>Penulis / Pengarang</td><td>:</td><td>' + reportData.author + '</td></tr>',
+          '    <tr><td>Penerbit & Kota Terbit</td><td>:</td><td>' + reportData.publisher + ', ' + reportData.city + '</td></tr>',
+          '    <tr><td>Tahun Terbit / Tebal</td><td>:</td><td>Tahun ' + reportData.year + ' • ' + reportData.pageCount + ' Halaman ' + (reportData.edition ? '(' + reportData.edition + ')' : '') + '</td></tr>',
+          '  </table>',
+          '',
+          '  <!-- RINGKASAN ISI BUKU -->',
+          '  <div class="section-header">2. Isi Ringkasan Buku (Aspek Menulis)</div>',
+          '  <div class="content-box">' + reportData.summary.replace(/\n/g, '<br/>') + '</div>',
+          '',
+          '  <!-- AMANAT / PESAN MORAL -->',
+          '  <div class="section-header">3. Amanat / Pesan Moral Bacaan</div>',
+          '  <div class="content-box">' + reportData.moralMessage.replace(/\n/g, '<br/>') + '</div>',
+          '',
+          '  <!-- EVALUASI GURU -->',
+          '  <div class="score-box">',
+          '    <div style="font-weight: bold; font-size: 10.5pt; text-align: center; margin-bottom: 4px; text-transform: uppercase;">EVALUASI & PENILAIAN RUBRIK RESIK RESMI</div>',
+          '    <table class="score-table">',
+          '      <thead>',
+          '        <tr>',
+          '          <th>Aspek Menulis (Max 16)</th>',
+          '          <th>Aspek Presentasi (Max 20)</th>',
+          '          <th>Nilai Akhir (0-100)</th>',
+          '          <th>Ketercapaian Kompetensi</th>',
+          '        </tr>',
+          '      </thead>',
+          '      <tbody>',
+          '        <tr>',
+          '          <td><strong>' + (reportData.writingScore !== null && reportData.writingScore !== undefined ? reportData.writingScore + ' / 16' : '-') + '</strong></td>',
+          '          <td><strong>' + (reportData.presentationScore !== null && reportData.presentationScore !== undefined ? reportData.presentationScore + ' / 20' : '-') + '</strong></td>',
+          '          <td><strong style="font-size: 13pt; color: #000;">' + (reportData.finalScore !== null && reportData.finalScore !== undefined ? reportData.finalScore : '-') + '</strong></td>',
+          '          <td><strong>' + (reportData.finalScore >= 75 ? 'TUNTAS (SANGAT BAIK)' : reportData.finalScore !== null && reportData.finalScore !== undefined ? 'PERLU PEMBINAAN' : 'MENUNGGU PENILAIAN') + '</strong></td>',
+          '        </tr>',
+          '      </tbody>',
+          '    </table>',
+          (reportData.teacherFeedback ? '    <div style="font-style: italic; margin-top: 6px; font-size: 9.5pt; background: #fafafa; padding: 4px 8px; border-left: 3px solid #000;"><strong>Catatan Guru Pengampu:</strong> "' + reportData.teacherFeedback + '"</div>' : ''),
+          '  </div>',
+          '',
+          '  <!-- TANDA TANGAN -->',
+          '  <table class="footer-signature">',
+          '    <tr>',
+          '      <td>',
+          '        Peserta Didik,<br/><br/><br/><br/>',
+          '        <strong><u>( ' + (userData.name || 'Siswa PPLG') + ' )</u></strong><br/>',
+          '        <span style="font-size: 8.5pt; font-family: monospace;">NIS/Kelas: ' + (userData.studentClass || '10 RPL') + '</span>',
+          '      </td>',
+          '      <td>',
+          '        Rongga, ' + new Date(reportData.reportDate).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' }) + '<br/>',
+          '        Guru Pengampu RPL / Literasi,<br/><br/><br/><br/>',
+          '        <strong><u>( Agung Gumelar Saputra, S.Tr.T. )</u></strong><br/>',
+          '        <span style="font-size: 8.5pt; font-family: monospace;">NIP. 199306012022211013</span>',
+          '      </td>',
+          '    </tr>',
+          '  </table>',
+          '</body>',
+          '</html>'
+        ].join('');
+
+        printWindow.document.write(printHtml);
+        printWindow.document.close();
+        setTimeout(() => { printWindow.print(); }, 400);
+      });
+    });
+  </script>
+</BaseLayout>

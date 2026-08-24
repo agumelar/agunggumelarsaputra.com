@@ -1,7 +1,6 @@
 import { defineMiddleware } from 'astro:middleware';
-import { verifyToken, canAccessAdminPanel, isSuperAdminEmail } from './utils/auth';
+import { verifyToken, canAccessAdminPanel, isSuperAdminEmail, isTeacherEmail } from './utils/auth';
 
-const PROTECTED_ROUTES = ['/dashboard', '/pembelajaran', '/admin'];
 
 export const onRequest = defineMiddleware(async (context, next) => {
   let user = null;
@@ -11,6 +10,8 @@ export const onRequest = defineMiddleware(async (context, next) => {
     if (user) {
       if (isSuperAdminEmail(user.email)) {
         user.role = 'superadmin';
+      } else if (isTeacherEmail(user.email) || user.role === 'teacher' || user.role === 'admin') {
+        user.role = 'teacher';
       }
     }
   } catch {
@@ -21,14 +22,17 @@ export const onRequest = defineMiddleware(async (context, next) => {
   const url = new URL(context.request.url);
   const pathname = url.pathname;
 
-  const isProtected = PROTECTED_ROUTES.some((route) => pathname.startsWith(route));
-  
+  // Catalog page (/pembelajaran) is public for guests to browse,
+  // but subroutes (/pembelajaran/orientasi-pplg, /pembelajaran/tka-pplg, /pembelajaran/[slug]) require login.
+  const isProtectedSubroute = pathname.startsWith('/pembelajaran/') && pathname !== '/pembelajaran' && pathname !== '/pembelajaran/';
+  const isProtected = pathname.startsWith('/dashboard') || isProtectedSubroute || (pathname.startsWith('/admin') && !pathname.startsWith('/api/admin'));
+
   if (isProtected && !user) {
     return context.redirect(`/login?redirect=${encodeURIComponent(pathname)}`);
   }
 
-  // Admin and Teacher route protection
-  if (pathname.startsWith('/admin') && !canAccessAdminPanel(user?.role)) {
+  // Admin and Teacher route protection (pages under /admin, API handles its own JSON auth)
+  if (pathname.startsWith('/admin') && !pathname.startsWith('/api/admin') && !canAccessAdminPanel(user?.role)) {
     return context.redirect('/dashboard?error=unauthorized_admin');
   }
 

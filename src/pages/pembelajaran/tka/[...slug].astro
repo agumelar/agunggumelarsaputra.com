@@ -1,0 +1,550 @@
+---
+import BaseLayout from '../../../layouts/BaseLayout.astro';
+import { getCollection, render } from 'astro:content';
+import { db, isDbConfigured, ensureDbInitialized } from '../../../db';
+import { userSubmissions, userProgress, enrollmentTokens, userEnrollments, tkaAttempts } from '../../../db/schema';
+import { eq, and, desc } from 'drizzle-orm';
+import { canAccessAdminPanel } from '../../../utils/auth.ts';
+import TkaQuiz from '../../../components/TkaQuiz.astro';
+import SmartMarkdownWrapper from '../../../components/modul/SmartMarkdownWrapper.astro';
+import InteractiveReflectionForm from '../../../components/modul/InteractiveReflectionForm.astro';
+import AntiCopyPasteGuardian from '../../../components/modul/AntiCopyPasteGuardian.astro';
+
+const { slug } = Astro.params;
+const allModules = await getCollection('tkaDrilling');
+const entry = allModules.find((m) => (m.id || m.slug) === slug);
+
+if (!entry) {
+  return Astro.redirect('/pembelajaran/tka-pplg');
+}
+
+const user = Astro.locals.user;
+const { Content } = await render(entry);
+
+const lessonSlug = entry.id || entry.slug;
+
+const sortedModules = allModules.sort((a, b) => (a.data.order || 0) - (b.data.order || 0));
+const currentIndex = sortedModules.findIndex((m) => (m.id || m.slug) === slug);
+const nextModule = currentIndex >= 0 && currentIndex < sortedModules.length - 1 ? sortedModules[currentIndex + 1] : null;
+const nextSlug = nextModule ? (nextModule.id || nextModule.slug) : null;
+
+// Gating Logic
+let isEnrolled = false;
+let completedSlugs: string[] = [];
+let hasPassedCheckpoint = false;
+let hasSubmittedReflection = false;
+let lastTkaAttempt: { score: number; totalQuestions: number; correctAnswers: number; xpEarned: number; createdAt: Date } | null = null;
+let allTkaAttempts: Array<{
+  id: number;
+  attemptNumber: number;
+  score: number;
+  totalQuestions: number;
+  correctAnswers: number;
+  xpEarned: number;
+  createdAt: Date;
+}> = [];
+
+if (user && isDbConfigured()) {
+  try {
+    await ensureDbInitialized();
+    
+    // Check Enrollment
+    const enrollments = await db.select({
+      targetType: enrollmentTokens.targetType,
+      title: enrollmentTokens.title,
+    }).from(userEnrollments)
+      .innerJoin(enrollmentTokens, eq(userEnrollments.tokenId, enrollmentTokens.id))
+      .where(eq(userEnrollments.userId, user.userId));
+
+    const tkaEnroll = enrollments.find(e => e.targetType === 'tka' || e.targetType === 'all' || e.title.toLowerCase().includes('tka'));
+    if (tkaEnroll || canAccessAdminPanel(user.role)) {
+      isEnrolled = true;
+    }
+
+    // Check Progress
+    const progressList = await db.select({ lessonSlug: userProgress.lessonSlug })
+      .from(userProgress).where(eq(userProgress.userId, user.userId));
+    completedSlugs = progressList.map(p => p.lessonSlug);
+    
+    const existingSubs = await db.select({ submissionType: userSubmissions.submissionType })
+      .from(userSubmissions)
+      .where(and(eq(userSubmissions.userId, user.userId), eq(userSubmissions.lessonSlug, lessonSlug)));
+
+    hasPassedCheckpoint = existingSubs.some(s => s.submissionType === 'quiz' || s.submissionType === 'checkpoint');
+    hasSubmittedReflection = existingSubs.some(s => s.submissionType === 'reflection');
+
+    // Fetch Tryout Attempts for THIS specific module
+    const attempts = await db.select({
+      id: tkaAttempts.id,
+      attemptNumber: tkaAttempts.attemptNumber,
+      score: tkaAttempts.score,
+      totalQuestions: tkaAttempts.totalQuestions,
+      correctAnswers: tkaAttempts.correctAnswers,
+      xpEarned: tkaAttempts.xpEarned,
+      createdAt: tkaAttempts.createdAt,
+    }).from(tkaAttempts)
+      .where(and(eq(tkaAttempts.userId, user.userId), eq(tkaAttempts.lessonSlug, lessonSlug)))
+      .orderBy(desc(tkaAttempts.createdAt));
+
+    allTkaAttempts = attempts;
+
+    if (allTkaAttempts.length > 0) {
+      lastTkaAttempt = allTkaAttempts[0];
+      hasPassedCheckpoint = true;
+    }
+    
+  } catch (e) {
+    console.error('Error fetching student progression states:', e);
+  }
+}
+
+const isCurrentModuleCompleted = completedSlugs.includes(lessonSlug);
+if (isCurrentModuleCompleted || allTkaAttempts.length > 0 || hasPassedCheckpoint) {
+  hasPassedCheckpoint = true;
+}
+const isCurrentModuleLocked = !isEnrolled; // For TKA, lock if not enrolled. (We can also add sequential locking later).
+
+---
+
+<BaseLayout title={entry.data.title} description={entry.data.description}>
+  <div class="container-main py-8" id="module-container" data-slug={lessonSlug} data-init-checkpoint={hasPassedCheckpoint ? "true" : "false"} data-init-reflection={hasSubmittedReflection ? "true" : "false"} data-user-role={user?.role || 'student'}>
+
+    <!-- Module Header Banner -->
+    <div class="p-6 md:p-8 rounded-2xl bg-gradient-to-br from-card to-cyan-900/10 border border-cyan-500/20 mb-8 space-y-4 shadow-sm relative overflow-hidden">
+      <div class="flex flex-wrap items-center justify-between gap-3">
+        <div class="flex items-center gap-2">
+          <a href="/pembelajaran/tka-pplg" class="text-xs text-muted-foreground hover:text-cyan-400 font-medium transition-colors flex items-center gap-1">
+            ← Hub TKA PPLG
+          </a>
+          <span class="text-muted-foreground">•</span>
+          <span class="px-2.5 py-0.5 rounded bg-cyan-500/10 text-cyan-400 text-xs font-mono font-semibold border border-cyan-500/20">{entry.data.category}</span>
+        </div>
+
+        <div class="flex items-center gap-3">
+          {canAccessAdminPanel(user?.role) && (
+            <span class="px-2.5 py-1 rounded-lg bg-amber-500/20 text-amber-300 font-mono text-xs font-bold border border-amber-500/40 flex items-center gap-1.5 shadow-sm">
+              👑 Akses Guru: Bypass Modul Aktif
+            </span>
+          )}
+          {isCurrentModuleCompleted ? (
+            <span class="px-2.5 py-1 rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 font-mono text-xs font-bold border border-emerald-500/20 flex items-center gap-1.5">
+              ✅ Selesai
+            </span>
+          ) : (
+            <span class="px-2.5 py-1 rounded-lg bg-amber-500/10 text-amber-600 dark:text-amber-400 font-mono text-xs font-bold border border-amber-500/20 flex items-center gap-1.5">
+              🎯 Sedang Drilling
+            </span>
+          )}
+          <span class="px-2.5 py-1 rounded-lg bg-secondary text-foreground font-mono text-xs font-semibold border border-border flex items-center gap-1.5">
+            ⏱️ {entry.data.duration}
+          </span>
+        </div>
+      </div>
+
+      <div class="space-y-1">
+        <h1 class="text-2xl md:text-3xl font-extrabold text-foreground tracking-tight">
+          {entry.data.title}
+        </h1>
+        <p class="text-xs md:text-sm text-muted-foreground leading-relaxed max-w-4xl">
+          {entry.data.description}
+        </p>
+      </div>
+
+      {!isCurrentModuleLocked && (
+        <div class="pt-4 border-t border-white/5 flex overflow-x-auto snap-x snap-mandatory hide-scrollbar gap-2 pb-2 -mx-2 px-2 sm:mx-0 sm:px-0" id="module-tab-nav">
+          <button
+            type="button"
+            data-tab="pretest"
+            class="module-tab-btn active-tab px-4 py-3 sm:py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 border border-cyan-500/20 flex-shrink-0 snap-center min-h-[44px] sm:min-h-0 bg-cyan-500/10 text-cyan-400"
+          >
+            <span>📝</span>
+            <span>1. CBT Simulator</span>
+          </button>
+
+          <button
+            type="button"
+            data-tab="materi"
+            id="tab-btn-materi"
+            class={`module-tab-btn px-4 py-3 sm:py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 border flex-shrink-0 snap-center min-h-[44px] sm:min-h-0 ${!hasPassedCheckpoint ? 'tab-locked opacity-75' : ''}`}
+          >
+            <span id="tab-icon-materi">{hasPassedCheckpoint ? '📖' : '🔒'}</span>
+            <span>2. Bedah Materi</span>
+          </button>
+
+          <button
+            type="button"
+            data-tab="refleksi"
+            id="tab-btn-refleksi"
+            class={`module-tab-btn px-4 py-3 sm:py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 border flex-shrink-0 snap-center min-h-[44px] sm:min-h-0 ${!hasPassedCheckpoint ? 'tab-locked opacity-75' : ''}`}
+          >
+            <span id="tab-icon-refleksi">{hasPassedCheckpoint ? '💭' : '🔒'}</span>
+            <span>3. Post-Test & Refleksi</span>
+          </button>
+        </div>
+      )}
+
+      <!-- Locked Warning Toast -->
+      <div id="tab-lock-toast" class="hidden p-3 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-700 dark:text-amber-300 text-xs font-medium flex items-center justify-between animate-shake mt-4">
+        <div class="flex items-center gap-2">
+          <span>🔒</span>
+          <span id="tab-lock-message">Selesaikan Kuis Simulator terlebih dahulu.</span>
+        </div>
+        <button type="button" id="close-lock-toast" class="text-xs font-bold px-2 py-0.5 rounded hover:bg-amber-500/20">✕</button>
+      </div>
+    </div>
+
+    <!-- Main Content Area -->
+    <main class="space-y-6 max-w-4xl mx-auto" id="module-content-area">
+
+      {isCurrentModuleLocked ? (
+        <div class="card p-8 md:p-12 text-center rounded-3xl border-cyan-500/20 bg-card shadow-lg space-y-6">
+          <div class="w-20 h-20 rounded-full bg-cyan-500/10 border border-cyan-500/30 text-cyan-500 text-4xl flex items-center justify-center mx-auto">
+            🔒
+          </div>
+          <div class="space-y-2">
+            <h2 class="text-2xl font-extrabold text-foreground tracking-tight">
+              Akses TKA Terkunci
+            </h2>
+            <p class="text-xs sm:text-sm text-muted-foreground leading-relaxed max-w-lg mx-auto">
+              Silakan mendaftar di kelas menggunakan token terlebih dahulu di halaman Hub TKA PPLG.
+            </p>
+          </div>
+          <div class="pt-3">
+            <a
+              href="/pembelajaran/tka-pplg"
+              class="btn btn-primary bg-cyan-600 hover:bg-cyan-500 text-xs sm:text-sm font-bold px-6 py-3 rounded-xl shadow-md border-0 text-white"
+            >
+              Kembali ke Hub TKA
+            </a>
+          </div>
+        </div>
+      ) : (
+        <>
+          <section id="panel-pretest" class="tab-panel space-y-6">
+            {allTkaAttempts.length > 0 && (
+              <div class="p-6 rounded-2xl bg-card border border-cyan-500/30 shadow-lg space-y-4">
+                <div class="flex flex-wrap items-center justify-between gap-3 border-b border-border/60 pb-3">
+                  <div class="flex items-center gap-3">
+                    <span class="text-2xl">🏆</span>
+                    <div>
+                      <div class="flex items-center gap-2">
+                        <span class="text-xs font-mono font-bold uppercase tracking-wider text-cyan-400">RIWAYAT DRILLING & REKAP PERCOBAAN SISWA</span>
+                        <span class="px-2 py-0.5 rounded bg-cyan-500/20 text-cyan-400 border border-cyan-500/30 text-[10px] font-mono font-bold">
+                          {allTkaAttempts.length} Percobaan
+                        </span>
+                      </div>
+                      <h3 class="text-base font-extrabold text-foreground">Hasil Tryout CBT {entry.data.title}</h3>
+                    </div>
+                  </div>
+
+                  <div class="flex items-center gap-2">
+                    <span class={`px-3 py-1 rounded-xl font-mono text-xs font-bold ${lastTkaAttempt && lastTkaAttempt.score >= 73 ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' : 'bg-amber-500/20 text-amber-400 border border-amber-500/30'}`}>
+                      {lastTkaAttempt && lastTkaAttempt.score >= 73 ? '✓ TUNTAS KKM (73)' : '⚠️ BELUM KKM'}
+                    </span>
+                    <span class="px-3 py-1 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 text-white font-mono text-xs font-black shadow-md">
+                      Skor Terakhir: {lastTkaAttempt?.score || 0} / 100
+                    </span>
+                  </div>
+                </div>
+
+                <!-- Attempt List Cards -->
+                <div class="space-y-2 max-h-56 overflow-y-auto pr-1 hide-scrollbar">
+                  {allTkaAttempts.map((item, idx) => (
+                    <div class="p-3.5 rounded-xl bg-secondary/30 border border-border flex flex-wrap items-center justify-between gap-3 hover:border-cyan-500/30 transition-colors">
+                      <div class="flex items-center gap-3">
+                        <span class="w-7 h-7 rounded-lg bg-cyan-500/10 text-cyan-400 font-mono font-bold text-xs flex items-center justify-center border border-cyan-500/20">
+                          #{item.attemptNumber || (allTkaAttempts.length - idx)}
+                        </span>
+                        <div>
+                          <div class="text-xs font-bold text-foreground">
+                            Percobaan Ke-{item.attemptNumber || (allTkaAttempts.length - idx)}
+                          </div>
+                          <div class="text-[11px] text-muted-foreground font-mono">
+                            {new Date(item.createdAt).toLocaleDateString('id-ID', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                          </div>
+                        </div>
+                      </div>
+
+                      <div class="flex items-center gap-3">
+                        <span class="text-xs font-mono text-muted-foreground">
+                          Jawaban: <strong class="text-foreground font-bold">{item.correctAnswers}/{item.totalQuestions}</strong>
+                        </span>
+                        <span class="text-xs font-mono text-amber-400 font-bold">
+                          +{item.xpEarned} XP
+                        </span>
+                        <span class={`px-2.5 py-0.5 rounded text-[11px] font-mono font-extrabold ${item.score >= 73 ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' : 'bg-amber-500/20 text-amber-400 border border-amber-500/30'}`}>
+                          Skor: {item.score}
+                        </span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            <div class="p-6 rounded-2xl bg-secondary/30 border border-border flex flex-col items-center justify-center text-center gap-2">
+              <h3 class="text-base font-bold text-foreground">Simulator Ujian CBT TKA</h3>
+              <p class="text-xs text-muted-foreground max-w-lg">
+                Selesaikan simulasi ujian ini dengan durasi maksimal 60 menit. Anda dapat mengulang ujian kapan saja untuk meningkatkan skor, dan hasil pengerjaan akan otomatis tercatat di riwayat di atas.
+              </p>
+            </div>
+            
+            <div class="card p-6 border border-border rounded-xl">
+               <TkaQuiz slug={lessonSlug} />
+            </div>
+          </section>
+
+          <section id="panel-materi" class="tab-panel hidden space-y-6">
+            <SmartMarkdownWrapper>
+              <Content />
+            </SmartMarkdownWrapper>
+          </section>
+
+          <section id="panel-refleksi" class="tab-panel hidden space-y-6">
+            <InteractiveReflectionForm
+              lessonSlug={lessonSlug}
+              moduleTitle={entry.data.title}
+              user={user}
+            />
+
+            <div class="p-6 md:p-8 rounded-2xl bg-gradient-to-br from-card via-card to-cyan-500/5 border border-border text-center space-y-4 shadow-sm relative overflow-hidden" id="module-completion-card">
+              <div class="space-y-1.5">
+                <div class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 text-xs font-mono font-bold">
+                  🏁 TAHAP AKHIR
+                </div>
+                <h3 class="text-lg md:text-xl font-extrabold text-foreground">
+                  Selesaikan Sesi Drilling
+                </h3>
+              </div>
+
+              <div class="pt-2 flex flex-col sm:flex-row items-center justify-center gap-3">
+                <button
+                  id="btn-complete-lesson"
+                  class={`btn text-xs sm:text-sm font-bold px-7 py-3 rounded-xl shadow-lg transition-all flex items-center justify-center gap-2 ${
+                    isCurrentModuleCompleted
+                      ? 'bg-emerald-600 text-white'
+                      : 'bg-cyan-600 hover:bg-cyan-500 text-white border-0 hover:scale-105'
+                  }`}
+                >
+                  <span>{isCurrentModuleCompleted ? '✅ Sesi TKA Telah Diselesaikan' : '✅ Tandai Selesai'}</span>
+                </button>
+
+                {nextSlug ? (
+                  <a
+                    id="btn-goto-next"
+                    href={`/pembelajaran/tka/${nextSlug}`}
+                    class={`btn text-xs sm:text-sm font-bold px-7 py-3 rounded-xl shadow-lg bg-emerald-600 hover:bg-emerald-500 text-white flex items-center justify-center gap-2 transition-all hover:scale-105 ${
+                      isCurrentModuleCompleted ? '' : 'hidden'
+                    }`}
+                  >
+                    <span>Lanjut ke Pertemuan Selanjutnya ➔</span>
+                  </a>
+                ) : (
+                  <a
+                    id="btn-goto-next"
+                    href="/pembelajaran/tka-pplg"
+                    class={`btn text-xs sm:text-sm font-bold px-7 py-3 rounded-xl shadow-lg bg-emerald-600 hover:bg-emerald-500 text-white flex items-center justify-center gap-2 transition-all hover:scale-105 ${
+                      isCurrentModuleCompleted ? '' : 'hidden'
+                    }`}
+                  >
+                    <span>Kembali ke Katalog TKA 🏁</span>
+                  </a>
+                )}
+              </div>
+            </div>
+          </section>
+        </>
+      )}
+
+    </main>
+  </div>
+
+  <style>
+    .module-tab-btn {
+      background-color: var(--secondary);
+      border-color: var(--border);
+      color: var(--muted-foreground);
+    }
+    .module-tab-btn:hover {
+      background-color: hsl(var(--secondary-foreground) / 0.1);
+      color: var(--foreground);
+    }
+    .module-tab-btn.active-tab {
+      background-color: hsl(var(--primary) / 0.15);
+      border-color: var(--primary);
+      color: var(--primary);
+      box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+    }
+    .tab-locked {
+      cursor: not-allowed;
+    }
+    .hide-scrollbar {
+      -ms-overflow-style: none;
+      scrollbar-width: none;
+    }
+    .hide-scrollbar::-webkit-scrollbar {
+      display: none;
+    }
+  </style>
+
+  <script>
+    import { markLessonComplete } from '../../../utils/gamification';
+
+    const container = document.getElementById('module-container');
+    const slug = container?.getAttribute('data-slug') || '';
+    const userRole = container?.getAttribute('data-user-role') || 'student';
+    const isAdmin = userRole === 'admin' || userRole === 'superadmin' || userRole === 'teacher';
+    const tabBtns = document.querySelectorAll('.module-tab-btn');
+    const tabPanels = document.querySelectorAll('.tab-panel');
+    const btnComplete = document.getElementById('btn-complete-lesson');
+    
+    const tabBtnMateri = document.getElementById('tab-btn-materi');
+    const tabIconMateri = document.getElementById('tab-icon-materi');
+    const tabBtnRefleksi = document.getElementById('tab-btn-refleksi');
+    const tabIconRefleksi = document.getElementById('tab-icon-refleksi');
+    const lockToast = document.getElementById('tab-lock-toast');
+    const lockMessage = document.getElementById('tab-lock-message');
+    const closeLockToast = document.getElementById('close-lock-toast');
+
+    // DEV BYPASS
+    const btnBypass = document.getElementById('btn-fake-pass-checkpoint');
+
+    let isCheckpointPassed = container?.getAttribute('data-init-checkpoint') === 'true';
+
+    function showLockWarning(msg: string) {
+      if (lockToast && lockMessage) {
+        lockMessage.textContent = msg;
+        lockToast.classList.remove('hidden');
+        setTimeout(() => {
+          lockToast.classList.add('hidden');
+        }, 5000);
+      }
+    }
+
+    closeLockToast?.addEventListener('click', () => {
+      lockToast?.classList.add('hidden');
+    });
+
+    function updateTabLockVisuals() {
+      if (isAdmin || isCheckpointPassed) {
+        tabBtnMateri?.classList.remove('tab-locked', 'opacity-75');
+        if (tabIconMateri) tabIconMateri.textContent = '📖';
+        
+        tabBtnRefleksi?.classList.remove('tab-locked', 'opacity-75');
+        if (tabIconRefleksi) tabIconRefleksi.textContent = '💭';
+      } else {
+        tabBtnMateri?.classList.add('tab-locked', 'opacity-75');
+        if (tabIconMateri) tabIconMateri.textContent = '🔒';
+        
+        tabBtnRefleksi?.classList.add('tab-locked', 'opacity-75');
+        if (tabIconRefleksi) tabIconRefleksi.textContent = '🔒';
+      }
+    }
+
+    updateTabLockVisuals();
+
+    window.addEventListener('checkpoint-passed', () => {
+      isCheckpointPassed = true;
+      updateTabLockVisuals();
+    });
+
+    function switchTab(targetTab: string) {
+      if (!targetTab) return;
+
+      if ((targetTab === 'materi' || targetTab === 'refleksi') && !isAdmin && !isCheckpointPassed) {
+        showLockWarning('🔒 Selesaikan kuis simulator di Tab Pre-Test terlebih dahulu.');
+        return;
+      }
+
+      lockToast?.classList.add('hidden');
+
+      tabBtns.forEach((btn) => {
+        if (btn.getAttribute('data-tab') === targetTab) {
+          btn.classList.add('active-tab');
+          if(targetTab !== 'pretest') {
+            btn.classList.remove('bg-cyan-500/10', 'text-cyan-400');
+            btn.classList.add('bg-primary/15', 'text-primary');
+          }
+        } else {
+          btn.classList.remove('active-tab');
+          btn.classList.remove('bg-cyan-500/10', 'text-cyan-400', 'bg-primary/15', 'text-primary');
+        }
+      });
+
+      tabPanels.forEach((panel) => {
+        if (panel.id === `panel-${targetTab}`) {
+          panel.classList.remove('hidden');
+        } else {
+          panel.classList.add('hidden');
+        }
+      });
+      history.replaceState(null, '', `#${targetTab}`);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    (window as any).switchModuleTab = switchTab;
+
+    tabBtns.forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const targetTab = btn.getAttribute('data-tab');
+        if (targetTab) switchTab(targetTab);
+      });
+    });
+
+    if (window.location.hash) {
+      const hash = window.location.hash.substring(1);
+      switchTab(hash);
+    }
+
+    if (btnBypass) {
+      btnBypass.addEventListener('click', () => {
+        isCheckpointPassed = true;
+        updateTabLockVisuals();
+        switchTab('materi');
+      });
+    }
+
+    if (btnComplete) {
+      btnComplete.addEventListener('click', async () => {
+        if (btnComplete.getAttribute('data-processing') === 'true') return;
+        btnComplete.setAttribute('data-processing', 'true');
+        btnComplete.textContent = '⏳ Menyimpan progres...';
+
+        const activeTokenId = localStorage.getItem('ags_active_token_id');
+
+        try {
+          const res = await fetch('/api/progress/complete-lesson', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              lessonSlug: slug,
+              tokenId: activeTokenId ? Number(activeTokenId) : null
+            })
+          });
+          const data = await res.json();
+          if (!res.ok || !data.success) throw new Error(data.error || 'Progres modul ditolak server.');
+          
+          markLessonComplete(slug);
+          localStorage.setItem(`ags_completed_${slug}`, 'true');
+
+          btnComplete.textContent = `🎉 Sesi TKA Berhasil Dituntaskan! (+${data.xpEarned || 15} XP)`;
+          btnComplete.className = 'btn text-xs sm:text-sm font-bold px-7 py-3 rounded-xl shadow-lg bg-emerald-600 hover:bg-emerald-500 text-white flex items-center justify-center gap-2';
+
+          const btnNextMod = document.getElementById('btn-goto-next');
+          if (btnNextMod) {
+            btnNextMod.classList.remove('hidden');
+          }
+          
+          window.dispatchEvent(new CustomEvent('refresh-live-score'));
+        } catch (err: any) {
+          alert('Gagal menandai modul selesai: ' + (err.message || err));
+          btnComplete.removeAttribute('data-processing');
+          btnComplete.textContent = '✅ Tandai Selesai';
+        }
+      });
+    }
+  </script>
+
+  <!-- Anti Copy Paste Protection -->
+  <AntiCopyPasteGuardian />
+</BaseLayout>

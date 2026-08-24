@@ -1,42 +1,501 @@
 ---
 import DashboardLayout from '../../layouts/DashboardLayout.astro';
-import TkaQuiz from '../../components/TkaQuiz.astro';
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import { getCollection } from 'astro:content';
+import { db, isDbConfigured, ensureDbInitialized } from '../../db';
+import { enrollmentTokens, userEnrollments, userProgress, tkaAttempts } from '../../db/schema';
+import { eq, desc } from 'drizzle-orm';
+import { canAccessAdminPanel } from '../../utils/auth';
 
 const user = Astro.locals.user;
-if (!user) {
-  return Astro.redirect('/login');
+
+// Ambil semua modul Drilling TKA
+let tkaModules: any[] = [];
+try {
+  const allTka = await getCollection('tkaDrilling');
+  tkaModules = allTka.sort((a, b) => a.data.order - b.data.order);
+} catch (e) {
+  console.error("Error loading tkaDrilling collection:", e);
 }
+
+let isEnrolled = false;
+let userEnrollmentData: any = null;
+let completedSlugs: string[] = [];
+let userTkaAttempts: Array<{ id: number; score: number; totalQuestions: number; correctAnswers: number; xpEarned: number; createdAt: Date }> = [];
+
+if (user && isDbConfigured()) {
+  try {
+    await ensureDbInitialized();
+    
+    // Cek enrollment
+    const enrollments = await db.select({
+      id: userEnrollments.id,
+      token: enrollmentTokens.token,
+      title: enrollmentTokens.title,
+      targetType: enrollmentTokens.targetType,
+      targetClass: enrollmentTokens.targetClass,
+      targetSlug: enrollmentTokens.targetSlug,
+      enrolledAt: userEnrollments.enrolledAt,
+    }).from(userEnrollments)
+      .innerJoin(enrollmentTokens, eq(userEnrollments.tokenId, enrollmentTokens.id))
+      .where(eq(userEnrollments.userId, user.userId));
+
+    userEnrollmentData = enrollments.find(e => 
+      e.targetType === 'tka' || e.targetType === 'all' || e.title.toLowerCase().includes('tka')
+    );
+    
+    if (userEnrollmentData) {
+      isEnrolled = true;
+    }
+
+    // Cek modul yang sudah selesai
+    const progressList = await db.select({
+      lessonSlug: userProgress.lessonSlug,
+    }).from(userProgress)
+      .where(eq(userProgress.userId, user.userId));
+    
+    completedSlugs = progressList.map(p => p.lessonSlug);
+
+    // Fetch Riwayat Tryout Siswa
+    userTkaAttempts = await db.select({
+      id: tkaAttempts.id,
+      lessonSlug: tkaAttempts.lessonSlug,
+      attemptNumber: tkaAttempts.attemptNumber,
+      score: tkaAttempts.score,
+      totalQuestions: tkaAttempts.totalQuestions,
+      correctAnswers: tkaAttempts.correctAnswers,
+      xpEarned: tkaAttempts.xpEarned,
+      createdAt: tkaAttempts.createdAt,
+    }).from(tkaAttempts)
+      .where(eq(tkaAttempts.userId, user.userId))
+      .orderBy(desc(tkaAttempts.createdAt));
+
+  } catch (err) {
+    console.error('Error fetching tka progress:', err);
+  }
+}
+
+const totalCompleted = tkaModules.filter(m => completedSlugs.includes(m.id || m.slug)).length;
+const progressPercentage = tkaModules.length > 0 ? Math.round((totalCompleted / tkaModules.length) * 100) : 0;
+const bestTkaScore = userTkaAttempts.length > 0 ? Math.max(...userTkaAttempts.map(a => a.score)) : 0;
 ---
 
-<DashboardLayout 
-  title="Drilling TKA PPLG Simulator"
-  description="Simulasi CBT Ujian Tes Keahlian Akademik PPLG Kurikulum Merdeka Kemendikdasmen oleh Agung Gumelar Saputra."
-  activeNav="/pembelajaran/tka-pplg"
->
-  <div class="space-y-6 max-w-5xl mx-auto">
-    <!-- Header Banner -->
-    <div class="p-6 rounded-xl bg-card border border-border space-y-2 shadow-sm">
-      <div class="flex items-center gap-2">
-        <span class="px-2.5 py-0.5 rounded-md bg-secondary text-foreground border border-border text-xs font-mono font-semibold">
-          🎯 Ujian Vokasi SMK
-        </span>
-        <span class="px-2.5 py-0.5 rounded-md bg-emerald-500/10 border border-emerald-500/25 text-emerald-600 dark:text-emerald-400 text-xs font-mono font-semibold">
-          ✨ Hingga +100 XP
-        </span>
+{user ? (
+  <DashboardLayout
+    title="Drilling TKA PPLG (Kelas 12)"
+    description="Hub Persiapan dan Try Out Ujian Keahlian Akademik PPLG Kelas 12"
+    activeNav="/pembelajaran/tka-pplg"
+  >
+    <div class="space-y-6 max-w-6xl mx-auto pb-12">
+      
+      <!-- Back Link & Breadcrumb -->
+      <div class="flex items-center justify-between">
+        <a href="/pembelajaran" class="inline-flex items-center gap-1.5 text-xs font-semibold text-muted-foreground hover:text-foreground transition-colors">
+          <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+          </svg>
+          Kembali ke Katalog
+        </a>
+
+        {isEnrolled && userEnrollmentData && (
+          <div class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-cyan-500/10 text-cyan-600 dark:text-cyan-400 border border-cyan-500/20 text-xs font-mono font-semibold">
+            <span class="w-2 h-2 rounded-full bg-cyan-500 animate-pulse"></span>
+            Terenroll di: {userEnrollmentData.targetClass || 'Kelas Siswa'} ({userEnrollmentData.token})
+          </div>
+        )}
       </div>
 
-      <h1 class="text-2xl sm:text-3xl font-bold text-foreground tracking-tight">
-        Drilling & Tryout TKA PPLG
-      </h1>
+      <!-- Course Hero Card -->
+      <div class="card p-6 md:p-8 rounded-2xl border border-cyan-500/20 bg-gradient-to-br from-card to-cyan-900/10 shadow-sm space-y-6 relative overflow-hidden">
+        <div class="absolute -right-10 -top-10 text-9xl opacity-5">🎯</div>
+        
+        <div class="flex flex-col lg:flex-row lg:items-start justify-between gap-6 relative z-10">
+          <div class="space-y-3 max-w-3xl">
+            <div class="flex flex-wrap items-center gap-2">
+              <span class="px-2.5 py-0.5 rounded bg-cyan-500/10 text-cyan-500 border border-cyan-500/20 text-[11px] font-mono font-bold uppercase">
+                PERSIAPAN UJIAN
+              </span>
+              <span class="px-2.5 py-0.5 rounded bg-secondary text-foreground border border-border text-[11px] font-mono font-semibold">
+                KELAS 12 RPL
+              </span>
+            </div>
 
-      <p class="text-xs sm:text-sm text-muted-foreground max-w-3xl leading-relaxed">
-        Asesmen Tes Keahlian Akademik untuk siswa <strong>Pengembangan Perangkat Lunak dan Gim (PPLG)</strong>. Uji pemahaman mengenai Algoritma, Database, OOP, K3LH, dan Proses Bisnis PPLG secara real-time. Nilai dan rekaman pengerjaan otomatis tercatat di akun belajarmu.
-      </p>
-    </div>
+            <h1 class="text-2xl sm:text-4xl font-extrabold text-foreground tracking-tight">
+              Drilling TKA PPLG Terpadu
+            </h1>
 
-    <!-- Quiz Engine Component -->
-    <div>
-      <TkaQuiz />
+            <p class="text-sm sm:text-base text-muted-foreground leading-relaxed">
+              Program intensif persiapan Ujian Keahlian Akademik & UKK PPLG. Dirancang dengan pola <strong class="text-foreground">60 Menit Kuis, 70 Menit Bedah Materi, dan 30 Menit Refleksi</strong> untuk memastikan penguasaan konsep teori kejuruan.
+            </p>
+
+            <!-- Meta details -->
+            <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-2">
+              <div class="p-3 rounded-lg bg-background/50 border border-white/5">
+                <span class="text-[10px] font-mono text-muted-foreground block">TARGET UJIAN</span>
+                <span class="text-xs font-bold text-foreground">26 Oktober 2026</span>
+              </div>
+              <div class="p-3 rounded-lg bg-background/50 border border-white/5">
+                <span class="text-[10px] font-mono text-muted-foreground block">TOTAL PERTEMUAN</span>
+                <span class="text-xs font-bold text-foreground">10 Modul (160 mnt/sesi)</span>
+              </div>
+              <div class="p-3 rounded-lg bg-background/50 border border-white/5">
+                <span class="text-[10px] font-mono text-muted-foreground block">POLA BELAJAR</span>
+                <span class="text-xs font-bold text-foreground">Kuis + Teori + Refleksi</span>
+              </div>
+              <div class="p-3 rounded-lg bg-background/50 border border-white/5">
+                <span class="text-[10px] font-mono text-muted-foreground block">TOTAL XP BELAJAR</span>
+                <span class="text-xs font-bold text-cyan-500 font-mono">✨ +1000 XP</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Progress Widget / Enroll CTA -->
+          <div class="w-full lg:w-72 p-5 rounded-xl bg-background/60 backdrop-blur-sm border border-white/10 flex flex-col justify-between space-y-4 shadow-lg">
+            <div>
+              <div class="flex items-center justify-between text-xs font-semibold mb-2">
+                <span class="text-foreground">Progres Drilling</span>
+                <span class="font-mono text-cyan-500">{progressPercentage}%</span>
+              </div>
+              <div class="w-full bg-secondary/80 rounded-full h-2 overflow-hidden border border-white/5">
+                <div class="bg-cyan-500 h-2 rounded-full transition-all duration-300" style={`width: ${progressPercentage}%`}></div>
+              </div>
+              <span class="text-[11px] text-muted-foreground mt-2 block font-mono">
+                {totalCompleted} dari {tkaModules.length} Modul Selesai
+              </span>
+            </div>
+
+            {isEnrolled ? (
+              <div class="p-3 rounded-lg bg-cyan-500/10 border border-cyan-500/20 text-xs text-cyan-600 dark:text-cyan-400 font-medium">
+                ✅ Terdaftar. Anda memiliki akses penuh ke seluruh modul Drilling TKA.
+              </div>
+            ) : (
+              <div class="space-y-2">
+                <a href="#enroll-section" class="btn btn-primary bg-cyan-600 hover:bg-cyan-500 w-full text-xs font-semibold py-2 rounded-lg text-center block text-white border-0">
+                  🎟️ Masukkan Token Drilling
+                </a>
+                <span class="text-[10px] text-muted-foreground text-center block">
+                  Token khusus kelas 12 diperlukan.
+                </span>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+
+      <!-- Student Tryout History Widget -->
+      {userTkaAttempts.length > 0 && (
+        <div class="card p-6 rounded-2xl border border-cyan-500/30 bg-gradient-to-br from-card to-secondary/30 shadow-md space-y-4">
+          <div class="flex flex-wrap items-center justify-between gap-3 border-b border-border/60 pb-3">
+            <div class="flex items-center gap-2.5">
+              <span class="text-2xl">🏆</span>
+              <div>
+                <span class="text-[10px] font-mono font-bold uppercase tracking-wider text-cyan-400">REKAPITULASI HASIL TRYOUT</span>
+                <h3 class="text-base font-extrabold text-foreground">Riwayat Ujian CBT Drilling Siswa</h3>
+              </div>
+            </div>
+            <div class="flex items-center gap-2">
+              <span class="px-3 py-1 rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 font-mono text-xs font-bold">
+                Skor Tertinggi: {bestTkaScore} / 100
+              </span>
+              <span class="px-3 py-1 rounded-lg bg-secondary text-foreground font-mono text-xs font-semibold border border-border">
+                {userTkaAttempts.length} Sesi Ujian
+              </span>
+            </div>
+          </div>
+
+          <div class="space-y-2">
+            <div class="text-xs font-semibold text-muted-foreground flex items-center justify-between">
+              <span>Sesi Ujian Terakhir:</span>
+              <span class="font-mono text-[11px] text-cyan-400">
+                {new Date(userTkaAttempts[0].createdAt).toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
+              </span>
+            </div>
+
+            <div class="p-3.5 rounded-xl bg-background/80 border border-border flex flex-col sm:flex-row items-center justify-between gap-3 text-xs">
+              <div class="flex items-center gap-3">
+                <div class={`w-10 h-10 rounded-xl font-mono text-sm font-extrabold flex items-center justify-center ${userTkaAttempts[0].score >= 73 ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' : 'bg-amber-500/20 text-amber-400 border border-amber-500/30'}`}>
+                  {userTkaAttempts[0].score}
+                </div>
+                <div>
+                  <div class="font-bold text-foreground">
+                    Skor: {userTkaAttempts[0].score}/100 {userTkaAttempts[0].score >= 73 ? ' (✓ Tuntas KKM)' : ' (⚠️ Belum KKM)'}
+                  </div>
+                  <div class="text-[11px] text-muted-foreground">
+                    Benar: {userTkaAttempts[0].correctAnswers} / {userTkaAttempts[0].totalQuestions} Soal • XP: +{userTkaAttempts[0].xpEarned} XP
+                  </div>
+                </div>
+              </div>
+              <a href={`/pembelajaran/tka/${tkaModules[0]?.id || tkaModules[0]?.slug}`} class="btn btn-sm bg-cyan-600 hover:bg-cyan-500 text-white font-bold text-xs px-4 py-2 rounded-lg border-0 shadow-sm shrink-0">
+                Review / Ulangi →
+              </a>
+            </div>
+          </div>
+        </div>
+      )}
+
+      <!-- ENROLLMENT STATUS & TOKEN FORM CARD (PENEMPATAN DI ATAS SEBELUM MODUL-MODULNYA) -->
+      {!isEnrolled ? (
+        <div id="enroll-section" class="card p-6 md:p-7 rounded-2xl border-2 border-amber-500/50 bg-amber-500/10 shadow-xl space-y-4 relative overflow-hidden">
+          <div class="relative z-10 flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-amber-500/30 pb-4">
+            <div>
+              <div class="flex items-center gap-2">
+                <span class="px-2 py-0.5 rounded bg-amber-500 text-black font-mono font-extrabold text-[10px] uppercase">AKSES KELAS TERKUNCI</span>
+                <h3 class="text-base sm:text-lg font-black text-foreground">🎟️ Gabung Kelas Drilling TKA (Masukkan Token)</h3>
+              </div>
+              <p class="text-xs text-muted-foreground mt-1 leading-relaxed">
+                Modul-modul di bawah masih terkunci. Masukkan token kelas 12 dari Guru untuk membuka akses latihan kuis & materi TKA.
+              </p>
+            </div>
+            <div id="enroll-alert-course" class="hidden text-xs font-bold px-4 py-2 rounded-xl text-center shadow-md"></div>
+          </div>
+
+          <form id="course-enroll-form" class="relative z-10 flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+            <input 
+              type="text" 
+              id="course-token-input" 
+              placeholder="Ketik Token Kelas (Contoh: TESDRILL)..." 
+              class="input flex-grow text-sm font-mono font-bold tracking-wider uppercase px-4 py-3 rounded-xl bg-background border-2 border-amber-500/50 focus:border-amber-400 focus:ring-2 focus:ring-amber-400/20 text-foreground"
+              required
+            />
+            <button 
+              type="submit" 
+              id="btn-course-enroll"
+              class="btn btn-primary bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 border-0 text-black font-black text-xs sm:text-sm px-7 py-3 rounded-xl shadow-lg whitespace-nowrap transition-all flex items-center justify-center gap-2"
+            >
+              <span>Validasi Token TKA →</span>
+            </button>
+          </form>
+        </div>
+      ) : (
+        <div class="p-4 rounded-2xl bg-cyan-500/10 border border-cyan-500/30 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-md">
+          <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-xl bg-cyan-500/20 text-cyan-400 border border-cyan-500/30 flex items-center justify-center text-xl shrink-0">
+              ✅
+            </div>
+            <div>
+              <div class="text-xs font-bold text-foreground flex items-center gap-2">
+                <span>STATUS ENROLLMENT: TERDAFTAR KELAS DRILLING</span>
+                <span class="px-2 py-0.5 rounded bg-cyan-500 text-black font-mono font-bold text-[10px]">
+                  {userEnrollmentData?.token || 'AKTIF'}
+                </span>
+              </div>
+              <p class="text-xs text-muted-foreground mt-0.5">
+                Target Kelas: <strong class="text-foreground">{userEnrollmentData?.targetClass || 'Kelas 12 RPL'}</strong> • Seluruh modul & CBT Simulator siap dipelajari.
+              </p>
+            </div>
+          </div>
+
+          <div class="text-xs font-mono font-bold text-emerald-400 bg-emerald-500/10 px-3 py-1.5 rounded-xl border border-emerald-500/20">
+            ✨ AKSES MODUL TERBUKA
+          </div>
+        </div>
+      )}
+
+      <!-- Syllabus Breakdown -->
+      <div class="space-y-4 pt-2">
+        <h2 class="text-xl font-bold text-foreground border-b border-border pb-3 flex items-center gap-2">
+          <span>📚</span> Daftar Pertemuan Drilling TKA
+        </h2>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {tkaModules.map((mod) => {
+            const modIndex = tkaModules.findIndex(m => (m.id || m.slug) === (mod.id || mod.slug));
+            const isDone = completedSlugs.includes(mod.id || mod.slug);
+            const isLocked = !canAccessAdminPanel(user?.role) && modIndex > 0 && !completedSlugs.includes(tkaModules[modIndex - 1].id || tkaModules[modIndex - 1].slug);
+            const prevMod = modIndex > 0 ? tkaModules[modIndex - 1] : null;
+
+            if (isLocked) {
+              return (
+                <div class="card p-5 border-border/50 bg-secondary/10 opacity-60 flex flex-col justify-between space-y-4 rounded-xl border-dashed select-none">
+                  <div class="space-y-2.5">
+                    <div class="flex items-center justify-between">
+                      <span class="px-2 py-0.5 rounded text-[10px] bg-secondary text-muted-foreground font-mono font-semibold border border-border">
+                        🔒 Pertemuan {mod.data.order}
+                      </span>
+                      <span class="text-xs text-muted-foreground font-mono">{mod.data.duration}</span>
+                    </div>
+
+                    <h3 class="text-sm font-bold text-muted-foreground">
+                      {mod.data.title}
+                    </h3>
+
+                    <p class="text-xs text-muted-foreground line-clamp-2 leading-relaxed">
+                      {mod.data.description}
+                    </p>
+                  </div>
+
+                  <div class="pt-3 border-t border-border/40 flex items-center justify-between text-xs">
+                    <span class="text-muted-foreground font-mono text-[11px]">🔒 Modul Terkunci</span>
+                    <span class="px-3 py-1.5 rounded-lg bg-secondary/60 text-muted-foreground text-[11px] font-semibold border border-border/50 cursor-not-allowed">
+                      Selesaikan P-{prevMod?.data.order}
+                    </span>
+                  </div>
+                </div>
+              );
+            }
+
+            return (
+              <div class:list={[
+                "card p-5 flex flex-col justify-between space-y-4 rounded-xl shadow-sm transition-all",
+                isDone 
+                  ? "border-emerald-500/30 bg-emerald-500/5 hover:border-emerald-500/50" 
+                  : "border-cyan-500/40 bg-card hover:border-cyan-500 ring-1 ring-cyan-500/10 shadow-md"
+              ]}>
+                <div class="space-y-2.5">
+                  <div class="flex items-center justify-between">
+                    <span class:list={[
+                      "px-2 py-0.5 rounded text-[10px] font-mono font-bold border",
+                      isDone 
+                        ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20" 
+                        : "bg-cyan-500/10 text-cyan-500 border-cyan-500/20"
+                    ]}>
+                      {isDone ? `✅ Pertemuan ${mod.data.order}` : `🎯 Pertemuan ${mod.data.order} (Aktif)`}
+                    </span>
+                    <span class="text-xs text-muted-foreground font-mono">{mod.data.duration}</span>
+                  </div>
+
+                  <h3 class="text-sm font-bold text-foreground hover:text-cyan-400 transition-colors">
+                    <a href={`/pembelajaran/tka/${mod.id || mod.slug}`}>{mod.data.title}</a>
+                  </h3>
+
+                  <p class="text-xs text-muted-foreground line-clamp-2 leading-relaxed">
+                    {mod.data.description}
+                  </p>
+                </div>
+
+                <div class="pt-3 border-t border-border flex items-center justify-between text-xs">
+                  <div class="flex items-center gap-2">
+                    <span class="text-amber-600 dark:text-amber-400 font-mono font-medium">⚡ +100 XP</span>
+                    {isDone && (
+                      <span class="px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-[10px] font-mono font-bold">
+                        ✓ SELESAI
+                      </span>
+                    )}
+                  </div>
+
+                  <a 
+                    href={`/pembelajaran/tka/${mod.id || mod.slug}`} 
+                    class:list={[
+                      "btn btn-sm text-xs font-semibold px-3 py-1.5 rounded-lg shadow-sm border-0",
+                      isDone ? "bg-secondary text-muted-foreground hover:bg-secondary/80" : "bg-cyan-600 hover:bg-cyan-500 text-white"
+                    ]}
+                  >
+                    {isDone ? 'Buka Modul →' : 'Mulai Drilling →'}
+                  </a>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
     </div>
-  </div>
-</DashboardLayout>
+  </DashboardLayout>
+) : (
+  <BaseLayout 
+    title="Drilling TKA PPLG (Kelas 12)" 
+    description="Hub Persiapan dan Try Out Ujian Keahlian Akademik PPLG Kelas 12"
+  >
+    <div class="container-main py-10 space-y-8">
+      
+      <a href="/pembelajaran" class="inline-flex items-center gap-1.5 text-xs font-semibold text-muted-foreground hover:text-foreground transition-colors">
+        ← Kembali ke Katalog
+      </a>
+
+      <div class="p-6 md:p-8 rounded-2xl bg-gradient-to-br from-card to-cyan-900/20 border border-cyan-500/20 space-y-4 shadow-xl">
+        <div class="flex flex-wrap items-center gap-2">
+          <span class="px-2.5 py-0.5 rounded bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 text-[11px] font-mono font-bold uppercase">
+            PERSIAPAN UJIAN
+          </span>
+          <span class="px-2.5 py-0.5 rounded bg-secondary text-foreground border border-border text-[11px] font-mono font-semibold">
+            KELAS 12 RPL
+          </span>
+        </div>
+
+        <h1 class="text-2xl sm:text-4xl font-extrabold text-foreground tracking-tight">
+          Drilling TKA PPLG Terpadu
+        </h1>
+
+        <p class="text-sm sm:text-base text-muted-foreground leading-relaxed max-w-3xl">
+          Program intensif persiapan Ujian Keahlian Akademik PPLG. Terdiri dari 10 modul komprehensif yang dirancang untuk menguji kesiapan Anda menuju sertifikasi industri dan kelulusan SMK.
+        </p>
+
+        <div class="pt-2">
+          <a href="/login?redirect=/pembelajaran/tka-pplg" class="btn btn-primary bg-cyan-600 hover:bg-cyan-500 border-0 text-white font-semibold text-xs sm:text-sm px-5 py-2.5 rounded-lg inline-block shadow-md">
+            Masuk untuk Mulai Drilling TKA →
+          </a>
+        </div>
+      </div>
+
+      <div class="space-y-6">
+        <h2 class="text-lg sm:text-xl font-bold text-foreground border-b border-border pb-2.5">
+          10 Topik Silabus Drilling
+        </h2>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {tkaModules.map((mod) => (
+            <div class="card p-5 border-border bg-card flex flex-col justify-between space-y-3 rounded-xl shadow-sm">
+              <div class="space-y-2">
+                <span class="px-2 py-0.5 rounded text-[10px] bg-secondary text-foreground font-mono font-semibold border border-border">
+                  Pertemuan {mod.data.order} • {mod.data.duration}
+                </span>
+                <h3 class="text-sm font-bold text-foreground">
+                  <a href={`/pembelajaran/tka/${mod.id || mod.slug}`} class="hover:text-cyan-400 transition-colors">{mod.data.title}</a>
+                </h3>
+                <p class="text-xs text-muted-foreground line-clamp-2">{mod.data.description}</p>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+    </div>
+  </BaseLayout>
+)}
+
+<script>
+  const courseEnrollForm = document.getElementById('course-enroll-form') as HTMLFormElement | null;
+  const courseTokenInput = document.getElementById('course-token-input') as HTMLInputElement | null;
+  const courseEnrollAlert = document.getElementById('enroll-alert-course');
+  const btnCourseEnroll = document.getElementById('btn-course-enroll') as HTMLButtonElement | null;
+
+  if (courseEnrollForm && courseTokenInput && courseEnrollAlert && btnCourseEnroll) {
+    courseEnrollForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const token = courseTokenInput.value.trim().toUpperCase();
+      if (!token) return;
+
+      btnCourseEnroll.disabled = true;
+      btnCourseEnroll.textContent = 'Memverifikasi...';
+      courseEnrollAlert.className = 'hidden';
+
+      try {
+        const res = await fetch('/api/enroll', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ tokenCode: token })
+        });
+
+        const data = await res.json();
+
+        if (res.ok && data.success) {
+          courseEnrollAlert.textContent = `🎉 Berhasil! Anda terdaftar di sesi ${data.token.title} (${data.token.targetClass}).`;
+          courseEnrollAlert.className = 'text-xs font-medium px-3 py-2 rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 block';
+          setTimeout(() => {
+            window.location.reload();
+          }, 1200);
+        } else {
+          courseEnrollAlert.textContent = `❌ ${data.error || 'Token tidak valid atau tidak aktif.'}`;
+          courseEnrollAlert.className = 'text-xs font-medium px-3 py-2 rounded-lg bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-500/20 block';
+          btnCourseEnroll.disabled = false;
+          btnCourseEnroll.textContent = 'Validasi Token TKA →';
+        }
+      } catch (err: any) {
+        courseEnrollAlert.textContent = '❌ Gagal menghubungi server.';
+        courseEnrollAlert.className = 'text-xs font-medium px-3 py-2 rounded-lg bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-500/20 block';
+        btnCourseEnroll.disabled = false;
+        btnCourseEnroll.textContent = 'Validasi Token TKA →';
+      }
+    });
+  }
+</script>

@@ -169,6 +169,64 @@ const progressPercentage = orientasiModules.length > 0 ? Math.round((totalComple
         </div>
       </div>
 
+      <!-- ENROLLMENT STATUS & TOKEN FORM CARD (PENEMPATAN DI ATAS SEBELUM MODUL-MODULNYA) -->
+      {!isEnrolled ? (
+        <div id="enroll-section" class="card p-6 md:p-7 rounded-2xl border-2 border-amber-500/50 bg-amber-500/10 shadow-xl space-y-4 relative overflow-hidden">
+          <div class="relative z-10 flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-amber-500/30 pb-4">
+            <div>
+              <div class="flex items-center gap-2">
+                <span class="px-2 py-0.5 rounded bg-amber-500 text-black font-mono font-extrabold text-[10px] uppercase">AKSES KELAS TERKUNCI</span>
+                <h3 class="text-base sm:text-lg font-black text-foreground">🎟️ Gabung Kelas Orientasi PPLG (Masukkan Token)</h3>
+              </div>
+              <p class="text-xs text-muted-foreground mt-1 leading-relaxed">
+                Modul-modul di bawah masih terkunci. Masukkan token kelas 10 yang diberikan oleh Guru untuk membuka akses LKPD & jurnal refleksi.
+              </p>
+            </div>
+            <div id="enroll-alert-course" class="hidden text-xs font-bold px-4 py-2 rounded-xl text-center shadow-md"></div>
+          </div>
+
+          <form id="course-enroll-form" class="relative z-10 flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+            <input 
+              type="text" 
+              id="course-token-input" 
+              placeholder="Ketik Token Kelas (Contoh: OPPLG-10RPL1)..." 
+              class="input flex-grow text-sm font-mono font-bold tracking-wider uppercase px-4 py-3 rounded-xl bg-background border-2 border-amber-500/50 focus:border-amber-400 focus:ring-2 focus:ring-amber-400/20 text-foreground"
+              required
+            />
+            <button 
+              type="submit" 
+              id="btn-course-enroll"
+              class="btn btn-primary bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 border-0 text-black font-black text-xs sm:text-sm px-7 py-3 rounded-xl shadow-lg whitespace-nowrap transition-all flex items-center justify-center gap-2"
+            >
+              <span>Validasi Token Kelas →</span>
+            </button>
+          </form>
+        </div>
+      ) : (
+        <div class="p-4 rounded-2xl bg-blue-500/10 border border-blue-500/30 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-md">
+          <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-xl bg-blue-500/20 text-blue-400 border border-blue-500/30 flex items-center justify-center text-xl shrink-0">
+              ✅
+            </div>
+            <div>
+              <div class="text-xs font-bold text-foreground flex items-center gap-2">
+                <span>STATUS ENROLLMENT: TERDAFTAR KELAS ORIENTASI PPLG</span>
+                <span class="px-2 py-0.5 rounded bg-blue-500 text-white font-mono font-bold text-[10px]">
+                  {userEnrollmentData?.token || 'AKTIF'}
+                </span>
+              </div>
+              <p class="text-xs text-muted-foreground mt-0.5">
+                Target Kelas: <strong class="text-foreground">{userEnrollmentData?.targetClass || 'Kelas 10 RPL'}</strong> • Seluruh modul & LKPD siap dipelajari.
+              </p>
+            </div>
+          </div>
+
+          <div class="text-xs font-mono font-bold text-blue-400 bg-blue-500/10 px-3 py-1.5 rounded-xl border border-blue-500/20">
+            ✨ AKSES MODUL TERBUKA
+          </div>
+        </div>
+      )}
+
       <!-- Syllabus Breakdown: Sprint 1 & Sprint 2 -->
       <div class="space-y-8">
         
@@ -394,36 +452,6 @@ const progressPercentage = orientasiModules.length > 0 ? Math.round((totalComple
           </div>
         </div>
 
-      </div>
-
-      <!-- ENROLL SECTION (IF NOT YET ENROLLED) -->
-      <div id="enroll-section" class="card p-6 rounded-2xl border-border bg-card shadow-sm space-y-4">
-        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-border pb-4">
-          <div>
-            <h3 class="text-base font-bold text-foreground">🎟️ Hubungkan ke Kelas Belajar (Enroll Token)</h3>
-            <p class="text-xs text-muted-foreground">
-              Masukkan token kelas yang diberikan oleh Pak Agung Gumelar Saputra untuk menghubungkan presensi dan rekapitulasi nilai LKPD.
-            </p>
-          </div>
-          <div id="enroll-alert-course" class="hidden text-xs font-medium px-3 py-1.5 rounded-lg text-center"></div>
-        </div>
-
-        <form id="course-enroll-form" class="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
-          <input 
-            type="text" 
-            id="course-token-input" 
-            placeholder="Contoh: OPPLG-10RPL1-2026..." 
-            class="input flex-grow text-xs sm:text-sm font-mono tracking-wider uppercase px-4 py-2.5 rounded-lg bg-background border border-border focus:border-primary focus:ring-1 focus:ring-primary"
-            required
-          />
-          <button 
-            type="submit" 
-            id="btn-course-enroll"
-            class="btn btn-primary text-white font-semibold text-xs sm:text-sm px-6 py-2.5 rounded-lg shadow-sm whitespace-nowrap"
-          >
-            Gabung Kelas Sekarang →
-          </button>
-        </form>
       </div>
 
     </div>

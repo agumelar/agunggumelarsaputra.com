@@ -1,7 +1,7 @@
 ---
 import DashboardLayout from '../../layouts/DashboardLayout.astro';
 import { db, isDbConfigured, ensureDbInitialized } from '../../db';
-import { users, userGamification, tkaAttempts, userProgress, enrollmentTokens, userEnrollments, userSubmissions } from '../../db/schema';
+import { users, userGamification, tkaAttempts, userProgress, enrollmentTokens, userEnrollments, userSubmissions, literasiReports } from '../../db/schema';
 import { eq, desc } from 'drizzle-orm';
 
 import { canAccessAdminPanel, isSuperAdmin, isSuperAdminEmail } from '../../utils/auth';
@@ -19,6 +19,7 @@ let allLessonLogs: any[] = [];
 let allTokens: any[] = [];
 let allEnrollments: any[] = [];
 let allSubmissions: any[] = [];
+let allLiterasiReports: any[] = [];
 
 if (isDbConfigured()) {
   try {
@@ -55,6 +56,8 @@ if (isDbConfigured()) {
       userName: users.name,
       userEmail: users.email,
       studentClass: users.studentClass,
+      lessonSlug: tkaAttempts.lessonSlug,
+      attemptNumber: tkaAttempts.attemptNumber,
       score: tkaAttempts.score,
       totalQuestions: tkaAttempts.totalQuestions,
       correctAnswers: tkaAttempts.correctAnswers,
@@ -128,10 +131,58 @@ if (isDbConfigured()) {
         .innerJoin(users, eq(userSubmissions.userId, users.id))
         .orderBy(desc(userSubmissions.submittedAt));
 
-      allSubmissions = rawSubmissions;
+      const uniqueSubMap = new Map();
+      for (const sub of rawSubmissions) {
+        const key = `${sub.userId}_${sub.lessonSlug}_${sub.submissionType}`;
+        if (!uniqueSubMap.has(key)) {
+          uniqueSubMap.set(key, sub);
+        }
+      }
+      allSubmissions = Array.from(uniqueSubMap.values());
     } catch (subErr) {
       console.warn('Submissions query error in admin:', subErr);
       allSubmissions = [];
+    }
+
+    // 7. Fetch All Literasi Reports + User Info (Deduplicated: Keep latest per student per week)
+    try {
+      const rawLiterasiReports = await db.select({
+        id: literasiReports.id,
+        userId: literasiReports.userId,
+        userName: users.name,
+        userEmail: users.email,
+        studentClass: users.studentClass,
+        weekNumber: literasiReports.weekNumber,
+        reportDate: literasiReports.reportDate,
+        bookTitle: literasiReports.bookTitle,
+        author: literasiReports.author,
+        publisher: literasiReports.publisher,
+        city: literasiReports.city,
+        year: literasiReports.year,
+        pageCount: literasiReports.pageCount,
+        summary: literasiReports.summary,
+        moralMessage: literasiReports.moralMessage,
+        writingScore: literasiReports.writingScore,
+        presentationScore: literasiReports.presentationScore,
+        finalScore: literasiReports.finalScore,
+        teacherFeedback: literasiReports.teacherFeedback,
+        status: literasiReports.status,
+        createdAt: literasiReports.createdAt,
+      }).from(literasiReports)
+        .innerJoin(users, eq(literasiReports.userId, users.id))
+        .orderBy(desc(literasiReports.createdAt));
+
+      const uniqueLitMap = new Map();
+      for (const rep of rawLiterasiReports) {
+        const key = `${rep.userId}_${rep.weekNumber}`;
+        if (!uniqueLitMap.has(key)) {
+          uniqueLitMap.set(key, rep);
+        }
+      }
+      allLiterasiReports = Array.from(uniqueLitMap.values());
+    } catch (litErr) {
+      console.warn('Literasi query error in admin:', litErr);
+      allLiterasiReports = [];
     }
   } catch (err) {
     console.error('Admin DB Error:', err);
@@ -171,125 +222,201 @@ const avgScoreAll = totalExamsTaken > 0
   : 0;
 const passingExams = allExamLogs.filter(e => e.score >= 73).length;
 const passRate = totalExamsTaken > 0 ? Math.round((passingExams / totalExamsTaken) * 100) : 0;
+
+const totalLiterasi = allLiterasiReports.length;
+const pendingLiterasi = allLiterasiReports.filter(r => r.status !== 'graded').length;
+const gradedLiterasi = allLiterasiReports.filter(r => r.status === 'graded').length;
 ---
 
 <DashboardLayout title="Panel Guru & Administrator" activeNav="/admin">
   <div class="space-y-6">
     
-    <!-- Admin Hero Banner -->
-    <div class="p-6 rounded-xl bg-card border border-border flex flex-col md:flex-row md:items-center justify-between gap-6 shadow-sm">
-      <div class="space-y-2">
-        <div class="inline-flex items-center gap-2 px-2.5 py-0.5 rounded-md bg-amber-500/10 border border-amber-500/25 text-amber-600 dark:text-amber-400 text-xs font-mono font-semibold">
-          <span>Administrator Console</span>
-          <span>•</span>
-          <span>Guru Pengampu RPL</span>
-        </div>
-        <h1 class="text-2xl sm:text-3xl font-bold text-foreground tracking-tight">
-          Panel Manajemen Guru & Monitoring Siswa
-        </h1>
-        <p class="text-xs sm:text-sm text-muted-foreground max-w-xl leading-relaxed">
-          Kelola token sesi pembelajaran, evaluasi lembar kerja (LKPD), tinjau respon refleksi kualitatif siswa, pantau hak akses, dan analisis hasil ujian Drilling TKA secara real-time.
-        </p>
-      </div>
+    <!-- Admin Hero Banner (High-Craft Dark Slate & Amber Gradient) -->
+    <div class="card p-6 md:p-8 rounded-2xl border border-amber-500/20 bg-gradient-to-br from-card via-card to-amber-950/20 shadow-lg relative overflow-hidden space-y-5">
+      <div class="absolute -right-8 -top-8 text-9xl opacity-5 pointer-events-none">⚡</div>
 
-      <div class="flex flex-wrap items-center gap-2 flex-shrink-0">
-        <a href="/admin/proyektor-leaderboard" target="_blank" class="btn btn-sm bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-black font-extrabold rounded-lg shadow-md flex items-center gap-1.5 animate-pulse">
-          <span>📺</span>
-          <span>Layar Proyektor Live Score</span>
-        </a>
-        <a href="#tokens" class="btn btn-sm bg-cyan-600 hover:bg-cyan-500 text-white font-semibold rounded-lg shadow-sm">
-          🎟️ Token ({allTokens.length})
-        </a>
-        <a href="#submissions" class="btn btn-sm bg-purple-600 hover:bg-purple-500 text-white font-semibold rounded-lg shadow-sm">
-          📝 LKPD ({totalLkpd})
-        </a>
-        <a href="#reflections" class="btn btn-sm bg-pink-600 hover:bg-pink-500 text-white font-semibold rounded-lg shadow-sm">
-          💭 Refleksi ({totalReflections})
-        </a>
-        <a href="#students" class="btn btn-sm bg-amber-500 hover:bg-amber-400 text-black font-semibold rounded-lg shadow-sm">
-          👥 Siswa ({allUsers.length})
-        </a>
-        <a href="#exams" class="btn btn-sm btn-outline border-border text-foreground hover:bg-accent font-semibold rounded-lg">
-          📈 Ujian ({totalExamsTaken})
-        </a>
+      <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-6 relative z-10">
+        <div class="space-y-2.5 max-w-3xl">
+          <div class="flex flex-wrap items-center gap-2">
+            <span class="px-2.5 py-0.5 rounded bg-amber-500/10 text-amber-500 border border-amber-500/20 text-[11px] font-mono font-bold uppercase tracking-wider">
+              ADMINISTRATOR CONSOLE
+            </span>
+            <span class="px-2.5 py-0.5 rounded bg-secondary text-foreground border border-border text-[11px] font-mono font-semibold">
+              GURU PENGAMPU RPL
+            </span>
+          </div>
+
+          <h1 class="text-2xl sm:text-3xl font-extrabold text-foreground tracking-tight">
+            Konsol Manajemen Guru & Monitoring Siswa
+          </h1>
+
+          <p class="text-xs sm:text-sm text-muted-foreground leading-relaxed">
+            Kelola token sesi pembelajaran, evaluasi lembar kerja (LKPD), tinjau respon jurnal refleksi, pantau hak akses pengguna, dan analisis hasil ujian Drilling TKA secara <i>real-time</i>.
+          </p>
+        </div>
+
+        <div class="flex flex-wrap items-center gap-2.5 flex-shrink-0">
+          <a href="/admin/proyektor-leaderboard" target="_blank" class="btn btn-sm bg-gradient-to-r from-amber-500 via-orange-500 to-amber-400 hover:from-amber-400 hover:to-orange-400 text-black font-extrabold px-4 py-2 rounded-xl shadow-lg flex items-center gap-2 animate-pulse border-0">
+            <span class="text-base">📺</span>
+            <span>Layar Proyektor Live Score</span>
+          </a>
+        </div>
       </div>
     </div>
 
-    <!-- 5 KPI Metrics -->
-    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+    <!-- 5 KPI Metrics Premium Cards -->
+    <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3.5">
       
-      <!-- Metric 1: Siswa & Guru -->
-      <div class="card p-5 rounded-xl border-border bg-card space-y-1.5 shadow-sm">
+      <!-- Metric 1: Total Pengguna -->
+      <div class="card p-4 rounded-xl border border-amber-500/20 bg-card space-y-1.5 shadow-sm hover:border-amber-500/40 transition-all">
         <div class="flex items-center justify-between">
-          <span class="text-xs font-medium text-muted-foreground">Total Pengguna</span>
-          <span class="text-base">👥</span>
+          <span class="text-[11px] font-semibold text-muted-foreground uppercase font-mono">Siswa & Guru</span>
+          <span class="text-xs px-2 py-0.5 rounded bg-amber-500/10 text-amber-400 font-mono font-bold">👥 Users</span>
         </div>
-        <div class="text-2xl font-bold text-foreground font-mono">
+        <div class="text-2xl sm:text-3xl font-bold text-foreground font-mono">
           {totalStudents} <span class="text-xs text-muted-foreground font-sans font-normal">Siswa</span>
         </div>
-        <div class="flex items-center gap-2 text-[11px] font-mono text-muted-foreground pt-0.5">
-          <span class="text-amber-600 dark:text-amber-400 font-semibold">{totalTeachers} Guru</span>
-          <span>•</span>
-          <span class="text-purple-600 dark:text-purple-400 font-semibold">{totalSuperAdmins} Super Admin</span>
+        <div class="text-[10px] font-mono text-muted-foreground truncate pt-0.5">
+          <span class="text-amber-500 font-semibold">{totalTeachers} Guru</span> • <span class="text-purple-400 font-semibold">{totalSuperAdmins} Super Admin</span>
         </div>
       </div>
 
-      <!-- Metric 2: Sesi Token Aktif -->
-      <div class="card p-5 rounded-xl border-border bg-card space-y-1.5 shadow-sm">
+      <!-- Metric 2: Token Sesi Aktif -->
+      <div class="card p-4 rounded-xl border border-cyan-500/20 bg-card space-y-1.5 shadow-sm hover:border-cyan-500/40 transition-all">
         <div class="flex items-center justify-between">
-          <span class="text-xs font-medium text-muted-foreground">Token Sesi Kelas</span>
-          <span class="text-base">🎟️</span>
+          <span class="text-[11px] font-semibold text-muted-foreground uppercase font-mono">Token Sesi</span>
+          <span class="text-xs px-2 py-0.5 rounded bg-cyan-500/10 text-cyan-400 font-mono font-bold">🎟️ Sesi</span>
         </div>
-        <div class="text-2xl font-bold text-cyan-600 dark:text-cyan-400 font-mono">
+        <div class="text-2xl sm:text-3xl font-bold text-cyan-400 font-mono">
           {allTokens.filter(t => t.isActive).length} <span class="text-xs text-muted-foreground font-sans font-normal">Aktif</span>
         </div>
-        <p class="text-[11px] text-muted-foreground">Total {allTokens.length} sesi terdaftar</p>
+        <p class="text-[10px] text-muted-foreground font-mono">Total {allTokens.length} token terdaftar</p>
       </div>
 
       <!-- Metric 3: Penilaian LKPD -->
-      <div class="card p-5 rounded-xl border-border bg-card space-y-1.5 shadow-sm">
+      <div class="card p-4 rounded-xl border border-purple-500/20 bg-card space-y-1.5 shadow-sm hover:border-purple-500/40 transition-all">
         <div class="flex items-center justify-between">
-          <span class="text-xs font-medium text-muted-foreground">Evaluasi LKPD</span>
-          <span class="text-base">📝</span>
+          <span class="text-[11px] font-semibold text-muted-foreground uppercase font-mono">Evaluasi LKPD</span>
+          <span class="text-xs px-2 py-0.5 rounded bg-purple-500/10 text-purple-400 font-mono font-bold">📝 LKPD</span>
         </div>
-        <div class="text-2xl font-bold text-purple-600 dark:text-purple-400 font-mono">
+        <div class="text-2xl sm:text-3xl font-bold text-purple-400 font-mono">
           {totalLkpd} <span class="text-xs text-muted-foreground font-sans font-normal">Set</span>
         </div>
-        <p class="text-[11px] text-muted-foreground">
-          <span class="text-amber-600 dark:text-amber-400 font-bold">{pendingLkpd} Menunggu</span> • <span class="text-emerald-600 dark:text-emerald-400 font-bold">{gradedLkpd} Dinilai</span>
+        <p class="text-[10px] text-muted-foreground font-mono">
+          <span class="text-amber-400 font-bold">{pendingLkpd} Menunggu</span> • <span class="text-emerald-400 font-bold">{gradedLkpd} Dinilai</span>
         </p>
       </div>
 
-      <!-- Metric 4: Jurnal Refleksi Siswa -->
-      <div class="card p-5 rounded-xl border-border bg-card space-y-1.5 shadow-sm">
+      <!-- Metric 4: Jurnal Refleksi -->
+      <div class="card p-4 rounded-xl border border-pink-500/20 bg-card space-y-1.5 shadow-sm hover:border-pink-500/40 transition-all">
         <div class="flex items-center justify-between">
-          <span class="text-xs font-medium text-muted-foreground">Jurnal Refleksi</span>
-          <span class="text-base">💭</span>
+          <span class="text-[11px] font-semibold text-muted-foreground uppercase font-mono">Jurnal Refleksi</span>
+          <span class="text-xs px-2 py-0.5 rounded bg-pink-500/10 text-pink-400 font-mono font-bold">💭 Refleksi</span>
         </div>
-        <div class="text-2xl font-bold text-pink-600 dark:text-pink-400 font-mono">
+        <div class="text-2xl sm:text-3xl font-bold text-pink-400 font-mono">
           {totalReflections} <span class="text-xs text-muted-foreground font-sans font-normal">Jurnal</span>
         </div>
-        <p class="text-[11px] text-muted-foreground">
-          <span class="text-amber-600 dark:text-amber-400 font-bold">{pendingReflections} Baru</span> • <span class="text-pink-600 dark:text-pink-400 font-bold">{reviewedReflections} Ditinjau</span>
+        <p class="text-[10px] text-muted-foreground font-mono">
+          <span class="text-amber-400 font-bold">{pendingReflections} Baru</span> • <span class="text-pink-400 font-bold">{reviewedReflections} Ditinjau</span>
         </p>
       </div>
 
-      <!-- Metric 5: Rata-Rata Nilai TKA -->
-      <div class="card p-5 rounded-xl border-border bg-card space-y-1.5 shadow-sm">
+      <!-- Metric 5: Rata-Rata TKA -->
+      <div class="card p-4 rounded-xl border border-blue-500/20 bg-card space-y-1.5 shadow-sm hover:border-blue-500/40 transition-all">
         <div class="flex items-center justify-between">
-          <span class="text-xs font-medium text-muted-foreground">Rata-Rata Drilling TKA</span>
-          <span class="text-base">📊</span>
+          <span class="text-[11px] font-semibold text-muted-foreground uppercase font-mono">Rata-Rata TKA</span>
+          <span class="text-xs px-2 py-0.5 rounded bg-blue-500/10 text-blue-400 font-mono font-bold">📊 Score</span>
         </div>
-        <div class="text-2xl font-bold text-amber-600 dark:text-amber-400 font-mono">
+        <div class="text-2xl sm:text-3xl font-bold text-amber-400 font-mono">
           {avgScoreAll} <span class="text-xs text-muted-foreground font-sans font-normal">/ 100</span>
         </div>
-        <p class="text-[11px] text-muted-foreground">Kelulusan KKM: <span class="text-emerald-600 dark:text-emerald-400 font-bold">{passRate}%</span></p>
+        <p class="text-[10px] text-muted-foreground font-mono">Lulus KKM: <span class="text-emerald-400 font-bold">{passRate}%</span></p>
+      </div>
+
+      <!-- Metric 6: Rabu Literasi RESIK -->
+      <div class="card p-4 rounded-xl border border-emerald-500/20 bg-card space-y-1.5 shadow-sm hover:border-emerald-500/40 transition-all">
+        <div class="flex items-center justify-between">
+          <span class="text-[11px] font-semibold text-muted-foreground uppercase font-mono">Rabu Literasi</span>
+          <span class="text-xs px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-400 font-mono font-bold">📚 RESIK</span>
+        </div>
+        <div class="text-2xl sm:text-3xl font-bold text-emerald-400 font-mono">
+          {totalLiterasi} <span class="text-xs text-muted-foreground font-sans font-normal">Resensi</span>
+        </div>
+        <p class="text-[10px] text-muted-foreground font-mono">
+          <span class="text-amber-400 font-bold">{pendingLiterasi} Menunggu</span> • <span class="text-emerald-400 font-bold">{gradedLiterasi} Dinilai</span>
+        </p>
       </div>
 
     </div>
 
     <!-- Alert Notification -->
     <div id="admin-alert" class="hidden p-3.5 rounded-lg text-xs font-medium text-center transition-all"></div>
+
+    <!-- ========================================== -->
+    <!-- STICKY TABBED CONSOLE NAVIGATION (Fix Clutter & Overwhelm) -->
+    <!-- ========================================== -->
+    <div class="sticky top-2 z-30 p-2 rounded-2xl bg-card/95 backdrop-blur-md border border-border shadow-xl flex items-center justify-between gap-2 overflow-x-auto">
+      <div class="flex items-center gap-1.5 min-w-max">
+        <button data-admin-tab="all" class="admin-tab-btn active px-3.5 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 bg-gradient-to-r from-amber-500 to-orange-500 text-black shadow-md">
+          <span>🌐</span>
+          <span>Semua Tampilan</span>
+        </button>
+
+        <button data-admin-tab="tokens" class="admin-tab-btn px-3.5 py-2 rounded-xl text-xs font-semibold text-muted-foreground hover:text-foreground hover:bg-secondary/60 transition-all flex items-center gap-2">
+          <span>🎟️</span>
+          <span>Token Sesi</span>
+          <span class="px-2 py-0.5 rounded-full text-[10px] font-mono bg-cyan-500/10 text-cyan-400 border border-cyan-500/20">{allTokens.length}</span>
+        </button>
+
+        <button data-admin-tab="submissions" class="admin-tab-btn px-3.5 py-2 rounded-xl text-xs font-semibold text-muted-foreground hover:text-foreground hover:bg-secondary/60 transition-all flex items-center gap-2">
+          <span>📝</span>
+          <span>Evaluasi LKPD</span>
+          {pendingLkpd > 0 ? (
+            <span class="px-2 py-0.5 rounded-full text-[10px] font-mono bg-amber-500/10 text-amber-400 border border-amber-500/20 animate-pulse">{pendingLkpd} Menunggu</span>
+          ) : (
+            <span class="px-2 py-0.5 rounded-full text-[10px] font-mono bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">{totalLkpd}</span>
+          )}
+        </button>
+
+        <button data-admin-tab="reflections" class="admin-tab-btn px-3.5 py-2 rounded-xl text-xs font-semibold text-muted-foreground hover:text-foreground hover:bg-secondary/60 transition-all flex items-center gap-2">
+          <span>💭</span>
+          <span>Jurnal Refleksi</span>
+          {pendingReflections > 0 ? (
+            <span class="px-2 py-0.5 rounded-full text-[10px] font-mono bg-pink-500/10 text-pink-400 border border-pink-500/20 animate-pulse">{pendingReflections} Baru</span>
+          ) : (
+            <span class="px-2 py-0.5 rounded-full text-[10px] font-mono bg-purple-500/10 text-purple-400 border border-purple-500/20">{totalReflections}</span>
+          )}
+        </button>
+
+        <button data-admin-tab="students" class="admin-tab-btn px-3.5 py-2 rounded-xl text-xs font-semibold text-muted-foreground hover:text-foreground hover:bg-secondary/60 transition-all flex items-center gap-2">
+          <span>👥</span>
+          <span>Data Siswa</span>
+          <span class="px-2 py-0.5 rounded-full text-[10px] font-mono bg-amber-500/10 text-amber-400 border border-amber-500/20">{totalStudents}</span>
+        </button>
+
+        <button data-admin-tab="exams" class="admin-tab-btn px-3.5 py-2 rounded-xl text-xs font-semibold text-muted-foreground hover:text-foreground hover:bg-secondary/60 transition-all flex items-center gap-2">
+          <span>📊</span>
+          <span>Log Ujian TKA</span>
+          <span class="px-2 py-0.5 rounded-full text-[10px] font-mono bg-blue-500/10 text-blue-400 border border-blue-500/20">{totalExamsTaken}</span>
+        </button>
+
+        <button data-admin-tab="literasi" class="admin-tab-btn px-3.5 py-2 rounded-xl text-xs font-semibold text-muted-foreground hover:text-foreground hover:bg-secondary/60 transition-all flex items-center gap-2">
+          <span>📚</span>
+          <span>Rabu Literasi</span>
+          {pendingLiterasi > 0 ? (
+            <span class="px-2 py-0.5 rounded-full text-[10px] font-mono bg-amber-500/10 text-amber-400 border border-amber-500/20 animate-pulse">{pendingLiterasi} Menunggu</span>
+          ) : (
+            <span class="px-2 py-0.5 rounded-full text-[10px] font-mono bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">{totalLiterasi}</span>
+          )}
+        </button>
+
+        <button data-admin-tab="lesson-logs" class="admin-tab-btn px-3.5 py-2 rounded-xl text-xs font-semibold text-muted-foreground hover:text-foreground hover:bg-secondary/60 transition-all flex items-center gap-2">
+          <span>📖</span>
+          <span>Log Modul</span>
+          <span class="px-2 py-0.5 rounded-full text-[10px] font-mono bg-secondary text-foreground border border-border">{allLessonLogs.length}</span>
+        </button>
+      </div>
+    </div>
 
     <!-- ========================================== -->
     <!-- SECTION 0: MANAJEMEN TOKEN SESI (ROLL & REKAP PER-TOKEN) -->
@@ -369,6 +496,9 @@ const passRate = totalExamsTaken > 0 ? Math.round((passingExams / totalExamsTake
                     <option value="12 RPL 2">12 RPL 2</option>
                     <option value="12 RPL 3">12 RPL 3</option>
                     <option value="12 RPL 4">12 RPL 4</option>
+                  </optgroup>
+                  <optgroup label="🧪 Khusus Pengujian / Sandbox">
+                    <option value="Kelas Uji Coba">Kelas Uji Coba</option>
                   </optgroup>
                 </select>
               </div>
@@ -644,10 +774,16 @@ const passRate = totalExamsTaken > 0 ? Math.round((passingExams / totalExamsTake
             <option value="10 RPL 1">10 RPL 1</option>
             <option value="10 RPL 2">10 RPL 2</option>
             <option value="10 RPL 3">10 RPL 3</option>
+            <option value="10 RPL 4">10 RPL 4</option>
             <option value="11 RPL 1">11 RPL 1</option>
             <option value="11 RPL 2">11 RPL 2</option>
+            <option value="11 RPL 3">11 RPL 3</option>
+            <option value="11 RPL 4">11 RPL 4</option>
             <option value="12 RPL 1">12 RPL 1</option>
             <option value="12 RPL 2">12 RPL 2</option>
+            <option value="12 RPL 3">12 RPL 3</option>
+            <option value="12 RPL 4">12 RPL 4</option>
+            <option value="Kelas Uji Coba">Kelas Uji Coba</option>
           </select>
         </div>
 
@@ -845,10 +981,16 @@ const passRate = totalExamsTaken > 0 ? Math.round((passingExams / totalExamsTake
             <option value="10 RPL 1">10 RPL 1</option>
             <option value="10 RPL 2">10 RPL 2</option>
             <option value="10 RPL 3">10 RPL 3</option>
+            <option value="10 RPL 4">10 RPL 4</option>
             <option value="11 RPL 1">11 RPL 1</option>
             <option value="11 RPL 2">11 RPL 2</option>
+            <option value="11 RPL 3">11 RPL 3</option>
+            <option value="11 RPL 4">11 RPL 4</option>
             <option value="12 RPL 1">12 RPL 1</option>
             <option value="12 RPL 2">12 RPL 2</option>
+            <option value="12 RPL 3">12 RPL 3</option>
+            <option value="12 RPL 4">12 RPL 4</option>
+            <option value="Kelas Uji Coba">Kelas Uji Coba</option>
           </select>
         </div>
 
@@ -1120,6 +1262,20 @@ const passRate = totalExamsTaken > 0 ? Math.round((passingExams / totalExamsTake
                         </span>
                       ) : (
                         <>
+                          {!isSelf && (
+                            <button 
+                              type="button"
+                              data-user-id={u.id}
+                              data-user-name={u.name}
+                              data-user-email={u.email}
+                              class="reset-pwd-btn px-2 py-1 rounded-md text-xs font-medium border border-blue-500/30 text-blue-400 bg-blue-500/10 hover:bg-blue-500/20 transition-colors flex items-center gap-1"
+                              title="Reset Password Siswa"
+                            >
+                              <span>🔑</span>
+                              <span>Reset Sandi</span>
+                            </button>
+                          )}
+
                           {isCurrentSuperAdmin && (
                             <button 
                               type="button"
@@ -1169,11 +1325,64 @@ const passRate = totalExamsTaken > 0 ? Math.round((passingExams / totalExamsTake
     <!-- SECTION 2: LOG HASIL UJIAN SISWA (GLOBAL) -->
     <!-- ========================================== -->
     <div id="exams" class="card p-5 sm:p-6 rounded-xl border-border bg-card space-y-5 shadow-sm">
-      <div class="border-b border-border pb-3">
-        <h2 class="text-base font-bold text-foreground flex items-center gap-2">
-          <span>🎯 Log Seluruh Nilai Ujian Drilling TKA PPLG</span>
-        </h2>
-        <p class="text-xs text-muted-foreground mt-0.5">Riwayat lengkap seluruh nilai simulasi ujian yang telah dikerjakan oleh siswa.</p>
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-border pb-3">
+        <div>
+          <h2 class="text-base font-bold text-foreground flex items-center gap-2">
+            <span>🎯 Log Seluruh Nilai Ujian Drilling TKA PPLG</span>
+          </h2>
+          <p class="text-xs text-muted-foreground mt-0.5">Riwayat lengkap seluruh nilai simulasi ujian yang telah dikerjakan oleh siswa.</p>
+        </div>
+        <div class="flex items-center gap-2 text-[10px] font-mono font-semibold flex-shrink-0">
+          <span class="px-2.5 py-1 rounded bg-blue-500/10 text-blue-400 border border-blue-500/20">
+            📊 {totalExamsTaken} Percobaan
+          </span>
+          <span class="px-2.5 py-1 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+            ✓ Lulus {passRate}%
+          </span>
+        </div>
+      </div>
+
+      <!-- Filter Controls for TKA -->
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+        <div class="relative">
+          <input 
+            type="text" 
+            id="exam-search-input" 
+            placeholder="Cari nama siswa / email..." 
+            class="w-full px-3 py-2 bg-background border border-border rounded-lg text-xs focus:outline-none focus:border-primary placeholder:text-muted-foreground"
+          />
+        </div>
+        <div>
+          <select 
+            id="exam-class-filter" 
+            class="w-full px-3 py-2 bg-background border border-border rounded-lg text-xs focus:outline-none focus:border-primary"
+          >
+            <option value="">Semua Kelas</option>
+            <option value="10 RPL 1">10 RPL 1</option>
+            <option value="10 RPL 2">10 RPL 2</option>
+            <option value="10 RPL 3">10 RPL 3</option>
+            <option value="10 RPL 4">10 RPL 4</option>
+            <option value="11 RPL 1">11 RPL 1</option>
+            <option value="11 RPL 2">11 RPL 2</option>
+            <option value="11 RPL 3">11 RPL 3</option>
+            <option value="11 RPL 4">11 RPL 4</option>
+            <option value="12 RPL 1">12 RPL 1</option>
+            <option value="12 RPL 2">12 RPL 2</option>
+            <option value="12 RPL 3">12 RPL 3</option>
+            <option value="12 RPL 4">12 RPL 4</option>
+            <option value="Kelas Uji Coba">Kelas Uji Coba</option>
+          </select>
+        </div>
+        <div>
+          <select 
+            id="exam-status-filter" 
+            class="w-full px-3 py-2 bg-background border border-border rounded-lg text-xs focus:outline-none focus:border-primary"
+          >
+            <option value="">Semua Status</option>
+            <option value="passed">✓ Kompeten (≥ 73)</option>
+            <option value="failed">⚠️ Belum Kompeten (< 73)</option>
+          </select>
+        </div>
       </div>
 
       {allExamLogs.length === 0 ? (
@@ -1181,20 +1390,21 @@ const passRate = totalExamsTaken > 0 ? Math.round((passingExams / totalExamsTake
           Belum ada rekaman ujian yang masuk dari siswa.
         </div>
       ) : (
-        <div class="overflow-x-auto">
-          <table class="w-full text-left text-xs">
-            <thead class="text-[11px] text-muted-foreground uppercase font-mono border-b border-border">
+        <div class="overflow-x-auto border border-border rounded-lg">
+          <table class="w-full text-left text-xs" id="exams-table">
+            <thead class="text-[11px] text-muted-foreground uppercase font-mono bg-secondary/40 border-b border-border">
               <tr>
-                <th class="py-2.5 px-3">Nama Siswa</th>
-                <th class="py-2.5 px-3">Kelas</th>
-                <th class="py-2.5 px-3">Waktu Pengerjaan</th>
-                <th class="py-2.5 px-3">Skor Nilai</th>
-                <th class="py-2.5 px-3">Ketepatan</th>
-                <th class="py-2.5 px-3">Status Hasil</th>
-                <th class="py-2.5 px-3 text-right">XP Diberikan</th>
+                <th class="py-3 px-3">Nama Siswa</th>
+                <th class="py-3 px-3">Kelas</th>
+                <th class="py-3 px-3">Percobaan</th>
+                <th class="py-3 px-3">Waktu Pengerjaan</th>
+                <th class="py-3 px-3">Skor Nilai</th>
+                <th class="py-3 px-3">Ketepatan</th>
+                <th class="py-3 px-3">Status Hasil</th>
+                <th class="py-3 px-3 text-right">XP Diberikan</th>
               </tr>
             </thead>
-            <tbody class="divide-y divide-border font-medium">
+            <tbody class="divide-y divide-border font-medium bg-card">
               {allExamLogs.map((exam) => {
                 const examDate = new Date(exam.createdAt).toLocaleDateString('id-ID', {
                   day: 'numeric',
@@ -1206,7 +1416,13 @@ const passRate = totalExamsTaken > 0 ? Math.round((passingExams / totalExamsTake
                 const isPass = exam.score >= 73;
 
                 return (
-                  <tr class="hover:bg-accent/40 transition-colors">
+                  <tr 
+                    class="exam-row hover:bg-accent/40 transition-colors"
+                    data-name={exam.userName.toLowerCase()}
+                    data-email={exam.userEmail.toLowerCase()}
+                    data-class={exam.studentClass || ''}
+                    data-status={isPass ? 'passed' : 'failed'}
+                  >
                     <td class="py-3 px-3 font-semibold text-foreground">
                       {exam.userName}
                       <span class="block text-[10px] text-muted-foreground font-mono font-normal">{exam.userEmail}</span>
@@ -1219,6 +1435,11 @@ const passRate = totalExamsTaken > 0 ? Math.round((passingExams / totalExamsTake
                       ) : (
                         <span class="text-muted-foreground text-[10px]">-</span>
                       )}
+                    </td>
+                    <td class="py-3 px-3">
+                      <span class="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-blue-500/10 text-blue-400 border border-blue-500/20">
+                        #{exam.attemptNumber || 1}
+                      </span>
                     </td>
                     <td class="py-3 px-3 font-mono text-muted-foreground">
                       {examDate}
@@ -1254,10 +1475,10 @@ const passRate = totalExamsTaken > 0 ? Math.round((passingExams / totalExamsTake
     <!-- ========================================== -->
     <!-- SECTION 3: LOG PENYELESAIAN MODUL MATERI -->
     <!-- ========================================== -->
-    <div class="card p-5 sm:p-6 rounded-xl border-border bg-card space-y-5 shadow-sm">
+    <div id="lesson-logs" class="card p-5 sm:p-6 rounded-xl border-border bg-card space-y-5 shadow-sm">
       <div class="border-b border-border pb-3">
         <h2 class="text-base font-bold text-foreground flex items-center gap-2">
-          <span>📚 Log Penyelesaian Modul Materi Siswa</span>
+          <span>📖 Log Penyelesaian Modul Materi Siswa</span>
         </h2>
         <p class="text-xs text-muted-foreground mt-0.5">Daftar siswa yang telah menyelesaikan materi di Learning Hub.</p>
       </div>
@@ -1316,6 +1537,375 @@ const passRate = totalExamsTaken > 0 ? Math.round((passingExams / totalExamsTake
       )}
     </div>
 
+    <!-- ========================================== -->
+    <!-- SECTION 4: PENILAIAN RABU LITERASI (RESIK) -->
+    <!-- ========================================== -->
+    <div id="literasi" class="card p-5 sm:p-6 rounded-xl border-border bg-card space-y-5 shadow-sm">
+      <div class="space-y-5">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-border pb-4">
+          <div>
+            <h2 class="text-base font-bold text-foreground flex items-center gap-2">
+              <span>📚 Penilaian Rabu Literasi (RESIK)</span>
+              <span class="text-[10px] px-2 py-0.5 rounded font-mono font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                RUBRIK RESIK
+              </span>
+            </h2>
+            <p class="text-xs text-muted-foreground mt-0.5">Tinjau dan nilai resensi buku non-teks mingguan siswa berdasarkan rubrik Menulis & Presentasi.</p>
+          </div>
+
+          <div class="flex items-center gap-2 text-[10px] font-mono font-semibold flex-shrink-0 flex-wrap">
+            <span class="px-2.5 py-1 rounded bg-amber-500/10 text-amber-400 border border-amber-500/20">
+              ⏳ {pendingLiterasi} Menunggu
+            </span>
+            <span class="px-2.5 py-1 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+              ✓ {gradedLiterasi} Dinilai
+            </span>
+
+            <a 
+              href="/api/literasi/export-rekap"
+              class="px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-medium text-xs transition-colors flex items-center gap-1.5 shadow-sm"
+              title="Unduh Rekap Literasi ke CSV"
+              download
+            >
+              <span>📥 Rekap CSV</span>
+            </a>
+          </div>
+        </div>
+      </div>
+
+      <!-- Filter Controls for Literasi -->
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+        <div class="relative">
+          <input 
+            type="text" 
+            id="literasi-search-input" 
+            placeholder="Cari nama siswa / judul buku..." 
+            class="w-full px-3 py-2 bg-background border border-border rounded-lg text-xs focus:outline-none focus:border-primary placeholder:text-muted-foreground"
+          />
+        </div>
+        <div>
+          <select 
+            id="literasi-class-filter" 
+            class="w-full px-3 py-2 bg-background border border-border rounded-lg text-xs focus:outline-none focus:border-primary"
+          >
+            <option value="">Semua Kelas</option>
+            <option value="10 RPL 1">10 RPL 1</option>
+            <option value="10 RPL 2">10 RPL 2</option>
+            <option value="10 RPL 3">10 RPL 3</option>
+            <option value="10 RPL 4">10 RPL 4</option>
+            <option value="11 RPL 1">11 RPL 1</option>
+            <option value="11 RPL 2">11 RPL 2</option>
+            <option value="11 RPL 3">11 RPL 3</option>
+            <option value="11 RPL 4">11 RPL 4</option>
+            <option value="12 RPL 1">12 RPL 1</option>
+            <option value="12 RPL 2">12 RPL 2</option>
+            <option value="12 RPL 3">12 RPL 3</option>
+            <option value="12 RPL 4">12 RPL 4</option>
+            <option value="Kelas Uji Coba">Kelas Uji Coba</option>
+          </select>
+        </div>
+        <div>
+          <select 
+            id="literasi-status-filter" 
+            class="w-full px-3 py-2 bg-background border border-border rounded-lg text-xs focus:outline-none focus:border-primary"
+          >
+            <option value="">Semua Status</option>
+            <option value="submitted">Menunggu Penilaian</option>
+            <option value="graded">Sudah Dinilai</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Literasi Reports Table -->
+      {allLiterasiReports.length === 0 ? (
+        <div class="p-8 text-center bg-background rounded-lg border border-border/50 text-xs text-muted-foreground space-y-2">
+          <div class="text-2xl">📚</div>
+          <p class="font-medium text-foreground">Belum ada resensi buku yang dikumpulkan oleh siswa.</p>
+          <p class="text-[11px]">Ketika siswa mengisi formulir Rabu Literasi (RESIK) dan menekan tombol kirim, data akan muncul di sini.</p>
+        </div>
+      ) : (
+        <div class="overflow-x-auto border border-border rounded-lg">
+          <table class="w-full text-left text-xs" id="literasi-table">
+            <thead class="text-[11px] text-muted-foreground uppercase font-mono bg-secondary/40 border-b border-border">
+              <tr>
+                <th class="py-3 px-3">Siswa & Kelas</th>
+                <th class="py-3 px-3">Judul Buku & Penulis</th>
+                <th class="py-3 px-3">Minggu</th>
+                <th class="py-3 px-3">Waktu Kirim</th>
+                <th class="py-3 px-3">Status / Nilai</th>
+                <th class="py-3 px-3 text-right">Aksi</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-border font-medium bg-card">
+              {allLiterasiReports.map((report: any) => {
+                const isGraded = report.status === 'graded' && report.finalScore !== null;
+                const dateFormatted = new Date(report.createdAt).toLocaleDateString('id-ID', {
+                  day: 'numeric',
+                  month: 'short',
+                  year: 'numeric',
+                  hour: '2-digit',
+                  minute: '2-digit'
+                });
+
+                return (
+                  <tr 
+                    class="literasi-row hover:bg-accent/40 transition-colors"
+                    data-name={report.userName.toLowerCase()}
+                    data-email={(report.userEmail || '').toLowerCase()}
+                    data-class={report.studentClass || ''}
+                    data-book={report.bookTitle.toLowerCase()}
+                    data-status={report.status}
+                  >
+                    <td class="py-3 px-3">
+                      <div class="space-y-0.5">
+                        <div class="font-bold text-foreground">{report.userName}</div>
+                        <div class="text-[10px] text-muted-foreground font-mono flex items-center gap-1.5">
+                          <span>{report.userEmail}</span>
+                          {report.studentClass && (
+                            <>
+                              <span>•</span>
+                              <span class="px-1.5 py-0.2 rounded bg-secondary text-foreground border border-border font-semibold">
+                                {report.studentClass}
+                              </span>
+                            </>
+                          )}
+                        </div>
+                      </div>
+                    </td>
+                    <td class="py-3 px-3">
+                      <div class="space-y-0.5">
+                        <div class="font-semibold text-foreground text-xs">{report.bookTitle}</div>
+                        <div class="text-[10px] text-muted-foreground">{report.author}</div>
+                      </div>
+                    </td>
+                    <td class="py-3 px-3">
+                      <span class="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                        Minggu {report.weekNumber}
+                      </span>
+                    </td>
+                    <td class="py-3 px-3 font-mono text-muted-foreground text-[10px]">
+                      {dateFormatted}
+                    </td>
+                    <td class="py-3 px-3">
+                      {isGraded ? (
+                        <div class="space-y-1">
+                          <span class="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/25">
+                            DINILAI: {report.finalScore}/100
+                          </span>
+                          <div class="text-[9px] text-muted-foreground font-mono">
+                            ✍️ {report.writingScore}/16 • 🎤 {report.presentationScore}/20
+                          </div>
+                        </div>
+                      ) : (
+                        <span class="px-2 py-0.5 rounded text-[10px] font-mono font-semibold bg-amber-500/10 text-amber-400 border border-amber-500/25 animate-pulse">
+                          MENUNGGU PENILAIAN
+                        </span>
+                      )}
+                    </td>
+                    <td class="py-3 px-3 text-right">
+                      <button 
+                        type="button"
+                        class="literasi-grade-btn px-3 py-1.5 rounded-lg text-xs font-semibold transition-all shadow-sm"
+                        class:list={[
+                          isGraded
+                            ? "bg-secondary hover:bg-accent text-foreground border border-border"
+                            : "bg-emerald-600 hover:bg-emerald-500 text-white"
+                        ]}
+                        data-report-id={report.id}
+                        data-student-name={report.userName}
+                        data-student-class={report.studentClass || '-'}
+                        data-book-title={report.bookTitle}
+                        data-author={report.author}
+                        data-publisher={`${report.publisher}, ${report.city} (${report.year})`}
+                        data-page-count={report.pageCount}
+                        data-summary={report.summary}
+                        data-moral={report.moralMessage}
+                        data-week={report.weekNumber}
+                        data-writing-score={report.writingScore || ''}
+                        data-presentation-score={report.presentationScore || ''}
+                        data-final-score={report.finalScore || ''}
+                        data-feedback={report.teacherFeedback || ''}
+                        data-status={report.status}
+                      >
+                        {isGraded ? '✏️ Edit Nilai' : '🔍 Periksa & Nilai'}
+                      </button>
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+      )}
+    </div>
+
+  </div>
+
+  <!-- ========================================== -->
+  <!-- MODAL PENILAIAN RABU LITERASI (RESIK) -->
+  <!-- ========================================== -->
+  <div id="literasi-grade-modal" class="fixed inset-0 z-50 bg-background/80 backdrop-blur-sm hidden flex items-center justify-center p-4">
+    <div class="bg-card border border-border rounded-xl max-w-3xl w-full max-h-[90vh] flex flex-col shadow-lg overflow-hidden animate-fadeIn">
+      
+      <!-- Modal Header -->
+      <div class="p-4 sm:p-5 border-b border-border flex items-center justify-between bg-emerald-950/30">
+        <div class="space-y-0.5">
+          <div class="flex items-center gap-2">
+            <span class="px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 text-xs font-mono font-bold">
+              RESIK
+            </span>
+            <span class="text-xs text-muted-foreground" id="lit-modal-student-info">Nama Siswa - Kelas</span>
+          </div>
+          <h3 class="text-base font-bold text-foreground">
+            Penilaian Resensi Buku Literasi
+          </h3>
+        </div>
+        <button type="button" id="close-literasi-modal-btn" class="p-1.5 rounded-lg hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-colors">
+          <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+        </button>
+      </div>
+
+      <!-- Modal Body (Scrollable) -->
+      <div class="flex-1 overflow-y-auto p-4 sm:p-5 space-y-5">
+        
+        <!-- Book Info Card -->
+        <div class="p-4 rounded-xl bg-secondary/40 border border-border space-y-3">
+          <div class="flex items-start gap-3">
+            <div class="text-3xl">📖</div>
+            <div class="space-y-1 flex-1">
+              <h4 class="font-bold text-foreground text-sm" id="lit-modal-book-title">Judul Buku</h4>
+              <p class="text-[11px] text-muted-foreground font-mono" id="lit-modal-book-meta">Penulis • Penerbit • Halaman</p>
+              <span class="inline-block px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20" id="lit-modal-week">Minggu 1</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Student's Summary -->
+        <div class="space-y-2">
+          <h4 class="text-xs font-bold text-foreground flex items-center gap-1.5">📝 Ringkasan Isi Buku</h4>
+          <div class="p-3.5 rounded-lg bg-background border border-border text-xs text-foreground leading-relaxed max-h-40 overflow-y-auto" id="lit-modal-summary">
+            -
+          </div>
+        </div>
+
+        <!-- Student's Moral Message -->
+        <div class="space-y-2">
+          <h4 class="text-xs font-bold text-foreground flex items-center gap-1.5">💡 Pesan Moral / Pelajaran</h4>
+          <div class="p-3.5 rounded-lg bg-background border border-border text-xs text-foreground leading-relaxed max-h-32 overflow-y-auto" id="lit-modal-moral">
+            -
+          </div>
+        </div>
+
+        <hr class="border-border" />
+
+        <!-- Grading Form -->
+        <form id="literasi-grade-form" class="space-y-5">
+          <input type="hidden" name="reportId" id="lit-grade-report-id" />
+
+          <!-- Writing Aspects (w1-w4, each 1-4, max 16) -->
+          <div class="space-y-3">
+            <h4 class="text-xs font-bold text-foreground flex items-center gap-1.5">
+              ✍️ Aspek Menulis <span class="text-[10px] text-muted-foreground font-normal">(Masing-masing 1-4, Total Maks 16)</span>
+            </h4>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div class="space-y-1">
+                <label class="text-[11px] font-semibold text-muted-foreground">W1: Kelengkapan Identitas Buku</label>
+                <input type="number" name="w1" id="lit-w1" min="1" max="4" value="3" class="w-full px-3 py-2 bg-background border border-border rounded-lg text-xs font-mono focus:outline-none focus:border-emerald-500" />
+              </div>
+              <div class="space-y-1">
+                <label class="text-[11px] font-semibold text-muted-foreground">W2: Kualitas Ringkasan</label>
+                <input type="number" name="w2" id="lit-w2" min="1" max="4" value="3" class="w-full px-3 py-2 bg-background border border-border rounded-lg text-xs font-mono focus:outline-none focus:border-emerald-500" />
+              </div>
+              <div class="space-y-1">
+                <label class="text-[11px] font-semibold text-muted-foreground">W3: Pesan Moral & Refleksi</label>
+                <input type="number" name="w3" id="lit-w3" min="1" max="4" value="3" class="w-full px-3 py-2 bg-background border border-border rounded-lg text-xs font-mono focus:outline-none focus:border-emerald-500" />
+              </div>
+              <div class="space-y-1">
+                <label class="text-[11px] font-semibold text-muted-foreground">W4: Ejaan & Tata Bahasa</label>
+                <input type="number" name="w4" id="lit-w4" min="1" max="4" value="3" class="w-full px-3 py-2 bg-background border border-border rounded-lg text-xs font-mono focus:outline-none focus:border-emerald-500" />
+              </div>
+            </div>
+            <div class="text-right text-[11px] font-mono font-bold text-emerald-400">
+              Subtotal Menulis: <span id="lit-writing-subtotal">12</span> / 16
+            </div>
+          </div>
+
+          <!-- Presentation Aspects (p1-p5, each 1-4, max 20) -->
+          <div class="space-y-3">
+            <h4 class="text-xs font-bold text-foreground flex items-center gap-1.5">
+              🎤 Aspek Presentasi <span class="text-[10px] text-muted-foreground font-normal">(Masing-masing 1-4, Total Maks 20)</span>
+            </h4>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div class="space-y-1">
+                <label class="text-[11px] font-semibold text-muted-foreground">P1: Kelancaran Penyampaian</label>
+                <input type="number" name="p1" id="lit-p1" min="1" max="4" value="3" class="w-full px-3 py-2 bg-background border border-border rounded-lg text-xs font-mono focus:outline-none focus:border-emerald-500" />
+              </div>
+              <div class="space-y-1">
+                <label class="text-[11px] font-semibold text-muted-foreground">P2: Kontak Mata & Ekspresi</label>
+                <input type="number" name="p2" id="lit-p2" min="1" max="4" value="3" class="w-full px-3 py-2 bg-background border border-border rounded-lg text-xs font-mono focus:outline-none focus:border-emerald-500" />
+              </div>
+              <div class="space-y-1">
+                <label class="text-[11px] font-semibold text-muted-foreground">P3: Volume & Intonasi Suara</label>
+                <input type="number" name="p3" id="lit-p3" min="1" max="4" value="3" class="w-full px-3 py-2 bg-background border border-border rounded-lg text-xs font-mono focus:outline-none focus:border-emerald-500" />
+              </div>
+              <div class="space-y-1">
+                <label class="text-[11px] font-semibold text-muted-foreground">P4: Penguasaan Materi</label>
+                <input type="number" name="p4" id="lit-p4" min="1" max="4" value="3" class="w-full px-3 py-2 bg-background border border-border rounded-lg text-xs font-mono focus:outline-none focus:border-emerald-500" />
+              </div>
+              <div class="space-y-1">
+                <label class="text-[11px] font-semibold text-muted-foreground">P5: Kemampuan Menjawab Pertanyaan</label>
+                <input type="number" name="p5" id="lit-p5" min="1" max="4" value="3" class="w-full px-3 py-2 bg-background border border-border rounded-lg text-xs font-mono focus:outline-none focus:border-emerald-500" />
+              </div>
+            </div>
+            <div class="text-right text-[11px] font-mono font-bold text-emerald-400">
+              Subtotal Presentasi: <span id="lit-presentation-subtotal">15</span> / 20
+            </div>
+          </div>
+
+          <!-- Auto-computed Final Score -->
+          <div class="p-4 rounded-xl bg-emerald-950/20 border border-emerald-500/20 flex items-center justify-between">
+            <div class="space-y-0.5">
+              <span class="text-[11px] font-mono font-semibold text-muted-foreground uppercase">Nilai Akhir RESIK</span>
+              <p class="text-[10px] text-muted-foreground">Formula: (Menulis + Presentasi) / 36 × 100</p>
+            </div>
+            <div class="text-3xl font-black font-mono text-emerald-400" id="lit-final-score-display">75</div>
+          </div>
+
+          <!-- Teacher Feedback -->
+          <div class="space-y-2">
+            <label class="text-xs font-bold text-foreground">💬 Catatan & Masukan Guru</label>
+            <textarea 
+              name="teacherFeedback" 
+              id="lit-teacher-feedback" 
+              rows="3" 
+              placeholder="Tulis catatan, saran, atau apresiasi untuk resensi siswa ini..."
+              class="w-full px-3 py-2.5 bg-background border border-border rounded-lg text-xs focus:outline-none focus:border-emerald-500 placeholder:text-muted-foreground resize-none"
+            ></textarea>
+            <div class="flex flex-wrap gap-1.5">
+              <button type="button" class="lit-feedback-preset px-2.5 py-1 rounded-md bg-secondary hover:bg-accent text-[10px] font-medium text-foreground border border-border transition-colors" data-text="Resensi sangat baik! Ringkasan mencerminkan pemahaman mendalam terhadap isi buku.">👏 Sangat Baik</button>
+              <button type="button" class="lit-feedback-preset px-2.5 py-1 rounded-md bg-secondary hover:bg-accent text-[10px] font-medium text-foreground border border-border transition-colors" data-text="Ringkasan cukup baik namun perlu diperdalam analisis pesan moralnya.">📝 Cukup Baik</button>
+              <button type="button" class="lit-feedback-preset px-2.5 py-1 rounded-md bg-secondary hover:bg-accent text-[10px] font-medium text-foreground border border-border transition-colors" data-text="Perlu diperbaiki: ringkasan terlalu singkat dan pesan moral belum tergali dengan baik. Silakan coba lagi.">⚠️ Perlu Perbaikan</button>
+              <button type="button" class="lit-feedback-preset px-2.5 py-1 rounded-md bg-secondary hover:bg-accent text-[10px] font-medium text-foreground border border-border transition-colors" data-text="Presentasi sangat percaya diri dan menginspirasi teman sekelas. Luar biasa!">🌟 Presentasi Luar Biasa</button>
+            </div>
+          </div>
+        </form>
+      </div>
+
+      <!-- Modal Footer -->
+      <div class="p-4 sm:p-5 border-t border-border flex items-center justify-between gap-3 bg-secondary/20">
+        <button type="button" id="print-literasi-modal-btn" class="px-3.5 py-2 rounded-lg bg-secondary hover:bg-accent text-foreground font-semibold text-xs border border-border transition-colors flex items-center gap-1.5 shadow-sm">
+          <span>🖨️</span> Cetak Dokumen Resmi PDF
+        </button>
+        <div class="flex items-center gap-2">
+          <button type="button" id="cancel-literasi-grade-btn" class="px-4 py-2 rounded-lg bg-secondary hover:bg-accent text-foreground font-medium text-xs border border-border transition-colors">
+            Batal
+          </button>
+          <button type="button" id="submit-literasi-grade-btn" class="px-5 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs shadow-sm transition-colors flex items-center gap-2">
+            <span>💾 Simpan Nilai RESIK</span>
+          </button>
+        </div>
+      </div>
+    </div>
   </div>
 
   <!-- ========================================== -->
@@ -2690,4 +3280,504 @@ const passRate = totalExamsTaken > 0 ? Math.round((passingExams / totalExamsTake
       }
     });
   });
+
+  // 11b. Reset Password Action for Admin / Teacher
+  const resetPwdButtons = document.querySelectorAll('.reset-pwd-btn');
+  resetPwdButtons.forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const targetUserId = btn.getAttribute('data-user-id');
+      const userName = btn.getAttribute('data-user-name') || 'Siswa';
+      const userEmail = btn.getAttribute('data-user-email') || '';
+
+      const defaultPassword = 'smk' + Math.floor(100000 + Math.random() * 900000);
+      const promptMsg = `🔑 RESET PASSWORD SISWA\n\nNama Siswa: ${userName}\nEmail: ${userEmail}\n\nMasukkan password baru untuk akun siswa ini (minimal 6 karakter):`;
+      
+      const newPassword = window.prompt(promptMsg, defaultPassword);
+      if (newPassword === null) return; // User cancelled
+
+      if (newPassword.trim().length < 6) {
+        alert('Password baru minimal harus 6 karakter.');
+        return;
+      }
+
+      try {
+        const res = await fetch('/api/admin/users/reset-password', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            targetUserId,
+            newPassword: newPassword.trim()
+          })
+        });
+
+        const data = await res.json();
+
+        if (res.ok && data.success) {
+          showAlert(data.message || 'Password berhasil direset!');
+          window.alert(`✅ SUKSES RESET PASSWORD!\n\nNama: ${userName}\nEmail: ${userEmail}\nPassword Baru: ${newPassword.trim()}\n\nSilakan bagikan informasi password baru ini kepada siswa yang bersangkutan.`);
+        } else {
+          showAlert(data.error || 'Gagal mereset password siswa.', true);
+        }
+      } catch (e) {
+        showAlert('Gagal: Terjadi gangguan jaringan/server.', true);
+      }
+    });
+  });
+
+  // 12. Interactive Console Section Tab Navigation (Solves Clutter)
+  const adminTabBtns = document.querySelectorAll('.admin-tab-btn');
+  const adminSections: Record<string, HTMLElement | null> = {
+    tokens: document.getElementById('tokens'),
+    submissions: document.getElementById('submissions'),
+    reflections: document.getElementById('reflections'),
+    students: document.getElementById('students'),
+    exams: document.getElementById('exams'),
+    literasi: document.getElementById('literasi'),
+    'lesson-logs': document.getElementById('lesson-logs'),
+  };
+
+  adminTabBtns.forEach(btn => {
+    btn.addEventListener('click', () => {
+      const tab = btn.getAttribute('data-admin-tab');
+
+      adminTabBtns.forEach(b => {
+        b.classList.remove('active', 'bg-gradient-to-r', 'from-amber-500', 'to-orange-500', 'text-black', 'shadow-md', 'font-bold');
+        b.classList.add('text-muted-foreground', 'font-semibold');
+      });
+
+      btn.classList.add('active', 'bg-gradient-to-r', 'from-amber-500', 'to-orange-500', 'text-black', 'shadow-md', 'font-bold');
+      btn.classList.remove('text-muted-foreground');
+
+      Object.entries(adminSections).forEach(([key, section]) => {
+        if (!section) return;
+        if (tab === 'all' || tab === key) {
+          section.style.display = '';
+        } else {
+          section.style.display = 'none';
+        }
+      });
+    });
+  });
+  // 13. TKA Exam Filter & Search Logic
+  const examSearchInput = document.getElementById('exam-search-input') as HTMLInputElement | null;
+  const examClassFilter = document.getElementById('exam-class-filter') as HTMLSelectElement | null;
+  const examStatusFilter = document.getElementById('exam-status-filter') as HTMLSelectElement | null;
+  const examRows = document.querySelectorAll('.exam-row');
+
+  function applyExamFilters() {
+    const q = examSearchInput?.value.toLowerCase().trim() || '';
+    const selectedClass = examClassFilter?.value || '';
+    const selectedStatus = examStatusFilter?.value || '';
+
+    examRows.forEach(row => {
+      const name = row.getAttribute('data-name') || '';
+      const email = row.getAttribute('data-email') || '';
+      const rowClass = row.getAttribute('data-class') || '';
+      const status = row.getAttribute('data-status') || '';
+
+      const matchesSearch = !q || name.includes(q) || email.includes(q);
+      const matchesClass = !selectedClass || rowClass === selectedClass;
+      const matchesStatus = !selectedStatus || status === selectedStatus;
+
+      if (matchesSearch && matchesClass && matchesStatus) {
+        (row as HTMLElement).style.display = '';
+      } else {
+        (row as HTMLElement).style.display = 'none';
+      }
+    });
+  }
+
+  examSearchInput?.addEventListener('input', applyExamFilters);
+  examClassFilter?.addEventListener('change', applyExamFilters);
+  examStatusFilter?.addEventListener('change', applyExamFilters);
+
+  // 14. Literasi Filter & Search Logic
+  const litSearchInput = document.getElementById('literasi-search-input') as HTMLInputElement | null;
+  const litClassFilter = document.getElementById('literasi-class-filter') as HTMLSelectElement | null;
+  const litStatusFilter = document.getElementById('literasi-status-filter') as HTMLSelectElement | null;
+  const litRows = document.querySelectorAll('.literasi-row');
+
+  function applyLiterasiFilters() {
+    const q = litSearchInput?.value.toLowerCase().trim() || '';
+    const selectedClass = litClassFilter?.value || '';
+    const selectedStatus = litStatusFilter?.value || '';
+
+    litRows.forEach(row => {
+      const name = row.getAttribute('data-name') || '';
+      const email = row.getAttribute('data-email') || '';
+      const rowClass = row.getAttribute('data-class') || '';
+      const book = row.getAttribute('data-book') || '';
+      const status = row.getAttribute('data-status') || '';
+
+      const matchesSearch = !q || name.includes(q) || email.includes(q) || book.includes(q);
+      const matchesClass = !selectedClass || rowClass === selectedClass;
+      const matchesStatus = !selectedStatus || status === selectedStatus;
+
+      if (matchesSearch && matchesClass && matchesStatus) {
+        (row as HTMLElement).style.display = '';
+      } else {
+        (row as HTMLElement).style.display = 'none';
+      }
+    });
+  }
+
+  litSearchInput?.addEventListener('input', applyLiterasiFilters);
+  litClassFilter?.addEventListener('change', applyLiterasiFilters);
+  litStatusFilter?.addEventListener('change', applyLiterasiFilters);
+
+  // 15. Literasi RESIK Grading Modal
+  const litGradeModal = document.getElementById('literasi-grade-modal');
+  const closeLitModalBtn = document.getElementById('close-literasi-modal-btn');
+  const cancelLitGradeBtn = document.getElementById('cancel-literasi-grade-btn');
+  const submitLitGradeBtn = document.getElementById('submit-literasi-grade-btn');
+  const litGradeForm = document.getElementById('literasi-grade-form') as HTMLFormElement | null;
+
+  const litModalStudentInfo = document.getElementById('lit-modal-student-info');
+  const litModalBookTitle = document.getElementById('lit-modal-book-title');
+  const litModalBookMeta = document.getElementById('lit-modal-book-meta');
+  const litModalWeek = document.getElementById('lit-modal-week');
+  const litModalSummary = document.getElementById('lit-modal-summary');
+  const litModalMoral = document.getElementById('lit-modal-moral');
+  const litReportIdInput = document.getElementById('lit-grade-report-id') as HTMLInputElement | null;
+  const litTeacherFeedback = document.getElementById('lit-teacher-feedback') as HTMLTextAreaElement | null;
+  const litFinalScoreDisplay = document.getElementById('lit-final-score-display');
+  const litWritingSubtotal = document.getElementById('lit-writing-subtotal');
+  const litPresentationSubtotal = document.getElementById('lit-presentation-subtotal');
+  const printLitModalBtn = document.getElementById('print-literasi-modal-btn');
+
+  let currentActiveLiterasiData: any = null;
+
+  function closeLitModal() {
+    litGradeModal?.classList.add('hidden');
+  }
+
+  closeLitModalBtn?.addEventListener('click', closeLitModal);
+  cancelLitGradeBtn?.addEventListener('click', closeLitModal);
+  litGradeModal?.addEventListener('click', (e) => {
+    if (e.target === litGradeModal) closeLitModal();
+  });
+
+  // Auto-compute RESIK score when inputs change
+  function updateLitScores() {
+    const w1 = Number((document.getElementById('lit-w1') as HTMLInputElement)?.value) || 0;
+    const w2 = Number((document.getElementById('lit-w2') as HTMLInputElement)?.value) || 0;
+    const w3 = Number((document.getElementById('lit-w3') as HTMLInputElement)?.value) || 0;
+    const w4 = Number((document.getElementById('lit-w4') as HTMLInputElement)?.value) || 0;
+    const p1 = Number((document.getElementById('lit-p1') as HTMLInputElement)?.value) || 0;
+    const p2 = Number((document.getElementById('lit-p2') as HTMLInputElement)?.value) || 0;
+    const p3 = Number((document.getElementById('lit-p3') as HTMLInputElement)?.value) || 0;
+    const p4 = Number((document.getElementById('lit-p4') as HTMLInputElement)?.value) || 0;
+    const p5 = Number((document.getElementById('lit-p5') as HTMLInputElement)?.value) || 0;
+
+    const totalWriting = Math.min(16, Math.max(4, w1 + w2 + w3 + w4));
+    const totalPresentation = Math.min(20, Math.max(5, p1 + p2 + p3 + p4 + p5));
+    const finalScore = Math.min(100, Math.max(0, Math.round(((totalWriting + totalPresentation) / 36) * 100)));
+
+    if (litWritingSubtotal) litWritingSubtotal.textContent = String(totalWriting);
+    if (litPresentationSubtotal) litPresentationSubtotal.textContent = String(totalPresentation);
+    if (litFinalScoreDisplay) litFinalScoreDisplay.textContent = String(finalScore);
+
+    if (currentActiveLiterasiData) {
+      currentActiveLiterasiData.writingScore = totalWriting;
+      currentActiveLiterasiData.presentationScore = totalPresentation;
+      currentActiveLiterasiData.finalScore = finalScore;
+    }
+  }
+
+  ['lit-w1', 'lit-w2', 'lit-w3', 'lit-w4', 'lit-p1', 'lit-p2', 'lit-p3', 'lit-p4', 'lit-p5'].forEach(id => {
+    document.getElementById(id)?.addEventListener('input', updateLitScores);
+  });
+
+  // Open Literasi grading modal
+  const litGradeBtns = document.querySelectorAll('.literasi-grade-btn');
+  litGradeBtns.forEach(btn => {
+    btn.addEventListener('click', () => {
+      const reportId = btn.getAttribute('data-report-id');
+      const studentName = btn.getAttribute('data-student-name') || '';
+      const studentClass = btn.getAttribute('data-student-class') || '-';
+      const bookTitle = btn.getAttribute('data-book-title') || '';
+      const author = btn.getAttribute('data-author') || '';
+      const publisher = btn.getAttribute('data-publisher') || '';
+      const pageCount = btn.getAttribute('data-page-count') || '0';
+      const summary = btn.getAttribute('data-summary') || '-';
+      const moral = btn.getAttribute('data-moral') || '-';
+      const week = btn.getAttribute('data-week') || '1';
+      const writingScore = btn.getAttribute('data-writing-score') || '';
+      const presentationScore = btn.getAttribute('data-presentation-score') || '';
+      const feedback = btn.getAttribute('data-feedback') || '';
+
+      currentActiveLiterasiData = {
+        reportId,
+        studentName,
+        studentClass,
+        bookTitle,
+        author,
+        publisher,
+        pageCount,
+        summary,
+        moral,
+        week,
+        writingScore,
+        presentationScore,
+        feedback,
+      };
+
+      if (litReportIdInput) litReportIdInput.value = reportId || '';
+      if (litModalStudentInfo) litModalStudentInfo.textContent = `${studentName} — ${studentClass}`;
+      if (litModalBookTitle) litModalBookTitle.textContent = bookTitle;
+      if (litModalBookMeta) litModalBookMeta.textContent = `${author} • ${publisher} • ${pageCount} hal.`;
+      if (litModalWeek) litModalWeek.textContent = `Minggu ${week}`;
+      if (litModalSummary) litModalSummary.textContent = summary;
+      if (litModalMoral) litModalMoral.textContent = moral;
+      if (litTeacherFeedback) litTeacherFeedback.value = feedback;
+
+      // Pre-fill scores if already graded
+      if (writingScore) {
+        const ws = Number(writingScore);
+        const avg = Math.round(ws / 4);
+        (document.getElementById('lit-w1') as HTMLInputElement).value = String(avg);
+        (document.getElementById('lit-w2') as HTMLInputElement).value = String(avg);
+        (document.getElementById('lit-w3') as HTMLInputElement).value = String(avg);
+        (document.getElementById('lit-w4') as HTMLInputElement).value = String(ws - avg * 3);
+      } else {
+        ['lit-w1', 'lit-w2', 'lit-w3', 'lit-w4'].forEach(id => {
+          (document.getElementById(id) as HTMLInputElement).value = '3';
+        });
+      }
+
+      if (presentationScore) {
+        const ps = Number(presentationScore);
+        const avg = Math.round(ps / 5);
+        (document.getElementById('lit-p1') as HTMLInputElement).value = String(avg);
+        (document.getElementById('lit-p2') as HTMLInputElement).value = String(avg);
+        (document.getElementById('lit-p3') as HTMLInputElement).value = String(avg);
+        (document.getElementById('lit-p4') as HTMLInputElement).value = String(avg);
+        (document.getElementById('lit-p5') as HTMLInputElement).value = String(ps - avg * 4);
+      } else {
+        ['lit-p1', 'lit-p2', 'lit-p3', 'lit-p4', 'lit-p5'].forEach(id => {
+          (document.getElementById(id) as HTMLInputElement).value = '3';
+        });
+      }
+
+      updateLitScores();
+      litGradeModal?.classList.remove('hidden');
+    });
+  });
+
+  // Print Literasi Report from Admin Modal with Official School Kop & Logo
+  printLitModalBtn?.addEventListener('click', () => {
+    if (!currentActiveLiterasiData) return;
+    const d = currentActiveLiterasiData;
+    const feedback = litTeacherFeedback?.value.trim() || d.feedback || '';
+    const ws = litWritingSubtotal?.textContent || '12';
+    const ps = litPresentationSubtotal?.textContent || '15';
+    const fs = litFinalScoreDisplay?.textContent || '75';
+    const logoUrl = window.location.origin + '/logo-smkn1rongga.png';
+
+    const printWindow = window.open('', '_blank');
+    if (!printWindow) return;
+
+    const printHtml = [
+      '<!DOCTYPE html>',
+      '<html lang="id">',
+      '<head>',
+      '  <meta charset="UTF-8">',
+      '  <title>LAPORAN_RESIK_' + (d.studentName || 'SISWA').replace(/\s+/g, '_') + '_MINGGU_' + d.week + '</title>',
+      '  <style>',
+      '    @page { size: A4 portrait; margin: 12mm 15mm 15mm 15mm; }',
+      '    * { box-sizing: border-box; }',
+      '    body { font-family: "Times New Roman", Times, serif; margin: 0; color: #000; line-height: 1.35; font-size: 11pt; background: #fff; }',
+      '    .kop-container { display: flex; align-items: center; justify-content: space-between; gap: 14px; padding-bottom: 8px; margin-bottom: 2px; }',
+      '    .kop-logo { width: 85px; height: 95px; object-fit: contain; flex-shrink: 0; }',
+      '    .kop-text { text-align: center; flex: 1; line-height: 1.2; }',
+      '    .kop-text h4 { margin: 0; font-size: 10.5pt; font-weight: normal; text-transform: uppercase; letter-spacing: 0.5px; }',
+      '    .kop-text h3 { margin: 2px 0; font-size: 11.5pt; font-weight: bold; text-transform: uppercase; letter-spacing: 0.5px; }',
+      '    .kop-text h2 { margin: 2px 0; font-size: 14.5pt; font-weight: 900; text-transform: uppercase; letter-spacing: 1px; }',
+      '    .kop-text p.meta-sub { margin: 2px 0 0 0; font-size: 9.5pt; font-weight: bold; text-transform: uppercase; }',
+      '    .kop-text p.address { margin: 2px 0 0 0; font-size: 8.5pt; font-style: italic; line-height: 1.2; }',
+      '    .kop-line-thick { border-top: 3px solid #000; margin-top: 4px; }',
+      '    .kop-line-thin { border-top: 1px solid #000; margin-top: 2px; margin-bottom: 14px; }',
+      '    .doc-title { text-align: center; margin-bottom: 14px; }',
+      '    .doc-title h3 { margin: 0; font-size: 12pt; font-weight: bold; text-decoration: underline; text-transform: uppercase; letter-spacing: 0.5px; }',
+      '    .doc-title p { margin: 2px 0 0 0; font-size: 9.5pt; font-family: monospace; font-weight: bold; }',
+      '    .meta-table { width: 100%; border-collapse: collapse; margin-bottom: 12px; font-size: 10pt; }',
+      '    .meta-table td { padding: 2.5px 4px; vertical-align: top; }',
+      '    .section-header { font-weight: bold; font-size: 10.5pt; margin-top: 10px; margin-bottom: 4px; text-transform: uppercase; border-bottom: 1px solid #000; padding-bottom: 2px; }',
+      '    .content-box { border: 1px solid #444; padding: 8px 10px; background: #fff; margin-bottom: 10px; text-align: justify; font-size: 10pt; line-height: 1.4; }',
+      '    .score-box { border: 1.5px solid #000; padding: 8px 10px; margin-top: 12px; page-break-inside: avoid; }',
+      '    .score-table { width: 100%; border-collapse: collapse; text-align: center; font-size: 9.5pt; margin-top: 4px; }',
+      '    .score-table th, .score-table td { border: 1px solid #000; padding: 4px 6px; }',
+      '    .score-table th { background: #f2f2f2; font-weight: bold; }',
+      '    .footer-signature { margin-top: 24px; width: 100%; page-break-inside: avoid; }',
+      '    .footer-signature td { text-align: center; width: 50%; vertical-align: top; font-size: 10pt; }',
+      '    @media print { body { -webkit-print-color-adjust: exact; print-color-adjust: exact; } }',
+      '  </style>',
+      '</head>',
+      '<body>',
+      '  <!-- KOP SURAT RESMI DENGAN LOGO SMKN 1 RONGGA -->',
+      '  <div class="kop-container">',
+      '    <img src="' + logoUrl + '" class="kop-logo" alt="Logo SMKN 1 Rongga" />',
+      '    <div class="kop-text">',
+      '      <h4>PEMERINTAH DAERAH PROVINSI JAWA BARAT</h4>',
+      '      <h4>DINAS PENDIDIKAN</h4>',
+      '      <h4>CABANG DINAS PENDIDIKAN WILAYAH VI</h4>',
+      '      <h2>SMK NEGERI 1 RONGGA</h2>',
+      '      <p class="meta-sub">PROGRAM KEAHLIAN PENGEMBANGAN PERANGKAT LUNAK DAN GIM (PPLG)</p>',
+      '      <p class="address">Jl. Raya Rongga, Desa. Cibedug Kec. Rongga Kab. Bandung Barat Prov. Jawa Barat Telp. 022-6950350</p>',
+      '      <p class="address"><u>Website :</u> smkn1rongga.sch.id Email : mail@smkn1rongga.sch.id</p>',
+      '      <p class="address">Bandung Barat 40565</p>',
+      '    </div>',
+      '    <div style="width: 85px; flex-shrink: 0;"></div>',
+      '  </div>',
+      '  <div class="kop-line-thick"></div>',
+      '  <div class="kop-line-thin"></div>',
+      '',
+      '  <div class="doc-title">',
+      '    <h3>LEMBAR LAPORAN RESENSI BUKU (RABU LITERASI RESIK)</h3>',
+      '    <p>MINGGU KE-' + d.week + ' • SEMESTER GANJIL TAHUN AJARAN 2026/2027</p>',
+      '  </div>',
+      '',
+      '  <!-- IDENTITAS SISWA -->',
+      '  <table class="meta-table">',
+      '    <tr>',
+      '      <td width="22%"><strong>Nama Peserta Didik</strong></td>',
+      '      <td width="2%">:</td>',
+      '      <td width="36%"><strong>' + (d.studentName || '-').toUpperCase() + '</strong></td>',
+      '      <td width="18%"><strong>Konsentrasi Keahlian</strong></td>',
+      '      <td width="2%">:</td>',
+      '      <td width="20%">Rekayasa Perangkat Lunak</td>',
+      '    </tr>',
+      '    <tr>',
+      '      <td><strong>Kelas / Rombel</strong></td>',
+      '      <td>:</td>',
+      '      <td>' + (d.studentClass || '10 RPL') + '</td>',
+      '      <td><strong>Tanggal Cetak</strong></td>',
+      '      <td>:</td>',
+      '      <td>' + new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' }) + '</td>',
+      '    </tr>',
+      '  </table>',
+      '',
+      '  <!-- IDENTITAS BUKU -->',
+      '  <div class="section-header">1. Kelengkapan Identitas Buku</div>',
+      '  <table class="meta-table" style="margin-left: 6px; margin-bottom: 6px;">',
+      '    <tr><td width="22%">Judul Buku</td><td width="2%">:</td><td><strong>' + d.bookTitle + '</strong></td></tr>',
+      '    <tr><td>Penulis / Pengarang</td><td>:</td><td>' + d.author + '</td></tr>',
+      '    <tr><td>Penerbit & Data Publikasi</td><td>:</td><td>' + d.publisher + '</td></tr>',
+      '    <tr><td>Tebal Buku</td><td>:</td><td>' + d.pageCount + ' Halaman</td></tr>',
+      '  </table>',
+      '',
+      '  <!-- RINGKASAN ISI BUKU -->',
+      '  <div class="section-header">2. Isi Ringkasan Buku (Aspek Menulis)</div>',
+      '  <div class="content-box">' + d.summary.replace(/\n/g, '<br/>') + '</div>',
+      '',
+      '  <!-- AMANAT / PESAN MORAL -->',
+      '  <div class="section-header">3. Amanat / Pesan Moral Bacaan</div>',
+      '  <div class="content-box">' + d.moral.replace(/\n/g, '<br/>') + '</div>',
+      '',
+      '  <!-- EVALUASI GURU -->',
+      '  <div class="score-box">',
+      '    <div style="font-weight: bold; font-size: 10.5pt; text-align: center; margin-bottom: 4px; text-transform: uppercase;">EVALUASI & PENILAIAN RUBRIK RESIK RESMI</div>',
+      '    <table class="score-table">',
+      '      <thead>',
+      '        <tr>',
+      '          <th>Aspek Menulis (Max 16)</th>',
+      '          <th>Aspek Presentasi (Max 20)</th>',
+      '          <th>Nilai Akhir (0-100)</th>',
+      '          <th>Ketercapaian Kompetensi</th>',
+      '        </tr>',
+      '      </thead>',
+      '      <tbody>',
+      '        <tr>',
+      '          <td><strong>' + ws + ' / 16</strong></td>',
+      '          <td><strong>' + ps + ' / 20</strong></td>',
+      '          <td><strong style="font-size: 13pt; color: #000;">' + fs + '</strong></td>',
+      '          <td><strong>' + (Number(fs) >= 75 ? 'TUNTAS (SANGAT BAIK)' : Number(fs) > 0 ? 'PERLU PEMBINAAN' : 'MENUNGGU PENILAIAN') + '</strong></td>',
+      '        </tr>',
+      '      </tbody>',
+      '    </table>',
+      (feedback ? '    <div style="font-style: italic; margin-top: 6px; font-size: 9.5pt; background: #fafafa; padding: 4px 8px; border-left: 3px solid #000;"><strong>Catatan Guru Pengampu:</strong> "' + feedback + '"</div>' : ''),
+      '  </div>',
+      '',
+      '  <!-- TANDA TANGAN -->',
+      '  <table class="footer-signature">',
+      '    <tr>',
+      '      <td>',
+      '        Peserta Didik,<br/><br/><br/><br/>',
+      '        <strong><u>( ' + (d.studentName || 'Siswa PPLG') + ' )</u></strong><br/>',
+      '        <span style="font-size: 8.5pt; font-family: monospace;">NIS/Kelas: ' + (d.studentClass || '10 RPL') + '</span>',
+      '      </td>',
+      '      <td>',
+      '        Rongga, ' + new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' }) + '<br/>',
+      '        Guru Pengampu RPL / Literasi,<br/><br/><br/><br/>',
+      '        <strong><u>( Agung Gumelar Saputra, S.Tr.T. )</u></strong><br/>',
+      '        <span style="font-size: 8.5pt; font-family: monospace;">NIP. 199306012022211013</span>',
+      '      </td>',
+      '    </tr>',
+      '  </table>',
+      '</body>',
+      '</html>'
+    ].join('');
+
+    printWindow.document.write(printHtml);
+    printWindow.document.close();
+    setTimeout(() => { printWindow.print(); }, 400);
+  });
+
+  // Feedback preset chips
+  const litFeedbackPresets = document.querySelectorAll('.lit-feedback-preset');
+  litFeedbackPresets.forEach(btn => {
+    btn.addEventListener('click', () => {
+      const text = btn.getAttribute('data-text') || '';
+      if (litTeacherFeedback) {
+        litTeacherFeedback.value = litTeacherFeedback.value ? litTeacherFeedback.value + ' ' + text : text;
+      }
+    });
+  });
+
+  // Submit Literasi Grade
+  submitLitGradeBtn?.addEventListener('click', async () => {
+    const reportId = Number(litReportIdInput?.value);
+    if (!reportId) {
+      alert('Data laporan tidak valid.');
+      return;
+    }
+
+    submitLitGradeBtn.textContent = 'Menyimpan...';
+    (submitLitGradeBtn as HTMLButtonElement).disabled = true;
+
+    const w1 = Number((document.getElementById('lit-w1') as HTMLInputElement)?.value) || 3;
+    const w2 = Number((document.getElementById('lit-w2') as HTMLInputElement)?.value) || 3;
+    const w3 = Number((document.getElementById('lit-w3') as HTMLInputElement)?.value) || 3;
+    const w4 = Number((document.getElementById('lit-w4') as HTMLInputElement)?.value) || 3;
+    const p1 = Number((document.getElementById('lit-p1') as HTMLInputElement)?.value) || 3;
+    const p2 = Number((document.getElementById('lit-p2') as HTMLInputElement)?.value) || 3;
+    const p3 = Number((document.getElementById('lit-p3') as HTMLInputElement)?.value) || 3;
+    const p4 = Number((document.getElementById('lit-p4') as HTMLInputElement)?.value) || 3;
+    const p5 = Number((document.getElementById('lit-p5') as HTMLInputElement)?.value) || 3;
+    const teacherFeedback = litTeacherFeedback?.value.trim() || '';
+
+    try {
+      const res = await fetch('/api/literasi/grade', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ reportId, w1, w2, w3, w4, p1, p2, p3, p4, p5, teacherFeedback })
+      });
+
+      const data = await res.json();
+      if (res.ok && data.success) {
+        showAlert(data.message || 'Penilaian RESIK berhasil disimpan!');
+        closeLitModal();
+        setTimeout(() => window.location.reload(), 1000);
+      } else {
+        showAlert(data.error || 'Gagal menyimpan penilaian RESIK.', true);
+        submitLitGradeBtn.innerHTML = '<span>💾 Simpan Nilai RESIK</span>';
+        (submitLitGradeBtn as HTMLButtonElement).disabled = false;
+      }
+    } catch (err: any) {
+      showAlert(err.message || 'Terjadi kesalahan jaringan.', true);
+      submitLitGradeBtn.innerHTML = '<span>💾 Simpan Nilai RESIK</span>';
+      (submitLitGradeBtn as HTMLButtonElement).disabled = false;
+    }
+  });
+
 </script>

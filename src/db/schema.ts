@@ -54,6 +54,8 @@ export const tkaAttempts = pgTable('tka_attempts', {
   id: serial('id').primaryKey(),
   userId: integer('user_id').references(() => users.id, { onDelete: 'cascade' }).notNull(),
   tokenId: integer('token_id').references(() => enrollmentTokens.id, { onDelete: 'set null' }),
+  lessonSlug: text('lesson_slug'),
+  attemptNumber: integer('attempt_number').default(1).notNull(),
   score: integer('score').notNull(),
   totalQuestions: integer('total_questions').notNull(),
   correctAnswers: integer('correct_answers').notNull(),
@@ -85,3 +87,38 @@ export const userSubmissions = pgTable('user_submissions', {
     table.submissionType,
   ),
 ]);
+
+export const literasiReports = pgTable('literasi_reports', {
+  id: serial('id').primaryKey(),
+  userId: integer('user_id').references(() => users.id, { onDelete: 'cascade' }).notNull(),
+  weekNumber: integer('week_number').default(1).notNull(),
+  reportDate: timestamp('report_date').defaultNow().notNull(),
+  bookTitle: text('book_title').notNull(),
+  author: text('author').notNull(),
+  publisher: text('publisher').notNull(),
+  city: text('city').notNull(),
+  year: integer('year').notNull(),
+  pageCount: integer('page_count').notNull(),
+  edition: text('edition'),
+  summary: text('summary').notNull(),
+  moralMessage: text('moral_message').notNull(),
+  selfChecklist: text('self_checklist').notNull(), // JSON string array
+  writingScore: integer('writing_score'), // Max 16
+  presentationScore: integer('presentation_score'), // Max 20
+  finalScore: integer('final_score'), // 0-100
+  teacherFeedback: text('teacher_feedback'),
+  gradedBy: integer('graded_by').references(() => users.id, { onDelete: 'set null' }),
+  gradedAt: timestamp('graded_at'),
+  status: text('status').default('submitted').notNull(), // 'submitted', 'graded'
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+});
+
+export const literasiPeerReviews = pgTable('literasi_peer_reviews', {
+  id: serial('id').primaryKey(),
+  reportId: integer('report_id').references(() => literasiReports.id, { onDelete: 'cascade' }).notNull(),
+  reviewerId: integer('reviewer_id').references(() => users.id, { onDelete: 'cascade' }).notNull(),
+  rating: integer('rating').notNull(), // 1-5 stars
+  comment: text('comment').notNull(),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+});

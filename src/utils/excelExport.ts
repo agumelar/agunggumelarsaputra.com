@@ -526,7 +526,7 @@ export async function generateLkpdSubmissionsExcel(submissions: any[]): Promise<
   worksheet.mergeCells(`F${rowIdx}:H${rowIdx}`);
 
   rowIdx++;
-  worksheet.getCell(`F${rowIdx}`).value = 'NIP. — / Guru Produktif RPL SMKN 1 Rongga';
+  worksheet.getCell(`F${rowIdx}`).value = 'NIP. 199306012022211013';
   worksheet.getCell(`F${rowIdx}`).font = { name: 'Arial', size: 9, color: { argb: textMuted } };
   worksheet.getCell(`F${rowIdx}`).alignment = { horizontal: 'center' };
   worksheet.mergeCells(`F${rowIdx}:H${rowIdx}`);
@@ -672,7 +672,7 @@ export async function generateReflectionsExcel(reflections: any[]): Promise<Buff
   worksheet.mergeCells(`H${rowIdx}:J${rowIdx}`);
 
   rowIdx++;
-  worksheet.getCell(`H${rowIdx}`).value = 'NIP. — / Guru Produktif RPL SMKN 1 Rongga';
+  worksheet.getCell(`H${rowIdx}`).value = 'NIP. 199306012022211013';
   worksheet.getCell(`H${rowIdx}`).font = { name: 'Arial', size: 9, color: { argb: textMuted } };
   worksheet.getCell(`H${rowIdx}`).alignment = { horizontal: 'center' };
   worksheet.mergeCells(`H${rowIdx}:J${rowIdx}`);

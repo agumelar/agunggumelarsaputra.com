@@ -1,0 +1,326 @@
+---
+import { db, isDbConfigured, ensureDbInitialized } from '../../db';
+import { users } from '../../db/schema';
+import { eq } from 'drizzle-orm';
+
+const sessionUser = Astro.locals.user;
+
+let shouldShowModal = false;
+let currentDbUser: { name: string; email: string; studentClass: string | null; avatarUrl: string | null; role: string } | null = null;
+
+if (sessionUser && isDbConfigured()) {
+  try {
+    await ensureDbInitialized();
+    const [dbUser] = await db.select({
+      name: users.name,
+      email: users.email,
+      studentClass: users.studentClass,
+      avatarUrl: users.avatarUrl,
+      role: users.role,
+    }).from(users).where(eq(users.id, sessionUser.userId)).limit(1);
+
+    if (dbUser) {
+      currentDbUser = dbUser;
+      // Trigger mandatory modal if user is a student and either avatar or class is missing
+      const isStudent = dbUser.role === 'student';
+      const isMissingAvatar = !dbUser.avatarUrl || dbUser.avatarUrl.trim() === '';
+      const isMissingClass = !dbUser.studentClass || dbUser.studentClass.trim() === '';
+      
+      if (isStudent && (isMissingAvatar || isMissingClass)) {
+        shouldShowModal = true;
+      }
+    }
+  } catch (err) {
+    console.error('Error checking profile completion:', err);
+  }
+}
+---
+
+{shouldShowModal && currentDbUser && (
+  <div 
+    id="mandatory-profile-modal" 
+    class="fixed inset-0 z-[9999] bg-black/85 backdrop-blur-md flex items-center justify-center p-4 overflow-y-auto"
+    data-no-escape="true"
+  >
+    <div class="card max-w-lg w-full p-6 sm:p-8 rounded-3xl bg-[#0b101b] border border-cyan-500/40 shadow-2xl space-y-6 relative animate-in zoom-in-95 my-auto text-foreground">
+      
+      <!-- Header -->
+      <div class="text-center space-y-2">
+        <div class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-cyan-500/10 text-cyan-400 text-[11px] font-mono font-bold uppercase border border-cyan-500/25">
+          <span>✨</span> TAHAP ONBOARDING WAJIB SISWA
+        </div>
+        <h2 class="text-2xl font-black text-white tracking-tight">
+          Lengkapi Foto Profil & Kelas 🎓
+        </h2>
+        <p class="text-xs text-muted-foreground leading-relaxed max-w-sm mx-auto">
+          Foto profil dan kelas wajib dilengkapi untuk identitas belajar, kartu resensi, sertifikat, serta tampilan di <strong>Papan Peringkat (Leaderboard) RPL</strong>.
+        </p>
+      </div>
+
+      <div id="onboarding-error-alert" class="hidden p-3.5 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-400 text-xs font-semibold text-center leading-relaxed"></div>
+
+      <!-- Form -->
+      <form id="form-mandatory-profile" class="space-y-5 text-xs">
+        
+        <!-- 1. Upload Avatar Section -->
+        <div class="flex flex-col items-center justify-center space-y-3 p-4 rounded-2xl bg-secondary/30 border border-border">
+          <div class="relative group cursor-pointer" id="avatar-click-zone">
+            <div class="w-24 h-24 sm:w-28 sm:h-28 rounded-full overflow-hidden border-2 border-cyan-500/50 bg-[#141d2d] flex items-center justify-center shadow-lg shadow-cyan-500/10 relative">
+              <img 
+                id="onboarding-avatar-preview" 
+                src={currentDbUser.avatarUrl || `https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(currentDbUser.name)}`} 
+                alt="Preview Avatar"
+                class="w-full h-full object-cover"
+              />
+              <div class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center text-white text-[10px] font-semibold gap-1">
+                <span>📷</span>
+                <span>Ganti Foto</span>
+              </div>
+            </div>
+            <button 
+              type="button" 
+              class="absolute bottom-0 right-0 w-8 h-8 rounded-full bg-cyan-600 hover:bg-cyan-500 text-white flex items-center justify-center shadow-md border-2 border-[#0b101b] transition-transform group-hover:scale-110"
+              title="Unggah Foto"
+            >
+              📷
+            </button>
+          </div>
+
+          <input 
+            type="file" 
+            id="onboarding-avatar-file" 
+            accept="image/jpeg,image/png,image/webp,image/jpg" 
+            class="hidden" 
+          />
+
+          <div class="text-center space-y-1">
+            <button 
+              type="button" 
+              id="btn-trigger-upload" 
+              class="btn btn-sm bg-cyan-500/10 hover:bg-cyan-500/20 text-cyan-400 font-bold border border-cyan-500/30 rounded-xl px-4 py-1.5 transition-all text-xs"
+            >
+              📁 Pilih Foto / Pas Foto Siswa
+            </button>
+            <p class="text-[10px] text-muted-foreground">
+              Format: JPG, PNG, atau WebP. Foto otomatis di-crop proporsional & dikompresi ringan.
+            </p>
+          </div>
+        </div>
+
+        <!-- 2. Nama Lengkap -->
+        <div class="space-y-1.5">
+          <label class="block font-bold text-foreground">Nama Lengkap Siswa <span class="text-rose-500">*</span></label>
+          <input 
+            type="text" 
+            id="onboarding-name" 
+            required 
+            value={currentDbUser.name} 
+            class="w-full px-3.5 py-2.5 rounded-xl bg-background border border-border text-foreground font-semibold focus:outline-none focus:border-cyan-500" 
+            placeholder="Nama lengkap sesuai absensi" 
+          />
+          <p class="text-[10px] text-muted-foreground">Pastikan ejaan nama Anda sudah benar sesuai data kelas.</p>
+        </div>
+
+        <!-- 3. Dropdown Kelas -->
+        <div class="space-y-1.5">
+          <label class="block font-bold text-foreground">Kelas / Rombel Anda <span class="text-rose-500">*</span></label>
+          <select 
+            id="onboarding-class" 
+            required 
+            class="w-full px-3.5 py-2.5 rounded-xl bg-background border border-border text-foreground font-bold focus:outline-none focus:border-cyan-500"
+          >
+            <option value="">-- Pilih Kelas Anda --</option>
+            <optgroup label="Tingkat 10 (Fase E - RPL)">
+              <option value="10 RPL 1" selected={currentDbUser.studentClass === '10 RPL 1'}>10 RPL 1</option>
+              <option value="10 RPL 2" selected={currentDbUser.studentClass === '10 RPL 2'}>10 RPL 2</option>
+              <option value="10 RPL 3" selected={currentDbUser.studentClass === '10 RPL 3'}>10 RPL 3</option>
+              <option value="10 RPL 4" selected={currentDbUser.studentClass === '10 RPL 4'}>10 RPL 4</option>
+            </optgroup>
+            <optgroup label="Tingkat 11 (Fase F - RPL)">
+              <option value="11 RPL 1" selected={currentDbUser.studentClass === '11 RPL 1'}>11 RPL 1</option>
+              <option value="11 RPL 2" selected={currentDbUser.studentClass === '11 RPL 2'}>11 RPL 2</option>
+              <option value="11 RPL 3" selected={currentDbUser.studentClass === '11 RPL 3'}>11 RPL 3</option>
+              <option value="11 RPL 4" selected={currentDbUser.studentClass === '11 RPL 4'}>11 RPL 4</option>
+            </optgroup>
+            <optgroup label="Tingkat 12 (Fase F - RPL)">
+              <option value="12 RPL 1" selected={currentDbUser.studentClass === '12 RPL 1'}>12 RPL 1</option>
+              <option value="12 RPL 2" selected={currentDbUser.studentClass === '12 RPL 2'}>12 RPL 2</option>
+              <option value="12 RPL 3" selected={currentDbUser.studentClass === '12 RPL 3'}>12 RPL 3</option>
+              <option value="12 RPL 4" selected={currentDbUser.studentClass === '12 RPL 4'}>12 RPL 4</option>
+            </optgroup>
+            <optgroup label="🧪 Khusus Pengujian / Sandbox">
+              <option value="Kelas Uji Coba" selected={currentDbUser.studentClass === 'Kelas Uji Coba'}>Kelas Uji Coba (Sandbox)</option>
+            </optgroup>
+          </select>
+        </div>
+
+        <!-- Submit Button -->
+        <button 
+          type="submit" 
+          id="btn-submit-onboarding" 
+          class="btn btn-primary w-full py-3 font-extrabold text-xs bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white rounded-xl shadow-lg shadow-cyan-600/20 transition-all transform active:scale-95 flex items-center justify-center gap-2"
+        >
+          <span>🚀</span> Simpan Profil & Buka Akses Belajar
+        </button>
+      </form>
+
+    </div>
+  </div>
+
+  <script>
+    let compressedAvatarDataUrl: string | null = null;
+    const fileInput = document.getElementById('onboarding-avatar-file') as HTMLInputElement | null;
+    const avatarPreview = document.getElementById('onboarding-avatar-preview') as HTMLImageElement | null;
+    const btnTrigger = document.getElementById('btn-trigger-upload');
+    const avatarZone = document.getElementById('avatar-click-zone');
+    const form = document.getElementById('form-mandatory-profile') as HTMLFormElement | null;
+    const errorAlert = document.getElementById('onboarding-error-alert');
+    const submitBtn = document.getElementById('btn-submit-onboarding') as HTMLButtonElement | null;
+
+    // Trigger file chooser
+    btnTrigger?.addEventListener('click', () => fileInput?.click());
+    avatarZone?.addEventListener('click', () => fileInput?.click());
+
+    // Process & compress image via HTML5 Canvas
+    fileInput?.addEventListener('change', async (e) => {
+      const target = e.target as HTMLInputElement;
+      if (!target.files || target.files.length === 0) return;
+
+      const file = target.files[0];
+      if (!file.type.startsWith('image/')) {
+        showError('File yang dipilih harus berupa gambar (JPG, PNG, WebP).');
+        return;
+      }
+
+      try {
+        const reader = new FileReader();
+        reader.onload = (event) => {
+          const img = new Image();
+          img.onload = () => {
+            // Square crop & resize to 240x240 px
+            const canvas = document.createElement('canvas');
+            const targetSize = 240;
+            canvas.width = targetSize;
+            canvas.height = targetSize;
+            const ctx = canvas.getContext('2d');
+            if (!ctx) return;
+
+            // Calculate center crop
+            const minSide = Math.min(img.width, img.height);
+            const startX = (img.width - minSide) / 2;
+            const startY = (img.height - minSide) / 2;
+
+            ctx.drawImage(
+              img,
+              startX,
+              startY,
+              minSide,
+              minSide,
+              0,
+              0,
+              targetSize,
+              targetSize
+            );
+
+            // Compress to WebP or JPEG Data URL
+            compressedAvatarDataUrl = canvas.toDataURL('image/webp', 0.85);
+            if (compressedAvatarDataUrl.length < 50) {
+              compressedAvatarDataUrl = canvas.toDataURL('image/jpeg', 0.85);
+            }
+
+            if (avatarPreview) {
+              avatarPreview.src = compressedAvatarDataUrl;
+            }
+            hideError();
+          };
+          img.src = event.target?.result as string;
+        };
+        reader.readAsDataURL(file);
+      } catch (err) {
+        showError('Gagal memproses gambar. Silakan coba gunakan foto lain.');
+      }
+    });
+
+    function showError(msg: string) {
+      if (errorAlert) {
+        errorAlert.textContent = msg;
+        errorAlert.classList.remove('hidden');
+      }
+    }
+
+    function hideError() {
+      if (errorAlert) {
+        errorAlert.classList.add('hidden');
+      }
+    }
+
+    // Submit handler
+    form?.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      hideError();
+
+      const name = (document.getElementById('onboarding-name') as HTMLInputElement)?.value.trim();
+      const studentClass = (document.getElementById('onboarding-class') as HTMLSelectElement)?.value.trim();
+
+      if (!name || name.length < 2) {
+        showError('Nama lengkap harus diisi minimal 2 karakter.');
+        return;
+      }
+
+      if (!studentClass) {
+        showError('Harap pilih Kelas / Rombel Anda.');
+        return;
+      }
+
+      // Check if avatar is uploaded or available
+      const currentSrc = avatarPreview?.src || '';
+      const finalAvatar = compressedAvatarDataUrl || (currentSrc.startsWith('data:image/') ? currentSrc : null);
+
+      if (!finalAvatar) {
+        showError('Harap unggah foto profil / pas foto Anda terlebih dahulu.');
+        return;
+      }
+
+      if (submitBtn) {
+        submitBtn.innerHTML = '<span>⏳</span> Menyimpan profil...';
+        submitBtn.disabled = true;
+      }
+
+      try {
+        const res = await fetch('/api/user/complete-profile', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            name,
+            studentClass,
+            avatarUrl: finalAvatar,
+          }),
+        });
+
+        const data = await res.json();
+        if (res.ok && data.success) {
+          if (submitBtn) {
+            submitBtn.innerHTML = '<span>✅</span> Profil Berhasil Disimpan!';
+            submitBtn.classList.remove('from-cyan-600', 'to-blue-600');
+            submitBtn.classList.add('bg-emerald-600');
+          }
+          setTimeout(() => {
+            window.location.reload();
+          }, 800);
+        } else {
+          showError(data.error || 'Gagal menyimpan profil.');
+          if (submitBtn) {
+            submitBtn.innerHTML = '<span>🚀</span> Simpan Profil & Buka Akses Belajar';
+            submitBtn.disabled = false;
+          }
+        }
+      } catch (err: any) {
+        showError('Terjadi gangguan jaringan atau server.');
+        if (submitBtn) {
+          submitBtn.innerHTML = '<span>🚀</span> Simpan Profil & Buka Akses Belajar';
+          submitBtn.disabled = false;
+        }
+      }
+    });
+  </script>
+)}

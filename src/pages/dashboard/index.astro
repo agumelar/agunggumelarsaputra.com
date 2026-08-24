@@ -1,11 +1,11 @@
 ---
-import DashboardLayout from '../layouts/DashboardLayout.astro';
-import { db, isDbConfigured, ensureDbInitialized } from '../db';
-import { users, userGamification, userProgress, tkaAttempts, userSubmissions } from '../db/schema';
+import DashboardLayout from '../../layouts/DashboardLayout.astro';
+import { db, isDbConfigured, ensureDbInitialized } from '../../db';
+import { users, userGamification, userProgress, tkaAttempts, userSubmissions, literasiReports } from '../../db/schema';
 import { eq, desc } from 'drizzle-orm';
 import { getCollection } from 'astro:content';
-import { calculateLevel } from '../utils/gamification';
-import { canAccessAdminPanel, isSuperAdmin, isSuperAdminEmail } from '../utils/auth';
+import { calculateLevel } from '../../utils/gamification';
+import { canAccessAdminPanel, isSuperAdmin, isSuperAdminEmail } from '../../utils/auth';
 
 const user = Astro.locals.user;
 if (!user) {
@@ -31,6 +31,7 @@ let completedLessons: any[] = [];
 let examHistory: any[] = [];
 let topUsers: any[] = [];
 let lkpdSubmissions: any[] = [];
+let userLiterasiReports: any[] = [];
 let dbErrorNotice = '';
 
 const dbReady = isDbConfigured();
@@ -66,6 +67,15 @@ if (dbReady) {
         .orderBy(desc(userSubmissions.submittedAt));
     } catch (e) {
       lkpdSubmissions = [];
+    }
+
+    try {
+      userLiterasiReports = await db.select()
+        .from(literasiReports)
+        .where(eq(literasiReports.userId, user.userId))
+        .orderBy(desc(literasiReports.reportDate));
+    } catch (e) {
+      userLiterasiReports = [];
     }
 
     topUsers = await db.select({
@@ -147,26 +157,31 @@ const resumeModules = remainingModules.slice(0, 2);
       </div>
     )}
 
-    <!-- Admin Banner -->
+    <!-- Teacher & Admin Console Banner -->
     {isTeacherOrAdmin && (
-      <div class="p-4 rounded-xl bg-amber-500/10 border border-amber-500/25 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-lg hover:shadow-amber-500/5 transition-all">
-        <div class="flex items-center gap-3">
-          <div class="w-9 h-9 rounded-lg bg-amber-500/20 text-amber-500 flex items-center justify-center font-bold text-base flex-shrink-0">👑</div>
-          <div>
+      <div class="p-5 rounded-2xl bg-amber-500/10 border-2 border-amber-500/30 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-xl">
+        <div class="flex items-center gap-3.5">
+          <div class="w-10 h-10 rounded-xl bg-amber-500/20 text-amber-500 border border-amber-500/30 flex items-center justify-center font-bold text-lg flex-shrink-0 shadow-sm">
+            👑
+          </div>
+          <div class="space-y-0.5">
             <div class="text-xs font-bold text-foreground flex items-center gap-2">
-              <span>Akses Khusus Pengampu Terdeteksi</span>
-              <span class="text-[10px] px-2 py-0.2 rounded font-mono font-bold bg-amber-500/20 text-amber-600 dark:text-amber-400 border border-amber-500/30">
-                {isSuperAdminUser ? 'SUPER ADMIN' : 'GURU & ADMIN'}
+              <span>AKSES PENGAMPU GURU TERDETEKSI</span>
+              <span class="text-[10px] px-2.5 py-0.5 rounded-full font-mono font-bold bg-amber-500 text-black shadow-sm">
+                {isSuperAdminUser ? 'SUPER ADMIN' : 'GURU PENGAMPU RPL'}
               </span>
             </div>
-            <p class="text-xs text-muted-foreground mt-0.5">
-              {isSuperAdminUser ? "Anda memiliki wewenang penuh mengelola kelas." : "Anda dapat memonitor hasil belajar."}
+            <p class="text-xs text-muted-foreground leading-relaxed">
+              Anda memiliki hak akses penuh. Seluruh 16 modul Orientasi PPLG & 10 Drilling TKA telah terbuka otomatis (Mode Bypass Pengampu Aktif).
             </p>
           </div>
         </div>
-        <a href="/admin" class="btn btn-sm bg-amber-500 hover:bg-amber-400 text-black font-semibold whitespace-nowrap">
-          {isSuperAdminUser ? 'Buka Super Admin Panel →' : 'Buka Panel Guru →'}
-        </a>
+
+        <div class="flex items-center gap-2 self-stretch sm:self-auto shrink-0">
+          <a href="/admin" class="btn btn-sm bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-400 hover:to-yellow-400 text-black font-extrabold text-xs px-4 py-2.5 rounded-xl border-0 shadow-md">
+            👑 Buka Panel Guru (/admin) →
+          </a>
+        </div>
       </div>
     )}
 
@@ -207,8 +222,8 @@ const resumeModules = remainingModules.slice(0, 2);
       </div>
     </div>
 
-    <!-- 4 Glassmorphism KPI Cards -->
-    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
+    <!-- 5 Glassmorphism KPI Cards -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
       
       <!-- XP Card -->
       <div class="group p-5 rounded-2xl border border-white/5 bg-card relative overflow-hidden shadow-lg hover:shadow-xl hover:shadow-amber-500/10 transition-all hover:-translate-y-1">
@@ -276,14 +291,33 @@ const resumeModules = remainingModules.slice(0, 2);
         <div class="absolute inset-0 bg-gradient-to-br from-cyan-500/5 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
         <div class="relative z-10 space-y-4">
           <div class="flex items-center justify-between">
-            <span class="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Skor Tertinggi</span>
+            <span class="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Skor TKA</span>
             <div class="w-8 h-8 rounded-lg bg-cyan-500/10 text-cyan-400 flex items-center justify-center font-bold shadow-inner">🎯</div>
           </div>
           <div class="space-y-1">
             <div class="text-3xl font-black text-foreground font-mono tracking-tight">
               {highestScore} <span class="text-sm font-sans font-medium text-muted-foreground">/ 100</span>
             </div>
-            <p class="text-xs text-muted-foreground font-medium">Dari {examHistory.length}x simulasi TKA</p>
+            <p class="text-xs text-muted-foreground font-medium truncate">Dari {examHistory.length}x tryout TKA</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Literasi Card -->
+      <div class="group p-5 rounded-2xl border border-white/5 bg-card relative overflow-hidden shadow-lg hover:shadow-xl hover:shadow-emerald-500/10 transition-all hover:-translate-y-1">
+        <div class="absolute inset-0 bg-gradient-to-br from-emerald-500/5 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
+        <div class="relative z-10 space-y-4">
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Rabu Literasi</span>
+            <div class="w-8 h-8 rounded-lg bg-emerald-500/10 text-emerald-400 flex items-center justify-center font-bold shadow-inner">📖</div>
+          </div>
+          <div class="space-y-1">
+            <div class="text-3xl font-black text-foreground font-mono tracking-tight">
+              {userLiterasiReports.length} <span class="text-xs font-sans font-medium text-muted-foreground">Resensi</span>
+            </div>
+            <a href="/pembelajaran/literasi-resik" class="text-xs font-semibold text-emerald-400 hover:text-emerald-300 transition-colors inline-flex items-center gap-1">
+              Lembar RESIK <span class="group-hover:translate-x-1 transition-transform">→</span>
+            </a>
           </div>
         </div>
       </div>
@@ -311,15 +345,18 @@ const resumeModules = remainingModules.slice(0, 2);
                 </div>
                 
                 <!-- Tab Navigation -->
-                <div class="flex bg-background/50 backdrop-blur-md p-1.5 rounded-xl border border-white/10 shadow-inner">
-                  <button class="tab-btn flex-1 px-4 py-2 text-xs font-bold rounded-lg transition-all text-foreground bg-secondary/80 shadow-sm" data-target="lkpd">
+                <div class="flex bg-background/50 backdrop-blur-md p-1.5 rounded-xl border border-white/10 shadow-inner overflow-x-auto">
+                  <button class="tab-btn flex-1 px-3 py-2 text-xs font-bold rounded-lg transition-all text-foreground bg-secondary/80 shadow-sm whitespace-nowrap" data-target="lkpd">
                     LKPD
                   </button>
-                  <button class="tab-btn flex-1 px-4 py-2 text-xs font-bold rounded-lg transition-all text-muted-foreground hover:text-foreground" data-target="refleksi">
+                  <button class="tab-btn flex-1 px-3 py-2 text-xs font-bold rounded-lg transition-all text-muted-foreground hover:text-foreground whitespace-nowrap" data-target="refleksi">
                     Refleksi
                   </button>
-                  <button class="tab-btn flex-1 px-4 py-2 text-xs font-bold rounded-lg transition-all text-muted-foreground hover:text-foreground" data-target="kuis">
+                  <button class="tab-btn flex-1 px-3 py-2 text-xs font-bold rounded-lg transition-all text-muted-foreground hover:text-foreground whitespace-nowrap" data-target="kuis">
                     Kuis
+                  </button>
+                  <button class="tab-btn flex-1 px-3 py-2 text-xs font-bold rounded-lg transition-all text-muted-foreground hover:text-foreground whitespace-nowrap" data-target="literasi">
+                    Literasi
                   </button>
                 </div>
               </div>
@@ -431,6 +468,46 @@ const resumeModules = remainingModules.slice(0, 2);
                     );
                   })}
                 </div>
+
+                <!-- Literasi Tab -->
+                <div id="tab-literasi" class="tab-content hidden space-y-4 animate-in fade-in slide-in-from-bottom-2 duration-300">
+                  {userLiterasiReports.length === 0 ? (
+                    <div class="text-center py-10 text-muted-foreground text-sm font-medium bg-background/30 rounded-2xl border border-dashed border-white/10">
+                      Belum ada Laporan Resensi Buku (Rabu Literasi). <a href="/pembelajaran/literasi-resik" class="text-emerald-400 font-bold hover:underline">Tulis Resensi Sekarang →</a>
+                    </div>
+                  ) : userLiterasiReports.map((rep: any) => {
+                    const isGraded = rep.status === 'graded';
+                    return (
+                      <div class="p-4 rounded-2xl bg-background border border-white/5 hover:border-emerald-500/30 transition-all space-y-3 shadow-sm">
+                        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-white/5 pb-3">
+                          <div class="space-y-1">
+                            <div class="flex items-center gap-2">
+                              <span class="text-xs px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300 font-mono font-bold">Minggu Ke-{rep.weekNumber}</span>
+                              <span class="text-sm font-bold text-foreground">📖 {rep.bookTitle}</span>
+                            </div>
+                            <div class="text-[10px] text-muted-foreground font-mono">Penulis: {rep.author} | Diserahkan: {new Date(rep.reportDate).toLocaleDateString('id-ID')}</div>
+                          </div>
+                          <div class="flex items-center gap-2">
+                            {isGraded ? (
+                              <span class="px-2.5 py-1 rounded bg-amber-500/15 text-amber-500 font-mono text-xs font-black border border-amber-500/30">⭐ {rep.finalScore}/100</span>
+                            ) : (
+                              <span class="px-2.5 py-1 rounded bg-secondary text-muted-foreground font-mono text-[10px] font-bold border border-white/5">⏳ MENUNGGU PENILAIAN</span>
+                            )}
+                          </div>
+                        </div>
+                        {isGraded && rep.teacherFeedback && (
+                          <div class="p-3 rounded-xl bg-emerald-500/5 border border-emerald-500/10 text-xs text-foreground space-y-1">
+                            <span class="text-[10px] font-bold text-emerald-400">💬 UMPAN BALIK GURU:</span>
+                            <p class="italic text-muted-foreground">"{rep.teacherFeedback}"</p>
+                          </div>
+                        )}
+                        <div class="text-right pt-1">
+                          <a href="/pembelajaran/literasi-resik" class="text-[11px] font-bold text-emerald-400 hover:underline">Buka Lembar RESIK →</a>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
               </div>
             </div>
           </div>
@@ -487,6 +564,28 @@ const resumeModules = remainingModules.slice(0, 2);
             <div class="pt-2">
               <span class="inline-flex items-center justify-center bg-cyan-500 text-black font-bold text-xs px-4 py-2 rounded-xl group-hover:bg-cyan-400 transition-colors">
                 Mulai Ujian Sekarang →
+              </span>
+            </div>
+          </div>
+        </a>
+
+        <!-- Literasi RESIK Banner Card -->
+        <a href="/pembelajaran/literasi-resik" class="group block p-6 rounded-3xl bg-gradient-to-br from-emerald-900/40 to-teal-900/20 border border-emerald-500/20 shadow-xl hover:shadow-emerald-500/10 transition-all hover:-translate-y-1 relative overflow-hidden">
+          <div class="absolute -right-6 -top-6 text-7xl opacity-10 group-hover:opacity-20 group-hover:rotate-12 transition-all">📚</div>
+          <div class="relative z-10 space-y-4">
+            <div class="flex items-center justify-between">
+              <span class="inline-block px-3 py-1 rounded-lg bg-emerald-500/20 text-emerald-300 text-[10px] font-mono font-black uppercase tracking-widest border border-emerald-500/30">
+                Program Literasi Sekolah
+              </span>
+              <span class="text-xs font-mono font-extrabold text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20">
+                {userLiterasiReports.length} Resensi
+              </span>
+            </div>
+            <h3 class="text-xl font-black text-white leading-tight">Rabu Literasi (RESIK)</h3>
+            <p class="text-xs text-emerald-100/70 font-medium leading-relaxed">Kembangkan minat baca & tulis resensi buku non-teks. Dapatkan apresiasi & penilaian dari guru.</p>
+            <div class="pt-2">
+              <span class="inline-flex items-center justify-center bg-emerald-500 text-black font-bold text-xs px-4 py-2 rounded-xl group-hover:bg-emerald-400 transition-colors">
+                Kelola Resensi Saya →
               </span>
             </div>
           </div>
@@ -574,8 +673,3 @@ const resumeModules = remainingModules.slice(0, 2);
     });
   });
 </script>
-
-<!-- Helper component function defined in frontmatter scope is messy in astro if we render UI, so we just use a small reusable pattern below -->
----
-{/* Helper Render Function - Since Astro doesn't support inline UI functions easily, we do it in a map. I already inlined it inside the maps using a standalone render block if needed, but Astro JSX handles map smoothly. */}
-{/* Oh wait, I didn't define renderSubmissionCard. I will replace it with inline map for simplicity or a local component. Let me fix the map below. */}

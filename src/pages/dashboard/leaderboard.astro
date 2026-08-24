@@ -1,7 +1,7 @@
 ---
 import DashboardLayout from '../../layouts/DashboardLayout.astro';
 import { db, isDbConfigured, ensureDbInitialized } from '../../db';
-import { userGamification, users } from '../../db/schema';
+import { userGamification, users, enrollmentTokens } from '../../db/schema';
 import { eq, desc } from 'drizzle-orm';
 
 const user = Astro.locals.user;
@@ -10,6 +10,7 @@ if (!user) {
 }
 
 let allRankedUsers: any[] = [];
+let allTokensList: any[] = [];
 
 if (isDbConfigured()) {
   try {
@@ -25,7 +26,16 @@ if (isDbConfigured()) {
       streakDays: userGamification.streakDays,
     }).from(userGamification)
       .innerJoin(users, eq(userGamification.userId, users.id))
+      .where(eq(users.role, 'student'))
       .orderBy(desc(userGamification.xp));
+
+    allTokensList = await db.select({
+      id: enrollmentTokens.id,
+      token: enrollmentTokens.token,
+      title: enrollmentTokens.title,
+      targetType: enrollmentTokens.targetType,
+      targetClass: enrollmentTokens.targetClass,
+    }).from(enrollmentTokens).where(eq(enrollmentTokens.isActive, true));
   } catch (err) {
     console.error('Leaderboard DB Error:', err);
   }
@@ -36,141 +46,265 @@ const userRankIndex = allRankedUsers.findIndex(u => u.id === user.userId);
 const userRank = userRankIndex !== -1 ? userRankIndex + 1 : '-';
 
 const top3 = allRankedUsers.slice(0, 3);
-const otherRanked = allRankedUsers.slice(3);
 ---
 
 <DashboardLayout title="Papan Peringkat Siswa" activeNav="/dashboard/leaderboard">
   <div class="space-y-8 max-w-5xl mx-auto">
     
     <!-- Header Banner -->
-    <div class="text-center space-y-3 py-6">
-      <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-500/10 border border-amber-500/30 text-amber-400 text-xs font-mono">
+    <div class="text-center space-y-3 py-4">
+      <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-500/10 border border-amber-500/30 text-amber-400 text-xs font-mono font-bold">
         <span>🏆 Peringkat Keaktifan & Prestasi Belajar</span>
       </div>
       <h1 class="text-3xl sm:text-4xl font-extrabold text-foreground tracking-tight">
         Leaderboard Siswa RPL
       </h1>
-      <p class="text-xs sm:text-sm text-muted-foreground max-w-lg mx-auto">
+      <p class="text-xs sm:text-sm text-muted-foreground max-w-lg mx-auto leading-relaxed">
         Kumpulkan Experience Points (XP) dengan menyelesaikan modul materi dan mencapai skor tinggi pada Tryout Drilling TKA PPLG.
       </p>
 
       <!-- Current User Rank Pill -->
-      <div class="inline-flex items-center gap-4 p-3 rounded-2xl bg-card border border-border/80 shadow-md mt-4 text-xs">
+      <div class="inline-flex items-center gap-4 p-3 rounded-2xl bg-card border border-border/80 shadow-md mt-4 text-xs" id="user-rank-pill">
         <div class="flex items-center gap-2">
           <span class="text-muted-foreground">Posisi Anda Saat Ini:</span>
-          <span class="px-2.5 py-0.5 rounded-lg bg-blue-500/20 text-blue-400 font-extrabold font-mono text-sm">
+          <span id="user-rank-val" class="px-2.5 py-0.5 rounded-lg bg-blue-500/20 text-blue-400 font-extrabold font-mono text-sm">
             #{userRank}
           </span>
         </div>
         <span class="text-muted-foreground">|</span>
         <div class="flex items-center gap-1.5">
           <span class="text-muted-foreground">Poin:</span>
-          <span class="text-amber-400 font-bold font-mono">
+          <span id="user-xp-val" class="text-amber-400 font-bold font-mono">
             {userRankIndex !== -1 ? allRankedUsers[userRankIndex].xp : 0} XP
           </span>
         </div>
       </div>
     </div>
 
-    <!-- Top 3 Podium Cards -->
-    {top3.length > 0 && (
-      <div class="grid grid-cols-1 md:grid-cols-3 gap-6 pt-4 items-end">
+    <!-- FILTER BAR CONTROL (MAPEL & TOKEN / KELAS) -->
+    <div class="card p-5 rounded-2xl border-border bg-card/90 shadow-md space-y-4">
+      <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
         
-        <!-- Rank 2 (Silver) -->
-        {top3[1] && (
-          <div class="p-6 rounded-2xl bg-gradient-to-b from-slate-800/40 via-card to-card border border-slate-700/60 text-center space-y-3 shadow-lg relative order-2 md:order-1">
-            <div class="w-10 h-10 rounded-full bg-slate-400/20 border border-slate-400 text-slate-200 font-extrabold text-lg flex items-center justify-center mx-auto shadow">
-              2
-            </div>
-            <div class="space-y-1">
-              <h3 class="text-sm font-bold text-foreground truncate">{top3[1].name}</h3>
-              <div class="flex items-center justify-center gap-1.5 flex-wrap">
-                <span class="text-[11px] text-muted-foreground font-mono">Level {top3[1].level}</span>
-                {top3[1].studentClass && (
-                  <span class="text-[9px] px-1.5 py-0.2 rounded bg-cyan-500/20 text-cyan-300 font-mono">
-                    {top3[1].studentClass}
-                  </span>
-                )}
-              </div>
-            </div>
-            <div class="text-xl font-extrabold text-slate-300 font-mono">
-              {top3[1].xp} XP
-            </div>
+        <!-- Filter 1: Subject / Mapel Tabs -->
+        <div class="space-y-1.5 flex-grow">
+          <label class="text-[11px] font-bold text-muted-foreground uppercase font-mono tracking-wider">
+            Filter Mata Pelajaran / Program:
+          </label>
+          <div class="flex items-center gap-2 overflow-x-auto pb-1 hide-scrollbar" id="subject-filter-group">
+            <button
+              type="button"
+              data-subject="all"
+              class="subject-tab-btn active-subject-tab px-3.5 py-2 rounded-xl text-xs font-bold transition-all border flex items-center gap-1.5 whitespace-nowrap bg-primary/15 text-primary border-primary shadow-sm"
+            >
+              <span>🌟</span>
+              <span>Semua Mata Pelajaran</span>
+            </button>
+            <button
+              type="button"
+              data-subject="orientasi-pplg"
+              class="subject-tab-btn px-3.5 py-2 rounded-xl text-xs font-bold transition-all border flex items-center gap-1.5 whitespace-nowrap bg-secondary/60 text-muted-foreground border-border hover:bg-secondary"
+            >
+              <span>📖</span>
+              <span>Orientasi PPLG</span>
+            </button>
+            <button
+              type="button"
+              data-subject="tka"
+              class="subject-tab-btn px-3.5 py-2 rounded-xl text-xs font-bold transition-all border flex items-center gap-1.5 whitespace-nowrap bg-secondary/60 text-muted-foreground border-border hover:bg-secondary"
+            >
+              <span>🎯</span>
+              <span>Drilling TKA PPLG</span>
+            </button>
+            <button
+              type="button"
+              data-subject="literasi"
+              class="subject-tab-btn px-3.5 py-2 rounded-xl text-xs font-bold transition-all border flex items-center gap-1.5 whitespace-nowrap bg-secondary/60 text-muted-foreground border-border hover:bg-secondary"
+            >
+              <span>📚</span>
+              <span>Rabu Literasi (RESIK)</span>
+            </button>
           </div>
-        )}
+        </div>
 
-        <!-- Rank 1 (Gold - Highest Center) -->
-        {top3[0] && (
-          <div class="p-8 rounded-3xl bg-gradient-to-b from-amber-500/20 via-card to-card border border-amber-500/40 text-center space-y-4 shadow-xl relative order-1 md:order-2 transform md:-translate-y-4">
-            <div class="text-3xl">👑</div>
-            <div class="w-12 h-12 rounded-full bg-gradient-to-r from-amber-400 to-yellow-500 text-black font-extrabold text-xl flex items-center justify-center mx-auto shadow-lg shadow-amber-500/30">
-              1
-            </div>
-            <div class="space-y-1.5">
-              <h3 class="text-base font-extrabold text-foreground truncate">{top3[0].name}</h3>
-              <div class="flex items-center justify-center gap-1.5 flex-wrap">
-                <span class="text-xs px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300 font-mono font-semibold">
-                  Level {top3[0].level}
-                </span>
-                {top3[0].studentClass && (
-                  <span class="text-[10px] px-2 py-0.5 rounded-full bg-cyan-500/20 text-cyan-300 font-mono font-medium">
-                    {top3[0].studentClass}
-                  </span>
-                )}
-              </div>
-            </div>
-            <div class="text-2xl font-extrabold text-amber-400 font-mono tracking-tight">
-              {top3[0].xp} XP
-            </div>
-          </div>
-        )}
+        <!-- Filter 2: Kelas Rombel / Token Filter -->
+        <div class="space-y-1.5 md:w-72 flex-shrink-0">
+          <label class="text-[11px] font-bold text-muted-foreground uppercase font-mono tracking-wider flex items-center justify-between">
+            <span>Filter Kelas / Rombel:</span>
+            <span class="text-[10px] text-cyan-400 font-normal">SMKN 1 Rongga</span>
+          </label>
+          <select
+            id="token-class-filter"
+            class="w-full px-3.5 py-2.5 rounded-xl bg-background border border-border text-xs text-foreground font-semibold focus:outline-none focus:border-cyan-500 transition-colors cursor-pointer shadow-sm"
+          >
+            <option value="all">🌐 Semua Siswa & Rombel (Global)</option>
+            
+            <optgroup label="── Tingkat 10 (Fase E - RPL) ──">
+              <option value="10 RPL 1">10 RPL 1</option>
+              <option value="10 RPL 2">10 RPL 2</option>
+              <option value="10 RPL 3">10 RPL 3</option>
+              <option value="10 RPL 4">10 RPL 4</option>
+            </optgroup>
 
-        <!-- Rank 3 (Bronze) -->
-        {top3[2] && (
-          <div class="p-6 rounded-2xl bg-gradient-to-b from-amber-900/30 via-card to-card border border-amber-800/40 text-center space-y-3 shadow-lg relative order-3">
-            <div class="w-10 h-10 rounded-full bg-amber-800/30 border border-amber-700 text-amber-500 font-extrabold text-lg flex items-center justify-center mx-auto shadow">
-              3
-            </div>
-            <div class="space-y-1">
-              <h3 class="text-sm font-bold text-foreground truncate">{top3[2].name}</h3>
-              <div class="flex items-center justify-center gap-1.5 flex-wrap">
-                <span class="text-[11px] text-muted-foreground font-mono">Level {top3[2].level}</span>
-                {top3[2].studentClass && (
-                  <span class="text-[9px] px-1.5 py-0.2 rounded bg-cyan-500/20 text-cyan-300 font-mono">
-                    {top3[2].studentClass}
-                  </span>
-                )}
-              </div>
-            </div>
-            <div class="text-xl font-extrabold text-amber-500 font-mono">
-              {top3[2].xp} XP
-            </div>
-          </div>
-        )}
+            <optgroup label="── Tingkat 11 (Fase F - RPL) ──">
+              <option value="11 RPL 1">11 RPL 1</option>
+              <option value="11 RPL 2">11 RPL 2</option>
+              <option value="11 RPL 3">11 RPL 3</option>
+              <option value="11 RPL 4">11 RPL 4</option>
+            </optgroup>
+
+            <optgroup label="── Tingkat 12 (Fase F - RPL) ──">
+              <option value="12 RPL 1">12 RPL 1</option>
+              <option value="12 RPL 2">12 RPL 2</option>
+              <option value="12 RPL 3">12 RPL 3</option>
+              <option value="12 RPL 4">12 RPL 4</option>
+            </optgroup>
+
+            <optgroup label="── Khusus Pengujian / Sandbox ──">
+              <option value="Kelas Uji Coba">🧪 Kelas Uji Coba (Sandbox)</option>
+            </optgroup>
+
+            {allTokensList && allTokensList.length > 0 && (
+              <optgroup label="── Token Enrollment & Sesi Ujian ──">
+                {allTokensList.map((t) => (
+                  <option value={t.token}>
+                    🎟️ Token: {t.token} ({t.targetClass || t.title})
+                  </option>
+                ))}
+              </optgroup>
+            )}
+          </select>
+        </div>
 
       </div>
-    )}
+    </div>
+
+    <!-- Top 3 Podium Cards -->
+    <div id="podium-container" class="grid grid-cols-1 md:grid-cols-3 gap-6 pt-4 items-end">
+      
+      <!-- Rank 2 (Silver) -->
+      {top3[1] ? (
+        <div class="p-6 rounded-2xl bg-gradient-to-b from-slate-800/40 via-card to-card border border-slate-700/60 text-center space-y-3 shadow-lg relative order-2 md:order-1">
+          <div class="relative w-16 h-16 rounded-full overflow-hidden mx-auto border-2 border-slate-300 shadow-md bg-secondary">
+            <img 
+              src={top3[1].avatarUrl || `https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(top3[1].name)}`} 
+              alt={top3[1].name}
+              class="w-full h-full object-cover"
+              onerror="this.src=`https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(this.alt)}`"
+            />
+            <div class="absolute -bottom-1 -right-1 w-6 h-6 rounded-full bg-slate-300 text-black font-extrabold text-xs flex items-center justify-center border border-black shadow">
+              2
+            </div>
+          </div>
+          <div class="space-y-1">
+            <h3 class="text-sm font-bold text-foreground truncate">{top3[1].name}</h3>
+            <div class="flex items-center justify-center gap-1.5 flex-wrap">
+              <span class="text-[11px] text-muted-foreground font-mono">Level {top3[1].level}</span>
+              {top3[1].studentClass && (
+                <span class="text-[9px] px-1.5 py-0.2 rounded bg-cyan-500/20 text-cyan-300 font-mono">
+                  {top3[1].studentClass}
+                </span>
+              )}
+            </div>
+          </div>
+          <div class="text-xl font-extrabold text-slate-300 font-mono">
+            {top3[1].xp} XP
+          </div>
+        </div>
+      ) : <div class="hidden md:block"></div>}
+
+      <!-- Rank 1 (Gold - Highest Center) -->
+      {top3[0] ? (
+        <div class="p-8 rounded-3xl bg-gradient-to-b from-amber-500/20 via-card to-card border border-amber-500/40 text-center space-y-4 shadow-xl relative order-1 md:order-2 transform md:-translate-y-4">
+          <div class="text-3xl">👑</div>
+          <div class="relative w-20 h-20 rounded-full overflow-hidden mx-auto border-2 border-amber-400 shadow-xl shadow-amber-500/20 bg-secondary">
+            <img 
+              src={top3[0].avatarUrl || `https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(top3[0].name)}`} 
+              alt={top3[0].name}
+              class="w-full h-full object-cover"
+              onerror="this.src=`https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(this.alt)}`"
+            />
+            <div class="absolute -bottom-1 -right-1 w-7 h-7 rounded-full bg-gradient-to-r from-amber-400 to-yellow-500 text-black font-black text-xs flex items-center justify-center border border-black shadow">
+              1
+            </div>
+          </div>
+          <div class="space-y-1.5">
+            <h3 class="text-base font-extrabold text-foreground truncate">{top3[0].name}</h3>
+            <div class="flex items-center justify-center gap-1.5 flex-wrap">
+              <span class="text-xs px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300 font-mono font-semibold">
+                Level {top3[0].level}
+              </span>
+              {top3[0].studentClass && (
+                <span class="text-[10px] px-2 py-0.5 rounded-full bg-cyan-500/20 text-cyan-300 font-mono font-medium">
+                  {top3[0].studentClass}
+                </span>
+              )}
+            </div>
+          </div>
+          <div class="text-2xl font-extrabold text-amber-400 font-mono tracking-tight">
+            {top3[0].xp} XP
+          </div>
+        </div>
+      ) : <div class="hidden md:block"></div>}
+
+      <!-- Rank 3 (Bronze) -->
+      {top3[2] ? (
+        <div class="p-6 rounded-2xl bg-gradient-to-b from-amber-900/30 via-card to-card border border-amber-800/40 text-center space-y-3 shadow-lg relative order-3">
+          <div class="relative w-16 h-16 rounded-full overflow-hidden mx-auto border-2 border-amber-700 shadow-md bg-secondary">
+            <img 
+              src={top3[2].avatarUrl || `https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(top3[2].name)}`} 
+              alt={top3[2].name}
+              class="w-full h-full object-cover"
+              onerror="this.src=`https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(this.alt)}`"
+            />
+            <div class="absolute -bottom-1 -right-1 w-6 h-6 rounded-full bg-amber-800 text-amber-200 font-extrabold text-xs flex items-center justify-center border border-black shadow">
+              3
+            </div>
+          </div>
+          <div class="space-y-1">
+            <h3 class="text-sm font-bold text-foreground truncate">{top3[2].name}</h3>
+            <div class="flex items-center justify-center gap-1.5 flex-wrap">
+              <span class="text-[11px] text-muted-foreground font-mono">Level {top3[2].level}</span>
+              {top3[2].studentClass && (
+                <span class="text-[9px] px-1.5 py-0.2 rounded bg-cyan-500/20 text-cyan-300 font-mono">
+                  {top3[2].studentClass}
+                </span>
+              )}
+            </div>
+          </div>
+          <div class="text-xl font-extrabold text-amber-500 font-mono">
+            {top3[2].xp} XP
+          </div>
+        </div>
+      ) : <div class="hidden md:block"></div>}
+
+    </div>
 
     <!-- Complete Ranked Table -->
     <div class="card p-6 rounded-2xl border-border/60 bg-card/90 space-y-4 shadow-md overflow-x-auto">
-      <h2 class="text-base font-bold text-foreground flex items-center gap-2">
-        <span>📜 Daftar Peringkat Seluruh Siswa</span>
-      </h2>
+      <div class="flex items-center justify-between">
+        <h2 class="text-base font-bold text-foreground flex items-center gap-2" id="table-title-text">
+          <span>📜 Daftar Peringkat Seluruh Siswa</span>
+        </h2>
+        <span id="student-count-badge" class="text-xs font-mono px-3 py-1 rounded-full bg-secondary text-muted-foreground border border-border">
+          {allRankedUsers.length} Siswa Terdaftar
+        </span>
+      </div>
 
       <table class="w-full text-left text-xs">
         <thead class="text-[11px] text-muted-foreground uppercase font-mono border-b border-border/60">
           <tr>
             <th class="py-3 px-4">Peringkat</th>
             <th class="py-3 px-4">Nama Siswa</th>
-            <th class="py-3 px-4">Kelas</th>
+            <th class="py-3 px-4">Kelas & Token</th>
             <th class="py-3 px-4">Tingkat Level</th>
-            <th class="py-3 px-4">Streak Aktif</th>
-            <th class="py-3 px-4 text-right">Total XP</th>
+            <th class="py-3 px-4">Streak / Modul</th>
+            <th class="py-3 px-4 text-right">Capaian XP</th>
           </tr>
         </thead>
-        <tbody class="divide-y divide-border/40 font-medium">
+        <tbody id="leaderboard-table-body" class="divide-y divide-border/40 font-medium">
           {allRankedUsers.map((ranked, idx) => {
             const isMe = ranked.id === user.userId;
+            const avatarSrc = ranked.avatarUrl || `https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(ranked.name)}`;
             return (
               <tr class:list={[
                 "hover:bg-accent/40 transition-colors",
@@ -189,21 +323,23 @@ const otherRanked = allRankedUsers.slice(3);
                 </td>
                 <td class="py-3.5 px-4">
                   <div class="flex items-center gap-2.5">
-                    <span class="text-foreground">{ranked.name}</span>
-                    {isMe && (
-                      <span class="text-[9px] px-2 py-0.5 rounded-full bg-blue-500/20 text-blue-400 font-mono">
-                        Anda
-                      </span>
-                    )}
-                    {ranked.role === 'superadmin' ? (
-                      <span class="text-[9px] px-2 py-0.5 rounded-full bg-purple-500/20 text-purple-300 font-mono">
-                        Super Admin
-                      </span>
-                    ) : (ranked.role === 'teacher' || ranked.role === 'admin') ? (
-                      <span class="text-[9px] px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300 font-mono">
-                        Guru
-                      </span>
-                    ) : null}
+                    <div class="w-7 h-7 rounded-full overflow-hidden border border-border/80 bg-secondary flex-shrink-0">
+                      <img 
+                        src={avatarSrc} 
+                        alt={ranked.name} 
+                        class="w-full h-full object-cover" 
+                        loading="lazy" 
+                        onerror="this.src=`https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(this.alt)}`"
+                      />
+                    </div>
+                    <div>
+                      <span class="text-foreground font-semibold block">{ranked.name}</span>
+                      {isMe && (
+                        <span class="text-[9px] px-1.5 py-0.2 rounded bg-blue-500/20 text-blue-400 font-mono inline-block">
+                          Anda
+                        </span>
+                      )}
+                    </div>
                   </div>
                 </td>
                 <td class="py-3.5 px-4 font-mono">
@@ -232,4 +368,244 @@ const otherRanked = allRankedUsers.slice(3);
     </div>
 
   </div>
+
+  <style>
+    .hide-scrollbar::-webkit-scrollbar {
+      display: none;
+    }
+    .hide-scrollbar {
+      -ms-overflow-style: none;
+      scrollbar-width: none;
+    }
+  </style>
+
+  <script>
+    let activeSubject = 'all';
+    let activeClass = 'all';
+
+    const subjectBtns = document.querySelectorAll('.subject-tab-btn');
+    const classSelect = document.getElementById('token-class-filter') as HTMLSelectElement;
+    const podiumContainer = document.getElementById('podium-container');
+    const tableBody = document.getElementById('leaderboard-table-body');
+    const studentCountBadge = document.getElementById('student-count-badge');
+    const userRankVal = document.getElementById('user-rank-val');
+    const userXpVal = document.getElementById('user-xp-val');
+
+    async function fetchAndUpdateLeaderboard() {
+      try {
+        const queryParams = new URLSearchParams({
+          subject: activeSubject,
+          class: activeClass,
+        });
+
+        const res = await fetch(`/api/leaderboard?${queryParams.toString()}`);
+        const data = await res.json();
+
+        if (!data.success || !data.leaderboard) return;
+
+        const students = data.leaderboard;
+
+        if (studentCountBadge) {
+          studentCountBadge.textContent = `${data.totalStudents || students.length} Siswa Terdaftar`;
+        }
+
+        if (data.currentUserRank) {
+          if (userRankVal) userRankVal.textContent = `#${data.currentUserRank.rank}`;
+          if (userXpVal) userXpVal.textContent = `${data.currentUserRank.xp} XP`;
+        } else {
+          if (userRankVal) userRankVal.textContent = `-`;
+        }
+
+        // Render Podium Top 3
+        const top3 = students.slice(0, 3);
+        if (podiumContainer) {
+          if (top3.length === 0) {
+            podiumContainer.innerHTML = `<div class="col-span-3 text-center py-8 text-muted-foreground text-xs font-mono">Belum ada data siswa untuk filter ini.</div>`;
+          } else {
+            const avatarTop1 = top3[0]?.avatarUrl || `https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(top3[0]?.name || '')}`;
+            const avatarTop2 = top3[1]?.avatarUrl || `https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(top3[1]?.name || '')}`;
+            const avatarTop3 = top3[2]?.avatarUrl || `https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(top3[2]?.name || '')}`;
+
+            podiumContainer.innerHTML = `
+              <!-- Rank 2 (Silver) -->
+              ${top3[1] ? `
+                <div class="p-6 rounded-2xl bg-gradient-to-b from-slate-800/40 via-card to-card border border-slate-700/60 text-center space-y-3 shadow-lg relative order-2 md:order-1">
+                  <div class="relative w-16 h-16 rounded-full overflow-hidden mx-auto border-2 border-slate-300 shadow-md bg-secondary">
+                    <img 
+                      src="${avatarTop2}" 
+                      alt="${top3[1].name}" 
+                      class="w-full h-full object-cover" 
+                      onerror="this.src='https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(top3[1].name)}'"
+                    />
+                    <div class="absolute -bottom-1 -right-1 w-6 h-6 rounded-full bg-slate-300 text-black font-extrabold text-xs flex items-center justify-center border border-black shadow">
+                      2
+                    </div>
+                  </div>
+                  <div class="space-y-1">
+                    <h3 class="text-sm font-bold text-foreground truncate">${top3[1].name}</h3>
+                    <div class="flex items-center justify-center gap-1.5 flex-wrap">
+                      <span class="text-[11px] text-muted-foreground font-mono">Level ${top3[1].level}</span>
+                      <span class="text-[9px] px-1.5 py-0.2 rounded bg-cyan-500/20 text-cyan-300 font-mono">
+                        ${top3[1].studentClass || 'PPLG'}
+                      </span>
+                    </div>
+                  </div>
+                  <div class="text-xl font-extrabold text-slate-300 font-mono">
+                    ${top3[1].xp} XP
+                  </div>
+                </div>
+              ` : '<div class="hidden md:block"></div>'}
+
+              <!-- Rank 1 (Gold - Center) -->
+              ${top3[0] ? `
+                <div class="p-8 rounded-3xl bg-gradient-to-b from-amber-500/20 via-card to-card border border-amber-500/40 text-center space-y-4 shadow-xl relative order-1 md:order-2 transform md:-translate-y-4">
+                  <div class="text-3xl">👑</div>
+                  <div class="relative w-20 h-20 rounded-full overflow-hidden mx-auto border-2 border-amber-400 shadow-xl shadow-amber-500/20 bg-secondary">
+                    <img 
+                      src="${avatarTop1}" 
+                      alt="${top3[0].name}" 
+                      class="w-full h-full object-cover" 
+                      onerror="this.src='https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(top3[0].name)}'"
+                    />
+                    <div class="absolute -bottom-1 -right-1 w-7 h-7 rounded-full bg-gradient-to-r from-amber-400 to-yellow-500 text-black font-black text-xs flex items-center justify-center border border-black shadow">
+                      1
+                    </div>
+                  </div>
+                  <div class="space-y-1.5">
+                    <h3 class="text-base font-extrabold text-foreground truncate">${top3[0].name}</h3>
+                    <div class="flex items-center justify-center gap-1.5 flex-wrap">
+                      <span class="text-xs px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300 font-mono font-semibold">
+                        Level ${top3[0].level}
+                      </span>
+                      <span class="text-[10px] px-2 py-0.5 rounded-full bg-cyan-500/20 text-cyan-300 font-mono font-medium">
+                        ${top3[0].studentClass || 'PPLG'}
+                      </span>
+                    </div>
+                  </div>
+                  <div class="text-2xl font-extrabold text-amber-400 font-mono tracking-tight">
+                    ${top3[0].xp} XP
+                  </div>
+                </div>
+              ` : '<div class="hidden md:block"></div>'}
+
+              <!-- Rank 3 (Bronze) -->
+              ${top3[2] ? `
+                <div class="p-6 rounded-2xl bg-gradient-to-b from-amber-900/30 via-card to-card border border-amber-800/40 text-center space-y-3 shadow-lg relative order-3">
+                  <div class="relative w-16 h-16 rounded-full overflow-hidden mx-auto border-2 border-amber-700 shadow-md bg-secondary">
+                    <img 
+                      src="${avatarTop3}" 
+                      alt="${top3[2].name}" 
+                      class="w-full h-full object-cover" 
+                      onerror="this.src='https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(top3[2].name)}'"
+                    />
+                    <div class="absolute -bottom-1 -right-1 w-6 h-6 rounded-full bg-amber-800 text-amber-200 font-extrabold text-xs flex items-center justify-center border border-black shadow">
+                      3
+                    </div>
+                  </div>
+                  <div class="space-y-1">
+                    <h3 class="text-sm font-bold text-foreground truncate">${top3[2].name}</h3>
+                    <div class="flex items-center justify-center gap-1.5 flex-wrap">
+                      <span class="text-[11px] text-muted-foreground font-mono">Level ${top3[2].level}</span>
+                      <span class="text-[9px] px-1.5 py-0.2 rounded bg-cyan-500/20 text-cyan-300 font-mono">
+                        ${top3[2].studentClass || 'PPLG'}
+                      </span>
+                    </div>
+                  </div>
+                  <div class="text-xl font-extrabold text-amber-500 font-mono">
+                    ${top3[2].xp} XP
+                  </div>
+                </div>
+              ` : '<div class="hidden md:block"></div>'}
+            `;
+          }
+        }
+
+        // Render Table Body
+        if (tableBody) {
+          if (students.length === 0) {
+            tableBody.innerHTML = `<tr><td colspan="6" class="py-8 text-center text-muted-foreground font-mono">Tidak ada data peringkat untuk filter ini.</td></tr>`;
+          } else {
+            tableBody.innerHTML = students.map((s: any, idx: number) => {
+              const rankBadgeClass = idx === 0 ? "bg-amber-500 text-black font-bold" :
+                                     idx === 1 ? "bg-slate-300 text-black font-bold" :
+                                     idx === 2 ? "bg-amber-700 text-white font-bold" :
+                                     "text-muted-foreground";
+              const isMe = s.isCurrentUser;
+              const meRowClass = isMe ? "bg-blue-500/10 font-bold" : "";
+              const avatar = s.avatarUrl || `https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(s.name)}`;
+              const subStat = activeSubject === 'orientasi-pplg' ? `${s.orientasiCount || 0} Modul` :
+                              activeSubject === 'tka' ? `${s.tkaCount || 0} Tryout (${s.tkaTopScore ?? 0} Ptn)` :
+                              activeSubject === 'literasi' ? `${s.literasiCount || 0} Resensi` :
+                              `🔥 ${s.streakDays || 1} Hari`;
+
+              return `
+                <tr class="hover:bg-accent/40 transition-colors ${meRowClass}">
+                  <td class="py-3.5 px-4 font-mono font-bold">
+                    <span class="w-6 h-6 rounded-full inline-flex items-center justify-center text-xs ${rankBadgeClass}">
+                      #${s.rank}
+                    </span>
+                  </td>
+                  <td class="py-3.5 px-4">
+                    <div class="flex items-center gap-2.5">
+                      <div class="w-7 h-7 rounded-full overflow-hidden border border-border/80 bg-secondary flex-shrink-0">
+                        <img 
+                          src="${avatar}" 
+                          alt="${s.name}" 
+                          class="w-full h-full object-cover" 
+                          onerror="this.src='https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(s.name)}'"
+                        />
+                      </div>
+                      <div>
+                        <span class="text-foreground font-semibold block">${s.name}</span>
+                        ${isMe ? '<span class="text-[9px] px-1.5 py-0.2 rounded bg-blue-500/20 text-blue-400 font-mono inline-block">Anda</span>' : ''}
+                      </div>
+                    </div>
+                  </td>
+                  <td class="py-3.5 px-4 font-mono">
+                    <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-cyan-500/15 text-cyan-300 border border-cyan-500/30">
+                      ${s.studentClass || 'PPLG'}
+                    </span>
+                  </td>
+                  <td class="py-3.5 px-4 font-mono text-emerald-400">
+                    Level ${s.level}
+                  </td>
+                  <td class="py-3.5 px-4 font-mono text-muted-foreground">
+                    ${subStat}
+                  </td>
+                  <td class="py-3.5 px-4 text-right font-mono font-extrabold text-amber-400 text-sm">
+                    ${s.xp} XP
+                  </td>
+                </tr>
+              `;
+            }).join('');
+          }
+        }
+
+      } catch (e) {
+        console.error('Error fetching live leaderboard update:', e);
+      }
+    }
+
+    // Attach subject filter tab clicks
+    subjectBtns.forEach(btn => {
+      btn.addEventListener('click', () => {
+        subjectBtns.forEach(b => {
+          b.classList.remove('active-subject-tab', 'bg-primary/15', 'text-primary', 'border-primary', 'shadow-sm');
+          b.classList.add('bg-secondary/60', 'text-muted-foreground', 'border-border');
+        });
+
+        btn.classList.remove('bg-secondary/60', 'text-muted-foreground', 'border-border');
+        btn.classList.add('active-subject-tab', 'bg-primary/15', 'text-primary', 'border-primary', 'shadow-sm');
+
+        activeSubject = btn.getAttribute('data-subject') || 'all';
+        fetchAndUpdateLeaderboard();
+      });
+    });
+
+    // Attach class/token filter select change
+    classSelect?.addEventListener('change', () => {
+      activeClass = classSelect.value;
+      fetchAndUpdateLeaderboard();
+    });
+  </script>
 </DashboardLayout>

@@ -10,6 +10,36 @@ Format penulisan mengacu pada [Keep a Changelog](https://keepachangelog.com/id/1
 - Generator PDF Otomatis untuk Rekap Portofolio Skill Passport Siswa.
 - Rollout materi interaktif berstandar Modul 01 untuk Modul 03 s.d. Modul 16.
 
+### 2026-08-16 — Onboarding Wajib Foto Profil & Rombel Siswa serta Tampilan Avatar Leaderboard
+- **Onboarding Wajib Profil Siswa (`MandatoryProfileModal.astro`):** Sistem secara otomatis mendeteksi siswa yang belum mengunggah foto profil atau belum memilih kelas/rombel dan memunculkan modal wajib (*non-dismissable*) untuk melengkapinya.
+- **Unggah & Kompresi Foto Cerdas (Client-Side HTML5 Canvas):** Foto selfie / pas foto siswa otomatis di-crop persegi tengah dan dikompresi ke format WebP (240×240 px, quality 0.85) langsung di browser pengguna sebelum disimpan ke database (`users.avatarUrl`).
+- **Endpoint Onboarding & Profil (`POST /api/user/complete-profile` & `POST /api/user/profile`):** Memvalidasi kelengkapan nama, kelas, dan foto avatar serta menyinkronkan token session JWT secara otomatis.
+- **Visualisasi Avatar di Leaderboard:**
+  - Papan Peringkat Siswa (`/dashboard/leaderboard`): Podium 1, 2, 3 dan baris tabel menampilkan foto avatar siswa secara elegan dengan fallback inisial/bottts jika gagal dimuat.
+  - Papan Peringkat Proyektor Kelas (`/admin/proyektor-leaderboard`): Menampilkan avatar peserta pada podium mahkota dan daftar tabel realtime untuk proyektor kelas.
+  - Halaman Pengaturan Profil (`/dashboard/profil`): Siswa dapat meninjau dan mengganti foto profil serta kelas rombel kapan saja.
+- **Refactoring & Restrukturisasi Filter Leaderboard & Kelas Sandbox:**
+  - Mengorganisasikan dropdown filter kelas dengan `<optgroup>` hierarkis: `Tingkat 10 (10 RPL 1–4)`, `Tingkat 11 (11 RPL 1–4)`, `Tingkat 12 (12 RPL 1–4)`, `Token Enrollment & Sesi Ujian`, serta kelompok khusus `🧪 Kelas Uji Coba (Sandbox)`.
+  - Menambahkan opsi `Kelas Uji Coba` pada modal onboarding siswa, halaman profil, formulir LKPD, dan filter manajemen nilai guru agar akun pengujian guru tidak bercampur atau mengganggu statistik siswa kelas riil.
+  - Memperbaiki akurasi pencocokan backend di `/api/leaderboard.ts` (case-insensitive & multi-target token matching).
+- **Integrasi Logo Resmi AGS & Favicon:**
+  - Mengganti teks/placeholder logo dengan logo resmi **AGS (Agung Gumelar Saputra - Technology • Innovation • Impact)** pada Header Navigasi Utama, Sidebar Dashboard & Admin, Footer, Favicon Browser (`/favicon.png`), serta Halaman Login & Registrasi Siswa.
+- **Hotfix Rute & Rendering Dashboard (`/dashboard`):**
+  - Mengatasi kendala layar putih (*blank screen*) pada `/dashboard` dengan memindahkan `src/pages/dashboard.astro` ke rute kanonis `src/pages/dashboard/index.astro`, menghapus delimiter/komentar tak valid di akhir file, serta menambahkan *error boundary* defensif pada `DashboardLayout.astro`.
+- **Provisioning Database Baru Neon (`learninghub-db-v2`):**
+  - Mengganti instance database lama yang mencapai batas kuota dengan resource baru `learninghub-db-v2` (Vercel Marketplace Neon).
+  - Menyinkronkan seluruh variabel lingkungan produksi (`POSTGRES_URL`, `DATABASE_URL`, dll).
+  - Melengkapi inisialisasi skema otomatis (*auto-ddl*) dan penanganan kueri *fail-safe* pada callback login Google.
+- **Universal PostgreSQL Driver Support (Supabase / VPS / Neon Hybrid):**
+  - Mengintegrasikan driver universal `postgres.js` (`postgres`) dan `drizzle-orm/postgres-js`.
+  - Sistem otomatis mendeteksi tipe database (Neon HTTP serverless atau Supabase/Postgres VPS standar) sehingga transisi ke Supabase VPS hanya memerlukan perubahan variabel `POSTGRES_URL` di Vercel tanpa perlu mengubah kode.
+
+### 2026-08-16 — Standarisasi Resensi RESIK & Kop Surat Resmi SMKN 1 Rongga
+- **Standarisasi Batas Kata Resensi:** Ringkasan isi buku minimal 100 kata (disertai panduan 3 bagian alur: awal, tengah, akhir) dan amanat/pesan bacaan minimal 30 kata (analisis nilai kehidupan & kejuruan RPL). Dilengkapi live word counter dengan badge warna interaktif (Merah, Kuning, Hijau).
+- **Format Laporan Cetak Resmi RESIK:** Penyematan logo resmi SMKN 1 Rongga (`public/logo-smkn1rongga.png`), alamat lengkap Cabang Dinas Wilayah VI Jawa Barat, serta NIP resmi Guru Pengampu RPL (`199306012022211013`).
+- **Reset Sandi Siswa di Panel Admin:** Tombol *quick-reset* kata sandi siswa oleh Guru/Admin (`POST /api/admin/users/reset-password`).
+
+
 ### 2026-08-09 — Redesign Katalog Pembelajaran & Enroll Token Fix
 - **Redesign UI/UX Katalog Pembelajaran (`/pembelajaran`):** Mengadopsi desain modern dan minimalis terinspirasi dari `kelasfullstack.id`. Hero section baru dengan gradient halus, border tipis, *glassmorphism*, dan transisi *hover* (shadow, transform) pada kartu modul.
 - **Relokasi Gamification Widget:** Widget profil gamifikasi (XP, Streak, Lencana) dipindahkan ke posisi paling atas agar menjadi pusat perhatian utama bagi siswa setelah login.
