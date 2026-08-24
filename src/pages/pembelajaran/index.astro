@@ -25,18 +25,19 @@ const sortedModules = modules.sort((a, b) => a.data.order - b.data.order);
       <!-- 1. GAMIFICATION WIDGET (TOP PRIORITY) -->
       <GamificationWidget />
 
-      <!-- 2. HERO SECTION (MINIMALIST ELEGANT) -->
-      <div class="relative overflow-hidden rounded-3xl bg-gradient-to-br from-card via-card to-blue-900/10 border border-white/5 shadow-xl">
-        <div class="absolute inset-0 bg-[url('/noise.png')] opacity-[0.03] mix-blend-overlay"></div>
+      <!-- 2. HERO SECTION (M3 Elevated Container) -->
+      <div class="relative overflow-hidden rounded-m3-2xl bg-[var(--md-sys-color-surface-container)] border border-[var(--md-sys-color-outline-variant)] shadow-sm">
         <div class="relative p-8 md:p-12 flex flex-col md:flex-row md:items-center justify-between gap-8">
           <div class="space-y-4 max-w-2xl">
-            <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 text-primary border border-primary/20 text-xs font-mono font-semibold">
-              <span class="w-2 h-2 rounded-full bg-primary animate-pulse"></span>
-              <span>Kurikulum Merdeka 2026/2027</span>
+            <div class="inline-flex items-center gap-2">
+              <span class="m3-chip-primary text-xs font-mono font-semibold">
+                <span class="w-1.5 h-1.5 rounded-full bg-sky-400"></span>
+                <span>Kurikulum Merdeka 2026/2027</span>
+              </span>
             </div>
-            <h1 class="text-3xl md:text-5xl font-black text-foreground tracking-tight leading-tight">
+            <h1 class="text-3xl md:text-5xl font-extrabold text-foreground font-display tracking-tight leading-tight">
               Eksplorasi Modul <br class="hidden md:block"/>
-              <span class="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-emerald-400">
+              <span class="text-sky-400">
                 Rekayasa Perangkat Lunak
               </span>
             </h1>
@@ -46,12 +47,11 @@ const sortedModules = modules.sort((a, b) => a.data.order - b.data.order);
           </div>
 
           <div class="flex-shrink-0">
-            <a href="/pembelajaran/tka-pplg" class="group relative inline-flex items-center justify-center gap-2 bg-card border border-white/10 hover:border-primary/50 text-foreground px-6 py-3.5 rounded-2xl shadow-lg hover:shadow-primary/20 transition-all hover:-translate-y-1">
-              <div class="absolute inset-0 bg-gradient-to-r from-blue-500/10 to-cyan-500/10 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity"></div>
-              <span class="text-xl">🎯</span>
+            <a href="/pembelajaran/tka-pplg" class="group relative inline-flex items-center justify-center gap-3 m3-card-elevated px-6 py-4 rounded-m3-xl shadow-md transition-all hover:scale-105">
+              <span class="text-2xl">🎯</span>
               <div class="text-left">
                 <div class="text-[10px] font-mono text-muted-foreground font-semibold uppercase tracking-wider">Drilling Simulator</div>
-                <div class="text-sm font-bold">Tryout TKA PPLG</div>
+                <div class="text-sm font-bold text-foreground font-display">Tryout TKA PPLG</div>
               </div>
             </a>
           </div>
@@ -60,28 +60,26 @@ const sortedModules = modules.sort((a, b) => a.data.order - b.data.order);
 
       <!-- 3. COURSE GRID -->
       <div class="space-y-6">
-        <div class="flex items-center justify-between border-b border-border/50 pb-4">
-          <h2 class="text-xl md:text-2xl font-bold text-foreground">Program & Mata Pelajaran</h2>
+        <div class="flex items-center justify-between border-b border-[var(--md-sys-color-outline-variant)] pb-4">
+          <h2 class="text-xl md:text-2xl font-bold text-foreground font-display">Program & Mata Pelajaran</h2>
         </div>
 
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
           
           <!-- COURSE CARD: ORIENTASI PPLG -->
-          <a href="/pembelajaran/orientasi-pplg" class="group relative flex flex-col justify-between bg-card rounded-3xl border border-white/5 hover:border-blue-500/30 overflow-hidden shadow-lg hover:shadow-2xl hover:shadow-blue-900/20 transition-all duration-300 hover:-translate-y-1.5 cursor-pointer">
-            <div class="absolute inset-0 bg-gradient-to-br from-blue-500/5 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
-            
-            <div class="p-8 space-y-6 relative z-10">
+          <a href="/pembelajaran/orientasi-pplg" class="group m3-card-elevated rounded-m3-2xl p-8 flex flex-col justify-between space-y-6 transition-all duration-300 hover:border-sky-500">
+            <div class="space-y-5">
               <div class="flex flex-wrap items-center gap-2">
-                <span class="px-2.5 py-1 rounded-md bg-blue-500/10 text-blue-400 border border-blue-500/20 text-[10px] font-mono font-bold uppercase tracking-wider">
+                <span class="m3-chip-primary text-[10px] font-mono font-bold uppercase tracking-wider">
                   Mata Pelajaran Utama
                 </span>
-                <span class="px-2.5 py-1 rounded-md bg-secondary text-foreground border border-border text-[10px] font-mono font-semibold">
+                <span class="m3-chip text-[10px] font-mono font-semibold">
                   Fase E • Kelas 10
                 </span>
               </div>
 
               <div>
-                <h3 class="text-2xl font-bold text-foreground group-hover:text-blue-400 transition-colors mb-3">
+                <h3 class="text-2xl font-bold text-foreground font-display group-hover:text-sky-400 transition-colors mb-2">
                   Orientasi PPLG & Skill Passport
                 </h3>
                 <p class="text-sm text-muted-foreground leading-relaxed line-clamp-2">
@@ -90,22 +88,21 @@ const sortedModules = modules.sort((a, b) => a.data.order - b.data.order);
               </div>
 
               <div class="grid grid-cols-2 gap-3 pt-2">
-                <div class="p-3 rounded-xl bg-secondary/30 border border-white/5">
+                <div class="p-3.5 rounded-m3-md bg-[var(--md-sys-color-surface-container-lowest)] border border-[var(--md-sys-color-outline-variant)]">
                   <span class="text-[10px] font-mono text-muted-foreground block mb-1">JUMLAH PERTEMUAN</span>
                   <span class="text-xs font-bold text-foreground">16 Pertemuan</span>
                 </div>
-                <div class="p-3 rounded-xl bg-secondary/30 border border-white/5">
+                <div class="p-3.5 rounded-m3-md bg-[var(--md-sys-color-surface-container-lowest)] border border-[var(--md-sys-color-outline-variant)]">
                   <span class="text-[10px] font-mono text-muted-foreground block mb-1">TOTAL XP</span>
-                  <span class="text-xs font-bold text-emerald-400 font-mono">✨ +120 XP</span>
+                  <span class="text-xs font-bold text-teal-400 font-mono">✨ +120 XP</span>
                 </div>
               </div>
             </div>
 
-            <div class="px-8 py-5 border-t border-white/5 bg-secondary/10 flex items-center justify-between transition-colors group-hover:bg-blue-500/5 relative z-10">
-              <span class="text-xs font-medium text-muted-foreground">Oleh Agung Gumelar S.</span>
-              <span class="text-sm font-semibold text-blue-400 group-hover:translate-x-1 transition-transform flex items-center gap-1">
-                Buka Modul 
-                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+            <div class="pt-4 border-t border-[var(--md-sys-color-outline-variant)] flex items-center justify-between text-xs">
+              <span class="text-muted-foreground font-mono">Pengampu: Agung Gumelar S., S.Tr.T.</span>
+              <span class="m3-btn-filled text-xs font-bold py-1.5 px-4">
+                Buka Modul & Silabus →
               </span>
             </div>
           </a>

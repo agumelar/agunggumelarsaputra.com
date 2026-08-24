@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Outfit:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -6,48 +6,85 @@
 
 @layer base {
   :root {
-    --background: 0 0% 100%;
-    --foreground: 240 10% 3.9%;
+    --background: 220 25% 97%;
+    --foreground: 222 47% 11%;
     --card: 0 0% 100%;
-    --card-foreground: 240 10% 3.9%;
+    --card-foreground: 222 47% 11%;
     --popover: 0 0% 100%;
-    --popover-foreground: 240 10% 3.9%;
-    --primary: 221.2 83.2% 53.3%;
+    --popover-foreground: 222 47% 11%;
+    --primary: 217.2 91.2% 59.8%;
     --primary-foreground: 210 40% 98%;
-    --secondary: 240 4.8% 95.9%;
-    --secondary-foreground: 240 5.9% 10%;
-    --muted: 240 4.8% 95.9%;
-    --muted-foreground: 240 3.8% 46.1%;
-    --accent: 240 4.8% 95.9%;
-    --accent-foreground: 240 5.9% 10%;
+    --secondary: 215 20% 90%;
+    --secondary-foreground: 222 47% 11%;
+    --muted: 215 20% 90%;
+    --muted-foreground: 215 16% 47%;
+    --accent: 215 20% 92%;
+    --accent-foreground: 222 47% 11%;
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 0 0% 98%;
-    --border: 240 5.9% 90%;
-    --input: 240 5.9% 90%;
-    --ring: 221.2 83.2% 53.3%;
-    --radius: 0.5rem;
+    --border: 214.3 31.8% 91.4%;
+    --input: 214.3 31.8% 91.4%;
+    --ring: 217.2 91.2% 59.8%;
+    --radius: 0.75rem;
+
+    /* Material Design 3 (M3) Light Color Roles */
+    --md-sys-color-surface: #f8fafc;
+    --md-sys-color-surface-container-lowest: #ffffff;
+    --md-sys-color-surface-container-low: #f1f5f9;
+    --md-sys-color-surface-container: #e2e8f0;
+    --md-sys-color-surface-container-high: #cbd5e1;
+    --md-sys-color-surface-container-highest: #94a3b8;
+    --md-sys-color-primary: #0284c7;
+    --md-sys-color-primary-container: #e0f2fe;
+    --md-sys-color-on-primary: #ffffff;
+    --md-sys-color-on-primary-container: #0369a1;
+    --md-sys-color-secondary: #0d9488;
+    --md-sys-color-secondary-container: #ccfbf1;
+    --md-sys-color-tertiary: #d97706;
+    --md-sys-color-tertiary-container: #fef3c7;
+    --md-sys-color-outline: rgba(15, 23, 42, 0.16);
+    --md-sys-color-outline-variant: rgba(15, 23, 42, 0.08);
   }
 
   .dark {
-    --background: 0 0% 3.9%;
-    --foreground: 0 0% 98%;
-    --card: 0 0% 6.1%;
-    --card-foreground: 0 0% 98%;
-    --popover: 0 0% 6.1%;
-    --popover-foreground: 0 0% 98%;
-    --primary: 217.2 91.2% 59.8%;
-    --primary-foreground: 222.2 47.4% 11.2%;
-    --secondary: 240 3.7% 15.9%;
-    --secondary-foreground: 0 0% 98%;
-    --muted: 240 3.7% 15.9%;
-    --muted-foreground: 240 5% 64.9%;
-    --accent: 240 3.7% 15.9%;
-    --accent-foreground: 0 0% 98%;
-    --destructive: 0 62.8% 30.6%;
+    /* Solid high-craft dark palette (Dark Navy Slate) */
+    --background: 222 47% 6%;
+    --foreground: 210 40% 98%;
+    --card: 222 47% 9%;
+    --card-foreground: 210 40% 98%;
+    --popover: 222 47% 9%;
+    --popover-foreground: 210 40% 98%;
+    --primary: 199 89% 48%;
+    --primary-foreground: 222 47% 6%;
+    --secondary: 217 33% 17%;
+    --secondary-foreground: 210 40% 98%;
+    --muted: 217 33% 14%;
+    --muted-foreground: 215 20% 65%;
+    --accent: 217 33% 17%;
+    --accent-foreground: 210 40% 98%;
+    --destructive: 0 72% 51%;
     --destructive-foreground: 0 0% 98%;
-    --border: 240 3.7% 15.9%;
-    --input: 240 3.7% 15.9%;
-    --ring: 212.7 26.8% 83.9%;
+    --border: 217 33% 18%;
+    --input: 217 33% 18%;
+    --ring: 199 89% 48%;
+
+    /* Material Design 3 (M3) Dark Color Roles */
+    --md-sys-color-surface: #090d16;
+    --md-sys-color-surface-container-lowest: #0d121e;
+    --md-sys-color-surface-container-low: #111827;
+    --md-sys-color-surface-container: #162032;
+    --md-sys-color-surface-container-high: #1c293e;
+    --md-sys-color-surface-container-highest: #23324d;
+    --md-sys-color-primary: #38bdf8;
+    --md-sys-color-primary-container: rgba(56, 189, 248, 0.12);
+    --md-sys-color-on-primary: #082f49;
+    --md-sys-color-on-primary-container: #bae6fd;
+    --md-sys-color-secondary: #2dd4bf;
+    --md-sys-color-secondary-container: rgba(45, 212, 191, 0.12);
+    --md-sys-color-tertiary: #fbbf24;
+    --md-sys-color-tertiary-container: rgba(251, 191, 36, 0.12);
+    --md-sys-color-outline: rgba(255, 255, 255, 0.14);
+    --md-sys-color-outline-variant: rgba(255, 255, 255, 0.07);
   }
 }
 
@@ -62,6 +99,11 @@
   
   body {
     @apply bg-background text-foreground font-sans antialiased;
+    background-color: var(--md-sys-color-surface);
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    font-family: 'Outfit', 'Inter', system-ui, sans-serif;
   }
 }
 
@@ -74,9 +116,128 @@
     @apply max-w-3xl mx-auto px-4;
   }
   
-  /* Card Component - shadcn style */
+  /* Material Design 3 Card Archetypes */
+  .m3-card {
+    @apply rounded-m3-lg border transition-all duration-200;
+    background-color: var(--md-sys-color-surface-container-low);
+    border-color: var(--md-sys-color-outline-variant);
+  }
+
+  .m3-card:hover {
+    border-color: var(--md-sys-color-outline);
+    background-color: var(--md-sys-color-surface-container);
+  }
+
+  .m3-card-elevated {
+    @apply rounded-m3-lg border transition-all duration-200 shadow-lg shadow-black/20;
+    background-color: var(--md-sys-color-surface-container);
+    border-color: var(--md-sys-color-outline-variant);
+  }
+
+  .m3-card-elevated:hover {
+    background-color: var(--md-sys-color-surface-container-high);
+    border-color: var(--md-sys-color-primary);
+  }
+
+  .m3-card-outlined {
+    @apply rounded-m3-lg border transition-all duration-200 bg-transparent;
+    border-color: var(--md-sys-color-outline-variant);
+  }
+
+  .m3-card-outlined:hover {
+    border-color: var(--md-sys-color-outline);
+    background-color: var(--md-sys-color-surface-container-lowest);
+  }
+
+  /* Material Design 3 Buttons */
+  .m3-btn {
+    @apply inline-flex items-center justify-center gap-2 rounded-m3-full text-xs font-semibold px-4 py-2.5 transition-all duration-200 disabled:opacity-50 disabled:pointer-events-none;
+  }
+
+  .m3-btn-filled {
+    @apply m3-btn text-white font-bold;
+    background-color: #0284c7;
+  }
+  .dark .m3-btn-filled {
+    background-color: #0284c7;
+    color: #ffffff;
+  }
+  .m3-btn-filled:hover {
+    filter: brightness(1.1);
+  }
+
+  .m3-btn-tonal {
+    @apply m3-btn;
+    background-color: var(--md-sys-color-primary-container);
+    color: var(--md-sys-color-primary);
+    border: 1px solid var(--md-sys-color-outline-variant);
+  }
+  .m3-btn-tonal:hover {
+    background-color: var(--md-sys-color-surface-container-high);
+    border-color: var(--md-sys-color-primary);
+  }
+
+  .m3-btn-outlined {
+    @apply m3-btn;
+    background-color: transparent;
+    border: 1px solid var(--md-sys-color-outline);
+    color: var(--foreground);
+  }
+  .m3-btn-outlined:hover {
+    background-color: var(--md-sys-color-surface-container-high);
+    border-color: var(--md-sys-color-primary);
+  }
+
+  /* Material Design 3 Chips */
+  .m3-chip {
+    @apply inline-flex items-center gap-1.5 rounded-m3-full px-3 py-1 text-[11px] font-semibold border transition-colors;
+    background-color: var(--md-sys-color-surface-container);
+    border-color: var(--md-sys-color-outline-variant);
+    color: var(--foreground);
+  }
+
+  .m3-chip-primary {
+    @apply m3-chip;
+    background-color: var(--md-sys-color-primary-container);
+    border-color: rgba(56, 189, 248, 0.3);
+    color: var(--md-sys-color-primary);
+  }
+
+  .m3-chip-success {
+    @apply m3-chip;
+    background-color: var(--md-sys-color-secondary-container);
+    border-color: rgba(45, 212, 191, 0.3);
+    color: var(--md-sys-color-secondary);
+  }
+
+  .m3-chip-warning {
+    @apply m3-chip;
+    background-color: var(--md-sys-color-tertiary-container);
+    border-color: rgba(251, 191, 36, 0.3);
+    color: var(--md-sys-color-tertiary);
+  }
+
+  /* Material Design 3 Segmented Buttons Container */
+  .m3-segmented-container {
+    @apply flex items-center p-1 rounded-m3-full border;
+    background-color: var(--md-sys-color-surface-container-lowest);
+    border-color: var(--md-sys-color-outline-variant);
+  }
+
+  .m3-segmented-item {
+    @apply flex-1 flex items-center justify-center gap-2 py-2 px-3.5 rounded-m3-full text-xs font-semibold transition-all duration-200 text-muted-foreground;
+  }
+
+  .m3-segmented-item.active,
+  .m3-segmented-item[aria-selected="true"] {
+    background-color: var(--md-sys-color-primary-container);
+    color: var(--md-sys-color-primary);
+    border: 1px solid rgba(56, 189, 248, 0.25);
+  }
+
+  /* Legacy Compatibility - shadcn style classes */
   .card {
-    @apply rounded-lg border bg-card text-card-foreground shadow-sm;
+    @apply m3-card;
   }
   
   .card-header {
@@ -84,11 +245,11 @@
   }
   
   .card-title {
-    @apply text-2xl font-semibold leading-none tracking-tight;
+    @apply text-xl font-bold leading-none tracking-tight font-display text-foreground;
   }
   
   .card-description {
-    @apply text-sm text-muted-foreground;
+    @apply text-xs text-muted-foreground;
   }
   
   .card-content {
@@ -99,54 +260,54 @@
     @apply flex items-center p-6 pt-0;
   }
   
-  /* Button Component - shadcn style */
   .btn {
-    @apply inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50;
+    @apply inline-flex items-center justify-center whitespace-nowrap rounded-m3-full text-xs font-semibold transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 px-4 py-2.5;
   }
   
   .btn-primary {
-    @apply bg-primary text-primary-foreground hover:bg-primary/90;
+    @apply m3-btn-filled;
   }
   
   .btn-secondary {
-    @apply bg-secondary text-secondary-foreground hover:bg-secondary/80;
+    @apply m3-btn-tonal;
   }
   
   .btn-ghost {
-    @apply hover:bg-accent hover:text-accent-foreground;
+    @apply hover:bg-white/5 hover:text-foreground text-muted-foreground rounded-m3-full;
   }
   
   .btn-outline {
-    @apply border border-input bg-background hover:bg-accent hover:text-accent-foreground;
+    @apply m3-btn-outlined;
   }
   
   .btn-sm {
-    @apply h-9 rounded-md px-3;
+    @apply h-8 px-3 text-[11px];
   }
   
   .btn-lg {
-    @apply h-11 rounded-md px-8;
+    @apply h-11 px-6 text-sm;
   }
   
-  /* Input Component - shadcn style */
   .input {
-    @apply flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50;
+    @apply flex h-10 w-full rounded-m3-md border px-3 py-2 text-xs transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 disabled:cursor-not-allowed disabled:opacity-50;
+    background-color: var(--md-sys-color-surface-container-lowest);
+    border-color: var(--md-sys-color-outline-variant);
+    color: var(--foreground);
   }
   
-  /* Badge Component - shadcn style */
   .badge {
-    @apply inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2;
+    @apply m3-chip;
   }
   
   .badge-primary {
-    @apply border-transparent bg-primary text-primary-foreground hover:bg-primary/80;
+    @apply m3-chip-primary;
   }
   
   .badge-secondary {
-    @apply border-transparent bg-secondary text-secondary-foreground hover:bg-secondary/80;
+    @apply m3-chip;
   }
   
   .badge-outline {
-    @apply text-foreground;
+    @apply m3-chip;
   }
 }

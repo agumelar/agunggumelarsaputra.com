@@ -17,39 +17,39 @@ const navItems = [
 ];
 ---
 
-<header class="sticky top-0 z-50 w-full border-b border-border/40 bg-background/80 backdrop-blur-md supports-[backdrop-filter]:bg-background/60">
+<header class="sticky top-0 z-50 w-full border-b border-[var(--md-sys-color-outline-variant)] bg-[var(--md-sys-color-surface)]/85 backdrop-blur-md transition-colors">
   <div class="container-main flex h-16 items-center justify-between">
     <!-- Brand Logo -->
-    <a href="/" class="flex items-center gap-2.5 font-bold text-lg tracking-tight group">
-      <div class="w-9 h-9 rounded-xl overflow-hidden bg-[#090d16] border border-white/15 flex items-center justify-center shadow-md group-hover:scale-105 transition-transform p-0.5 flex-shrink-0">
-        <img src="/logo-ags.png" alt="Logo AGS" class="w-full h-full object-contain rounded-lg" />
+    <a href="/" class="flex items-center gap-3 font-bold text-lg tracking-tight group">
+      <div class="w-9 h-9 rounded-m3-md overflow-hidden bg-[#090d16] border border-white/15 flex items-center justify-center shadow-sm group-hover:scale-105 transition-transform p-0.5 flex-shrink-0">
+        <img src="/logo-ags.png" alt="Logo AGS" class="w-full h-full object-contain rounded-m3-xs" />
       </div>
       <div class="flex flex-col">
-        <span class="leading-tight text-foreground font-semibold">Agung Gumelar</span>
-        <span class="text-[10px] text-muted-foreground font-mono">SMKN 1 Rongga • PPLG</span>
+        <span class="leading-tight text-foreground font-display font-bold text-sm">Agung Gumelar</span>
+        <span class="text-[10px] text-muted-foreground font-mono">Guru RPL • SMKN 1 Rongga</span>
       </div>
     </a>
     
-    <!-- Desktop Navigation -->
-    <nav class="hidden lg:flex items-center gap-1">
+    <!-- Desktop Navigation (M3 Pill Items) -->
+    <nav class="hidden lg:flex items-center gap-1.5 bg-[var(--md-sys-color-surface-container-lowest)] px-2 py-1.5 rounded-m3-full border border-[var(--md-sys-color-outline-variant)]">
       {navItems.map((item) => {
         const isActive = currentPath === item.href || (item.href !== '/' && currentPath.startsWith(item.href));
         return (
           <a 
             href={item.href}
             class:list={[
-              "px-3 py-2 rounded-md text-sm font-medium transition-all relative",
-              item.highlight ? "text-cyan-400 hover:text-cyan-300 font-semibold" : "",
+              "px-3.5 py-1.5 rounded-m3-full text-xs font-semibold transition-all relative flex items-center gap-1.5",
               isActive 
-                ? "text-blue-500 font-semibold bg-blue-500/10" 
-                : "text-muted-foreground hover:text-foreground hover:bg-accent/50"
+                ? "bg-[var(--md-sys-color-primary-container)] text-[var(--md-sys-color-primary)] font-bold shadow-sm" 
+                : "text-muted-foreground hover:text-foreground hover:bg-white/5",
+              item.highlight && !isActive ? "text-sky-400 font-semibold" : ""
             ]}
           >
-            {item.label}
+            <span>{item.label}</span>
             {item.highlight && (
-              <span class="absolute -top-1 -right-1 flex h-2 w-2">
-                <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-cyan-400 opacity-75"></span>
-                <span class="relative inline-flex rounded-full h-2 w-2 bg-cyan-500"></span>
+              <span class="flex h-1.5 w-1.5 relative">
+                <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-sky-400 opacity-75"></span>
+                <span class="relative inline-flex rounded-full h-1.5 w-1.5 bg-sky-500"></span>
               </span>
             )}
           </a>
@@ -57,21 +57,21 @@ const navItems = [
       })}
     </nav>
     
-    <!-- Action Controls: Gamification Badge + Dark/Light Theme Switcher -->
+    <!-- Action Controls: User Portal Button + Theme Switcher -->
     <div class="flex items-center gap-2">
       {user ? (
         <div class="flex items-center gap-2">
           {isTeacherOrAdmin && (
-            <a href="/admin" class="hidden sm:inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-amber-500/10 border border-amber-500/30 text-xs font-bold text-amber-300 hover:bg-amber-500/20 transition-colors">
+            <a href="/admin" class="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-m3-full bg-amber-500/10 border border-amber-500/30 text-xs font-bold text-amber-300 hover:bg-amber-500/20 transition-all">
               <span>👑 Panel Guru</span>
             </a>
           )}
-          <a href="/dashboard" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold shadow-md shadow-blue-600/20 transition-all">
+          <a href="/dashboard" class="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-m3-full bg-[var(--md-sys-color-primary-container)] text-[var(--md-sys-color-primary)] border border-sky-500/30 hover:bg-sky-500/20 text-xs font-bold transition-all shadow-sm">
             <span>🎓 Portal Siswa</span>
           </a>
         </div>
       ) : (
-        <a href="/login" class="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white text-xs font-bold shadow-md shadow-blue-600/20 transition-all">
+        <a href="/login" class="m3-btn-filled text-xs font-bold py-1.5 px-4 shadow-sm">
           <span>Masuk LMS</span>
           <span>→</span>
         </a>
@@ -81,45 +81,45 @@ const navItems = [
       <button 
         id="theme-toggle" 
         type="button" 
-        class="p-2 rounded-lg text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
+        class="w-9 h-9 flex items-center justify-center rounded-m3-full text-muted-foreground hover:text-foreground hover:bg-white/5 transition-colors border border-transparent hover:border-[var(--md-sys-color-outline-variant)]"
         aria-label="Toggle theme"
       >
-        <svg id="sun-icon" class="w-5 h-5 hidden" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <svg id="sun-icon" class="w-4 h-4 hidden" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
         </svg>
-        <svg id="moon-icon" class="w-5 h-5 hidden" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <svg id="moon-icon" class="w-4 h-4 hidden" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
         </svg>
       </button>
 
       <!-- Mobile Menu Button -->
       <button 
-        class="lg:hidden p-2 rounded-lg text-muted-foreground hover:bg-accent"
+        class="lg:hidden w-9 h-9 flex items-center justify-center rounded-m3-full text-muted-foreground hover:bg-white/5 border border-[var(--md-sys-color-outline-variant)]"
         aria-label="Toggle menu"
         id="mobile-menu-btn"
       >
-        <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
         </svg>
       </button>
     </div>
   </div>
   
-  <!-- Mobile Drawer -->
-  <div id="mobile-menu" class="hidden lg:hidden border-b border-border bg-background/95 backdrop-blur-md">
-    <nav class="container-main py-4 flex flex-col gap-1">
+  <!-- Mobile Drawer (M3 Sheet) -->
+  <div id="mobile-menu" class="hidden lg:hidden border-b border-[var(--md-sys-color-outline-variant)] bg-[var(--md-sys-color-surface-container-lowest)] shadow-xl">
+    <nav class="container-main py-4 flex flex-col gap-1.5">
       {navItems.map((item) => (
         <a 
           href={item.href}
           class:list={[
-            "px-4 py-3.5 rounded-lg text-base font-medium transition-colors flex items-center justify-between min-h-[48px]",
+            "px-4 py-3 rounded-m3-md text-sm font-semibold transition-all flex items-center justify-between min-h-[44px]",
             currentPath === item.href || (item.href !== '/' && currentPath.startsWith(item.href))
-              ? "bg-blue-600/10 text-blue-500 font-semibold"
-              : "text-muted-foreground hover:bg-accent hover:text-foreground"
+              ? "bg-[var(--md-sys-color-primary-container)] text-[var(--md-sys-color-primary)] font-bold"
+              : "text-muted-foreground hover:bg-white/5 hover:text-foreground"
           ]}
         >
           <span>{item.label}</span>
-          {item.highlight && <span class="text-xs bg-cyan-500/20 text-cyan-400 px-2 py-0.5 rounded-full">New</span>}
+          {item.highlight && <span class="text-[10px] bg-sky-500/20 text-sky-400 px-2 py-0.5 rounded-m3-full font-bold">HOT</span>}
         </a>
       ))}
     </nav>

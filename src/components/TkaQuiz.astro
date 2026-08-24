@@ -17,15 +17,15 @@ if (allQuestionsFiles[targetFile]) {
   <div id="tka-quiz-data" data-questions={JSON.stringify(questions)} data-slug={slug} class="hidden"></div>
 
   <!-- Active Token Session Indicator Banner -->
-  <div id="quiz-token-banner" class="hidden p-4 rounded-xl bg-card border border-border flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-sm animate-fadeIn">
+  <div id="quiz-token-banner" class="hidden p-4 rounded-m3-xl bg-[var(--md-sys-color-surface-container)] border border-[var(--md-sys-color-outline-variant)] flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-sm animate-fadeIn">
     <div class="flex items-center gap-3">
-      <div class="w-8 h-8 rounded-lg bg-secondary border border-border flex items-center justify-center text-foreground text-sm flex-shrink-0">
+      <div class="w-8 h-8 rounded-m3-md bg-[var(--md-sys-color-surface-container-high)] border border-[var(--md-sys-color-outline-variant)] flex items-center justify-center text-foreground text-sm flex-shrink-0">
         🎟️
       </div>
       <div>
         <div class="flex items-center gap-2">
           <span class="text-xs font-semibold text-foreground">Sesi Ujian Terdaftar:</span>
-          <span id="banner-token-code" class="px-2 py-0.5 rounded bg-secondary text-foreground font-mono font-bold text-xs tracking-wider border border-border">
+          <span id="banner-token-code" class="px-2 py-0.5 rounded-m3-xs bg-[var(--md-sys-color-surface-container-highest)] text-foreground font-mono font-bold text-xs tracking-wider border border-[var(--md-sys-color-outline-variant)]">
             TOKEN
           </span>
         </div>
@@ -45,16 +45,16 @@ if (allQuestionsFiles[targetFile]) {
     </button>
   </div>
 
-  <div class="card p-5 md:p-7 border-border bg-card rounded-xl shadow-sm relative">
+  <div class="m3-card-elevated p-5 md:p-7 rounded-m3-2xl relative space-y-4">
     
     <!-- Header Bar Quiz -->
-    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-border pb-4 mb-5">
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-[var(--md-sys-color-outline-variant)] pb-4">
       <div>
         <div class="flex items-center gap-2">
-          <span class="px-2 py-0.5 rounded bg-secondary text-foreground text-[10px] font-mono font-semibold uppercase tracking-wider border border-border">Simulasi CBT TKA PPLG</span>
+          <span class="m3-chip-primary text-[10px] font-mono font-bold uppercase tracking-wider">Simulasi CBT TKA PPLG</span>
           <span id="quiz-progress-text" class="text-xs text-muted-foreground font-mono">Soal 1 dari ...</span>
         </div>
-        <h3 id="quiz-category-title" class="text-base font-bold text-foreground mt-1">Memuat Modul...</h3>
+        <h3 id="quiz-category-title" class="text-base font-bold text-foreground font-display mt-1">Memuat Modul...</h3>
       </div>
     </div>
 

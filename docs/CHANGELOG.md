@@ -10,7 +10,26 @@ Format penulisan mengacu pada [Keep a Changelog](https://keepachangelog.com/id/1
 - Generator PDF Otomatis untuk Rekap Portofolio Skill Passport Siswa.
 - Rollout materi interaktif berstandar Modul 01 untuk Modul 03 s.d. Modul 16.
 
-### 2026-08-16 — Onboarding Wajib Foto Profil & Rombel Siswa serta Tampilan Avatar Leaderboard
+### 2026-08-24 — Transformasi Desain Sistem Material Design 3 (M3) & High-Craft UI
+- **M3 Design Token & Arsitektur CSS (`src/styles/global.css`, `tailwind.config.mjs`):**
+  - Mengadopsi sistem warna Material Design 3: surface container tinting (`--md-sys-color-surface-container-*`), peran primer (`--md-sys-color-primary`), dan outline variant kontras tinggi.
+  - Mengintegrasikan shape tokens M3 (`rounded-m3-xs` s/d `rounded-m3-full`) dan tipografi hierarkis (`Outfit` untuk display headline, `Inter` untuk body teks, `JetBrains Mono` untuk angka/XP/kode).
+  - Melenyapkan seluruh *AI-slop* (gradien teks ungu-cyan berlebih, aura blur background yang menyilaukan, dan glassmorphism rendah kontras) demi kenyamanan membaca (*high readability & craft*).
+- **M3 Top App Bar & Navigasi (`src/components/Navigation.astro`, `src/layouts/DashboardLayout.astro`):**
+  - M3 Pill chips untuk navigasi desktop dengan state aktif tonal container (`--md-sys-color-primary-container`).
+  - M3 Assist Chips untuk lencana XP dan Level belajar realtime.
+  - Sidebar aplikasi bergaya M3 Sheet dengan navigasi melengkung (*rounded pill*) dan state interaktif taktil.
+- **M3 Homepage & Showcase Komprehensif (`src/pages/index.astro`):**
+  - M3 Hero split-layout dengan tipografi tegas, assist chips peran resmi guru/engineer, dan preview console interaktif.
+  - 4 Pilar Kompetensi Keahlian RPL berbasis elevated container cards.
+  - Gamification & TKA Spotlight cards dengan penataan ruang M3 yang rapi dan elegan.
+- **M3 Pembelajaran & 4-Tab Lesson Reader (`/pembelajaran`, `[...slug].astro`):**
+  - Mengadopsi **M3 Segmented Button Navigation** untuk peralihan 4 tab (Materi, LKPD, Jurnal Refleksi, KKTP).
+  - M3 Outlined Text Field dan Textarea yang terintegrasi dengan proteksi Anti-Copy Paste Guardian.
+  - Stat cards kemajuan mata pelajaran berbasis M3 Surface container.
+- **M3 Dashboard Siswa & Halaman Autentikasi (`/dashboard`, `/login`, `/register`):**
+  - KPI Stat Grid (XP, Level, Modul Selesai, Skor TKA, Rabu Literasi) berbasis M3 Surface Cards.
+  - Form login dan registrasi berbasis M3 Elevated Container dengan tombol aksi terpadu.
 - **Onboarding Wajib Profil Siswa (`MandatoryProfileModal.astro`):** Sistem secara otomatis mendeteksi siswa yang belum mengunggah foto profil atau belum memilih kelas/rombel dan memunculkan modal wajib (*non-dismissable*) untuk melengkapinya.
 - **Unggah & Kompresi Foto Cerdas (Client-Side HTML5 Canvas):** Foto selfie / pas foto siswa otomatis di-crop persegi tengah dan dikompresi ke format WebP (240×240 px, quality 0.85) langsung di browser pengguna sebelum disimpan ke database (`users.avatarUrl`).
 - **Endpoint Onboarding & Profil (`POST /api/user/complete-profile` & `POST /api/user/profile`):** Memvalidasi kelengkapan nama, kelas, dan foto avatar serta menyinkronkan token session JWT secara otomatis.
