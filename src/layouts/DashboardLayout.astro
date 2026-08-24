@@ -406,9 +406,9 @@ const adminNavItems = [
 
     </div>
 
-    <!-- MOBILE BOTTOM NAVIGATION (STUDENTS ONLY) -->
+    <!-- MOBILE BOTTOM NAVIGATION (STUDENTS ONLY - M3 Navigation Bar) -->
     {!isAdminRoute && (
-      <nav class="lg:hidden fixed bottom-0 left-0 right-0 z-40 bg-background/95 backdrop-blur-md border-t border-border flex items-center justify-around pb-[env(safe-area-inset-bottom)] h-16 shadow-[0_-4px_20px_rgba(0,0,0,0.05)]">
+      <nav class="lg:hidden fixed bottom-0 left-0 right-0 z-40 bg-[var(--md-sys-color-surface-container)]/95 backdrop-blur-md border-t border-[var(--md-sys-color-outline-variant)] flex items-center justify-around pb-[env(safe-area-inset-bottom)] h-16 shadow-lg">
         {[
           { href: '/dashboard', label: 'Ringkasan', icon: 'M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6' },
           { href: '/pembelajaran', label: 'Modul', icon: 'M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253' },
@@ -417,12 +417,16 @@ const adminNavItems = [
         ].map(item => {
           const isActive = currentPath === item.href || (item.href !== '/dashboard' && currentPath.startsWith(item.href));
           return (
-            <a href={item.href} class="flex flex-col items-center justify-center w-full h-full space-y-1 relative group">
-              <span class:list={["absolute -top-3 w-8 h-1 rounded-full transition-all", isActive ? "bg-primary opacity-100" : "opacity-0"]}></span>
-              <svg class:list={["w-6 h-6 transition-colors", isActive ? "text-primary" : "text-muted-foreground group-hover:text-foreground"]} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width={isActive ? "2.5" : "2"} d={item.icon} />
-              </svg>
-              <span class:list={["text-[10px] font-medium transition-colors", isActive ? "text-primary font-semibold" : "text-muted-foreground group-hover:text-foreground"]}>
+            <a href={item.href} class="flex flex-col items-center justify-center w-full h-full relative group">
+              <div class:list={[
+                "flex items-center justify-center px-4 py-1 rounded-m3-full transition-all",
+                isActive ? "bg-[var(--md-sys-color-primary-container)] text-[var(--md-sys-color-primary)] font-bold shadow-sm" : "text-muted-foreground hover:text-foreground"
+              ]}>
+                <svg class="w-5 h-5 transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width={isActive ? "2.5" : "2"} d={item.icon} />
+                </svg>
+              </div>
+              <span class:list={["text-[10px] transition-colors mt-0.5 font-sans", isActive ? "text-[var(--md-sys-color-primary)] font-bold" : "text-muted-foreground"]}>
                 {item.label}
               </span>
             </a>
