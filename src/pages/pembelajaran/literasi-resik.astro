@@ -141,25 +141,23 @@ const currentWeek = userReports.length + 1;
     </div>
 
     <!-- Hero Card RESIK -->
-    <div class="relative overflow-hidden rounded-3xl bg-gradient-to-br from-card via-card to-cyan-950/20 border border-cyan-500/30 p-6 md:p-8 shadow-xl space-y-6">
-      <div class="absolute -right-8 -top-8 text-9xl opacity-5 pointer-events-none select-none">📚</div>
-
+    <div class="m3-card-elevated rounded-m3-2xl p-6 md:p-8 shadow-sm space-y-6 relative overflow-hidden">
       <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-6 relative z-10">
         <div class="space-y-3 max-w-3xl">
           <div class="flex flex-wrap items-center gap-2">
-            <span class="px-2.5 py-0.5 rounded bg-cyan-500/10 text-cyan-400 text-[11px] font-mono font-bold uppercase border border-cyan-500/20">
+            <span class="m3-chip-primary text-[11px] font-mono font-bold uppercase">
               PEMBIASAAN RABU LITERASI ASIK (RESIK)
             </span>
-            <span class="px-2.5 py-0.5 rounded bg-secondary text-foreground text-[11px] font-mono font-semibold border border-border">
+            <span class="px-2.5 py-0.5 rounded-m3-full bg-[var(--md-sys-color-surface-container-high)] text-foreground text-[11px] font-mono font-semibold border border-[var(--md-sys-color-outline-variant)]">
               SMK NEGERI 1 RONGGA
             </span>
-            <span class="px-2.5 py-0.5 rounded bg-emerald-500/10 text-emerald-400 text-[11px] font-mono font-bold border border-emerald-500/20">
+            <span class="m3-chip-success text-[11px] font-mono font-bold">
               ✨ +30 XP / Resensi Buku
             </span>
           </div>
 
-          <h1 class="text-3xl md:text-4xl font-black text-foreground tracking-tight">
-            Portal Laporan Literasi Siswa <span class="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 via-blue-400 to-emerald-400">(RESIK)</span>
+          <h1 class="text-3xl md:text-4xl font-extrabold text-foreground font-display tracking-tight">
+            Portal Laporan Literasi Siswa <span class="text-[var(--md-sys-color-primary)]">(RESIK)</span>
           </h1>
 
           <p class="text-xs md:text-sm text-muted-foreground leading-relaxed">
@@ -168,19 +166,19 @@ const currentWeek = userReports.length + 1;
 
           <!-- Quick Metrics -->
           <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-2">
-            <div class="p-3 rounded-xl bg-background/60 border border-border">
+            <div class="p-3 rounded-m3-md bg-[var(--md-sys-color-surface-container)] border border-[var(--md-sys-color-outline-variant)]">
               <span class="text-[10px] font-mono text-muted-foreground block uppercase">TOTAL RESENSI SAYA</span>
               <span class="text-base font-bold text-foreground font-mono">{totalUserResensi} Buku</span>
             </div>
-            <div class="p-3 rounded-xl bg-background/60 border border-border">
+            <div class="p-3 rounded-m3-md bg-[var(--md-sys-color-surface-container)] border border-[var(--md-sys-color-outline-variant)]">
               <span class="text-[10px] font-mono text-muted-foreground block uppercase">SUDAH DINILAI GURU</span>
               <span class="text-base font-bold text-emerald-400 font-mono">{gradedUserResensi.length} Resensi</span>
             </div>
-            <div class="p-3 rounded-xl bg-background/60 border border-border">
+            <div class="p-3 rounded-m3-md bg-[var(--md-sys-color-surface-container)] border border-[var(--md-sys-color-outline-variant)]">
               <span class="text-[10px] font-mono text-muted-foreground block uppercase">RATA-RATA NILAI RESIK</span>
-              <span class="text-base font-bold text-cyan-400 font-mono">{avgScore > 0 ? `${avgScore} / 100` : '-'}</span>
+              <span class="text-base font-bold text-sky-400 font-mono">{avgScore > 0 ? `${avgScore} / 100` : '-'}</span>
             </div>
-            <div class="p-3 rounded-xl bg-background/60 border border-border">
+            <div class="p-3 rounded-m3-md bg-[var(--md-sys-color-surface-container)] border border-[var(--md-sys-color-outline-variant)]">
               <span class="text-[10px] font-mono text-muted-foreground block uppercase">LEVEL GAMIFIKASI</span>
               <span class="text-base font-bold text-amber-400 font-mono">Lvl {userStats.level} ({userStats.xp} XP)</span>
             </div>
@@ -188,9 +186,9 @@ const currentWeek = userReports.length + 1;
         </div>
 
         <!-- Action CTAs -->
-        <div class="w-full lg:w-72 p-5 rounded-2xl bg-background/80 backdrop-blur-md border border-cyan-500/20 flex flex-col justify-between space-y-4 shadow-lg shrink-0">
+        <div class="w-full lg:w-72 p-5 rounded-m3-xl bg-[var(--md-sys-color-surface-container)] border border-[var(--md-sys-color-outline-variant)] flex flex-col justify-between space-y-4 shadow-sm shrink-0">
           <div>
-            <div class="text-xs font-bold text-foreground mb-1">
+            <div class="text-xs font-bold text-foreground font-display mb-1">
               🎯 Minggu Ini: Resensi Ke-{currentWeek}
             </div>
             <p class="text-[11px] text-muted-foreground leading-relaxed">
@@ -198,33 +196,33 @@ const currentWeek = userReports.length + 1;
             </p>
           </div>
 
-          <a href="#form-resensi" class="btn btn-primary bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white font-extrabold text-xs py-2.5 rounded-xl text-center shadow-md border-0">
-            ✍️ Tulis Resensi Baru →
+          <a href="#form-resensi" class="m3-btn-filled text-xs py-2.5 text-center font-bold">
+            ✍️ Tulis Resensi Baru ➔
           </a>
         </div>
       </div>
     </div>
 
     <!-- Navigation Tabs -->
-    <div class="flex border-b border-border/80 gap-2 overflow-x-auto hide-scrollbar pb-1" id="resik-tab-headers">
+    <div class="m3-segmented-container overflow-x-auto hide-scrollbar p-1.5" id="resik-tab-headers">
       <button 
         type="button" 
         data-tab="form" 
-        class="resik-tab-btn active px-4 py-2.5 rounded-xl text-xs font-bold transition-all border border-cyan-500/30 bg-cyan-500/10 text-cyan-400 flex items-center gap-2 shrink-0"
+        class="resik-tab-btn m3-segmented-item active text-xs font-bold shrink-0"
       >
         <span>✍️</span> 1. Form Tulis Resensi Baru
       </button>
       <button 
         type="button" 
         data-tab="my-reports" 
-        class="resik-tab-btn px-4 py-2.5 rounded-xl text-xs font-bold transition-all border border-border bg-card text-muted-foreground hover:text-foreground flex items-center gap-2 shrink-0"
+        class="resik-tab-btn m3-segmented-item text-xs font-bold shrink-0"
       >
         <span>📚</span> 2. Riwayat & Cetak PDF Resensi Saya ({totalUserResensi})
       </button>
       <button 
         type="button" 
         data-tab="peer-feed" 
-        class="resik-tab-btn px-4 py-2.5 rounded-xl text-xs font-bold transition-all border border-border bg-card text-muted-foreground hover:text-foreground flex items-center gap-2 shrink-0"
+        class="resik-tab-btn m3-segmented-item text-xs font-bold shrink-0"
       >
         <span>🌟</span> 3. Galeri Literasi Teman & Peer Review
       </button>

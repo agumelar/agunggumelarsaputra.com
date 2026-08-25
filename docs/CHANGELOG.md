@@ -10,6 +10,14 @@ Format penulisan mengacu pada [Keep a Changelog](https://keepachangelog.com/id/1
 - Generator PDF Otomatis untuk Rekap Portofolio Skill Passport Siswa.
 - Rollout materi interaktif berstandar Modul 01 untuk Modul 03 s.d. Modul 16.
 
+### 2026-08-25 — Integrasi Standar NeedMCP Style-Locking & Audit Total Desain M3
+- **NeedMCP Style-Locking Blueprint (`DESIGN.md`, `docs/DESIGN_SYSTEM.md`):**
+  - Mengadopsi format spesifikasi kanonis berstandar [NeedMCP](https://needmcp.com/) dengan YAML Frontmatter (token warna kanonis, surface container elevation, tipografi `Outfit`/`Inter`/`JetBrains Mono`, radius, spacing, dan component archetypes).
+  - Mengunci aturan arsitektur visual (border-defined depth, accent scarcity, kontras teks tinggi, anti AI-slop) agar konsistensi desain terjaga permanen lintas sesi pengkodean AI.
+- **Audit & Penyeragaman Total Token Halaman UI:**
+  - Menuntaskan penyelarasan halaman Pengaturan Profil (`/dashboard/profil`), Modal Onboarding Wajib (`MandatoryProfileModal.astro`), dan Portal Literasi RESIK (`/pembelajaran/literasi-resik`) ke sistem token M3 Surface Container dan komponen baku (`m3-card-elevated`, `m3-btn-filled`, `m3-btn-tonal`, `m3-segmented-*`).
+  - Menghilangkan sisa-sisa styling ad-hoc dan memastikan touch targets minimal 44×44 px pada mode smartphone.
+
 ### 2026-08-24 — Transformasi Desain Sistem Material Design 3 (M3) & High-Craft UI
 - **M3 Design Token & Arsitektur CSS (`src/styles/global.css`, `tailwind.config.mjs`):**
   - Mengadopsi sistem warna Material Design 3: surface container tinting (`--md-sys-color-surface-container-*`), peran primer (`--md-sys-color-primary`), dan outline variant kontras tinggi.
