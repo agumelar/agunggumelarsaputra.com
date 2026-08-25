@@ -17,28 +17,28 @@ const navItems = [
 ];
 ---
 
-<header class="sticky top-0 z-50 w-full border-b border-[var(--md-sys-color-outline-variant)] bg-[var(--md-sys-color-surface)]/85 backdrop-blur-md transition-colors">
+<header class="sticky top-0 z-50 w-full border-b border-[var(--md-sys-color-outline-variant)] bg-[var(--md-sys-color-surface)]/90 backdrop-blur-md transition-colors">
   <div class="container-main flex h-16 items-center justify-between">
     <!-- Brand Logo -->
-    <a href="/" class="flex items-center gap-3 font-bold text-lg tracking-tight group">
+    <a href="/" class="flex items-center gap-2.5 tracking-tight group py-1 flex-shrink-0">
       <div class="w-9 h-9 rounded-m3-md overflow-hidden bg-[#090d16] border border-white/15 flex items-center justify-center shadow-sm group-hover:scale-105 transition-transform p-0.5 flex-shrink-0">
         <img src="/logo-ags.png" alt="Logo AGS" class="w-full h-full object-contain rounded-m3-xs" />
       </div>
-      <div class="flex flex-col">
-        <span class="leading-tight text-foreground font-display font-bold text-sm">Agung Gumelar</span>
-        <span class="text-[10px] text-muted-foreground font-mono">Guru RPL • SMKN 1 Rongga</span>
+      <div class="flex flex-col justify-center text-left">
+        <span class="text-sm font-bold font-display text-foreground leading-tight">Agung Gumelar</span>
+        <span class="text-[10px] text-muted-foreground font-mono leading-tight">Guru RPL • SMKN 1 Rongga</span>
       </div>
     </a>
     
     <!-- Desktop Navigation (M3 Pill Items) -->
-    <nav class="hidden lg:flex items-center gap-1.5 bg-[var(--md-sys-color-surface-container-lowest)] px-2 py-1.5 rounded-m3-full border border-[var(--md-sys-color-outline-variant)]">
+    <nav class="hidden lg:flex items-center gap-1 bg-[var(--md-sys-color-surface-container-lowest)] px-1.5 py-1 rounded-m3-full border border-[var(--md-sys-color-outline-variant)]">
       {navItems.map((item) => {
         const isActive = currentPath === item.href || (item.href !== '/' && currentPath.startsWith(item.href));
         return (
           <a 
             href={item.href}
             class:list={[
-              "px-3.5 py-1.5 rounded-m3-full text-xs font-semibold transition-all relative flex items-center gap-1.5",
+              "px-3 py-1 rounded-m3-full text-xs font-semibold transition-all relative flex items-center gap-1.5",
               isActive 
                 ? "bg-[var(--md-sys-color-primary-container)] text-[var(--md-sys-color-primary)] font-bold shadow-sm" 
                 : "text-muted-foreground hover:text-foreground hover:bg-white/5",
@@ -58,20 +58,22 @@ const navItems = [
     </nav>
     
     <!-- Action Controls: User Portal Button + Theme Switcher -->
-    <div class="flex items-center gap-2">
+    <div class="flex items-center gap-1.5 sm:gap-2">
       {user ? (
-        <div class="flex items-center gap-2">
+        <div class="flex items-center gap-1.5">
           {isTeacherOrAdmin && (
-            <a href="/admin" class="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-m3-full bg-amber-500/10 border border-amber-500/30 text-xs font-bold text-amber-300 hover:bg-amber-500/20 transition-all">
-              <span>👑 Panel Guru</span>
+            <a href="/admin" class="hidden sm:inline-flex items-center gap-1 px-2.5 py-1 rounded-m3-full bg-amber-500/10 border border-amber-500/30 text-xs font-bold text-amber-300 hover:bg-amber-500/20 transition-all">
+              <span>👑 Panel</span>
             </a>
           )}
-          <a href="/dashboard" class="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-m3-full bg-[var(--md-sys-color-primary-container)] text-[var(--md-sys-color-primary)] border border-sky-500/30 hover:bg-sky-500/20 text-xs font-bold transition-all shadow-sm">
-            <span>🎓 Portal Siswa</span>
+          <a href="/dashboard" class="inline-flex items-center gap-1.5 px-2.5 sm:px-3.5 py-1.5 rounded-m3-full bg-[var(--md-sys-color-primary-container)] text-[var(--md-sys-color-primary)] border border-sky-500/30 hover:bg-sky-500/20 text-xs font-bold transition-all shadow-sm">
+            <span>🎓</span>
+            <span class="hidden sm:inline">Portal Siswa</span>
+            <span class="sm:hidden">Portal</span>
           </a>
         </div>
       ) : (
-        <a href="/login" class="m3-btn-filled text-xs font-bold py-1.5 px-4 shadow-sm">
+        <a href="/login" class="m3-btn-filled text-xs font-bold py-1.5 px-3 sm:px-4 shadow-sm">
           <span>Masuk LMS</span>
           <span>→</span>
         </a>
@@ -81,7 +83,7 @@ const navItems = [
       <button 
         id="theme-toggle" 
         type="button" 
-        class="w-9 h-9 flex items-center justify-center rounded-m3-full text-muted-foreground hover:text-foreground hover:bg-white/5 transition-colors border border-transparent hover:border-[var(--md-sys-color-outline-variant)]"
+        class="w-8 h-8 sm:w-9 sm:h-9 flex items-center justify-center rounded-m3-full text-muted-foreground hover:text-foreground hover:bg-white/5 transition-colors border border-transparent hover:border-[var(--md-sys-color-outline-variant)]"
         aria-label="Toggle theme"
       >
         <svg id="sun-icon" class="w-4 h-4 hidden" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -94,11 +96,11 @@ const navItems = [
 
       <!-- Mobile Menu Button -->
       <button 
-        class="lg:hidden w-9 h-9 flex items-center justify-center rounded-m3-full text-muted-foreground hover:bg-white/5 border border-[var(--md-sys-color-outline-variant)]"
+        class="lg:hidden w-8 h-8 sm:w-9 sm:h-9 flex items-center justify-center rounded-m3-full text-muted-foreground hover:bg-white/5 border border-[var(--md-sys-color-outline-variant)]"
         aria-label="Toggle menu"
         id="mobile-menu-btn"
       >
-        <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <svg class="w-4 h-4 sm:w-5 sm:h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
         </svg>
       </button>
